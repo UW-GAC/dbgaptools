@@ -88,5 +88,8 @@ best way to develop package will be to start working through dbgap file prep for
 	- "dbgap_prepare"
  
  
+# Ongoing questions 
+1. Are DDs required to have row1=column names?
+ 
 
 
