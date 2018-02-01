@@ -86,6 +86,7 @@ best way to develop package will be to start working through dbgap file prep for
 - unclear to me what style conventions exist
 - ideas
 	- "dbgap_prepare"
+	- "dbgap_file_prep"
  
  
 # Ongoing questions 

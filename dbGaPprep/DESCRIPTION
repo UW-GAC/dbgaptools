@@ -1,9 +1,10 @@
 Package: dbGaPprep
-Title: What the Package Does (one line, title case)
+Title: Creates and Checks Standard Files for dbGaP submission
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Nelson", "Sarah", email = "sarahcn@uw.edu", role = c("aut", "cre"))
+Description: This package can create or check dataset and data dictionary files for the required dbGaP submission elements: sample-subject mapping, sample attributes, and subject consent files. Optionally, pedigree and phenotpye files can be checked for presence of expected subjects. (say something about TOPMed as motivating use case to create?)
 Depends: R (>= 3.4.3)
-License: What license is it under?
+License: MIT
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 6.0.1
