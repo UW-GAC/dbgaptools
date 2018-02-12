@@ -37,7 +37,7 @@ Stephanie
 - sample attributes (satt)
 - pedigree and phenotype
 	- limit to checking for expected subjects
-	- should we also check for expected column names, and correspondence between 
+	- should we also check for expected column names
 
 ## types of functions
 - find inputs 
@@ -61,6 +61,7 @@ Stephanie
 	- sample attributes file - will have several TOPmed specific values
 		- master scan annot will have study, top med proj, sequencing center
 		- need to ask Quenna how to systematically get phase and funding info
+			- looks like Phase info is on website: https://www.nhlbiwgs.org/group/project-studies
 - write outputs (DS and DD)
 
 ## conventions
@@ -75,18 +76,21 @@ best way to develop package will be to start working through dbgap file prep for
 1. ask Anne Sturke for 
 	- current version of the dbGaP submission guide (she's been updating)
 		- she told Quenna she was working on
+		- _done_
 	- for list of all checks that dbGaP runs on these files, as we want to try and cover these as well in our checks
 		- Adrienne knows of article that write this out?
 2. set up meeting with Quenna and Stephanie where we download Quenna's knowledge about how to determine phase and funding source to add to sample attributes
 	- answer might be to add a column to the main tracking sheet - though these may be sample-level variables rather than study-level
 	- need for "phs encyclopedia" across sample qc and pheno harm - Adrienne may have skeleton
-	- there is master NWS ID list of Cathy's indicating sequencing batch - that may be tied to funding source (and phase?)
+	- there is master NWD ID list of Cathy's indicating sequencing batch - that may be tied to funding source (and phase?)
 
 # package names?
 - unclear to me what style conventions exist
+- wickham says no underscores
 - ideas
-	- "dbgap_prepare"
-	- "dbgap_file_prep"
+	- "dbGaPfileprep"
+	- "dbGaPprep"
+	- "dbGaPrepr
  
  
 # Ongoing questions 

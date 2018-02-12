@@ -186,22 +186,25 @@ file_types <- c("samp_subj_mapping",
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID
+#' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)
 #' @param sample_uses Either a single string for expected SAMPLE_USE across all samples, or a data frame with SAMPLE_ID and SAMPLE_USE values
 #' @param topmed Logical to indicate TOPMed study
 #'
 #' @details
 #' When (\code{ssm_exp != NULL}), checks for expected correspondence between
 #' SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
-#' or a difference in the list of expectd SAMPLE_IDs or SUBJECT_IDs,
+#' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 #' will be returned in the output.
+#' If (\code{ssm_exp != NULL}) contains an additional logical field 'quarantine,'
+#' code will check that SAMPLE_USE=NA for this record. Will otherwise be treated as
+#' other records in terms of checking for missing or extra subjects or samples.
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
 #' When (\code{TOPMed = TRUE}) checks for presence of additional, TOPMed-specific
 #' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 #' TOPMed_Project, Study_Name.
 #'
-#' @return ssm_report, a list of the following:
+#' @return ssm_report, a list of the following issues (when present):
 #' \item{missing_vars}{Missing and required variables}
 #' Additionally, if (\code{ddfile != NULL}):
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
@@ -230,7 +233,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   }
 
   # read in data dictionary if provided
-  dd_errors <- NA
+  dd_errors <- NULL
   if(!is.null(ddfile)){
     dd <- .read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds)
@@ -238,7 +241,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   }
 
   # expected SSM if provided
-  ssm_diffs <- NA
+  ssm_diffs <- NULL
   if(!is.null(ssm_exp)){
 
     # check for matching subject ids
@@ -255,15 +258,23 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
     ssm_diffs <- ssm_exp[!is.element(ssm_exp$map, maps_ssm),1:2]
   }
 
-  # if TOPMed, sample uses should be "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" for all samples
+  # if TOPMed, sample uses should be "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" for all samples,
+  # except quarantine=TRUE samples
   sample_uses_topmed <- "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
   if(topmed & !is.null(sample_uses) & sample_uses!=sample_uses_topmed){
     warning(paste0("Non TOPMed sample uses were provided; manually setting to ",
                    sample_uses_topmed,". To check other sample_uses, set topmed=FALSE"))
     sample_uses <- sample_uses_topmed
+
+    # if quarantine=TRUE samples are in ssm_exp, change expected sample use to NA
+    if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
+      sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
+                                SAMPLE_USE=sample_uses_topmed)
+      sample_uses$SAMPLE_USE[ssm_exp[,3]] <- "NA"
+    }
   }
 
-  sampuse_diffs <- NA
+  sampuse_diffs <- NULL
   # check for expected sample uses
   if(!is.null(sample_uses)){
     ds.mini <- ds[,c("SAMPLE_ID","SAMPLE_USE")]
@@ -281,9 +292,10 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 
   # check for required columns
   req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
-  missing_vars <- setdiff(req_vars, names(ds))
-
-  missing_topmed_vars <- NA
+  miss_vars <- setdiff(req_vars, names(ds))
+  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
+  
+  missing_topmed_vars <- NULL
   # if TOPMed, check for TOPMed-specific variables
   if(topmed){
     topmed_vars <- c(req_vars, "SEQUENCING_CENTER", "Funding_Source",
@@ -292,11 +304,35 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   }
 
   # create and return results list
-  ssm_report <- list(missing_vars=missing_vars, dd_errors=dd_errors,
-                     extra_subjects=extra_subjects, missing_subjects=missing_subjects,
-                     extra_samples=extra_samples, missing_samples=missing_samples,
-                     ssm_diffs=ssm_diffs, sampuse_diffs=sampuse_diffs,
-                     missing_topmed_vars=missing_topmed_vars)
+  ssm_report <- list()
+
+  if(!is.na(missing_vars)){
+    ssm_report$missing_vars <- missing_vars
+  }
+  if(!is.null(dd_errors)){
+    ssm_report$dd_errors <- dd_errors
+  }
+  if(!is.null(extra_subjects)){
+    ssm_report$extra_subjects <- extra_subjects
+  }
+  if(!is.null(missing_subjects)){
+    ssm_report$missing_subjects <- missing_subjects
+  }  
+  if(!is.null(extra_samples)){
+    ssm_report$extra_samples <- extra_samples
+  }
+  if(!is.null(missing_samples)){
+    ssm_report$missing_samples <- missing_samples
+  }
+  if(!is.null(ssm_diffs)){
+    ssm_report$ssm_diffs <- ssm_diffs
+  }
+  if(!is.null(sampuse_diffs)){
+    ssm_report$sampuse_diffs <- sampuse_diffs
+  }
+  if(!is.null(missing_topmed_vars)){
+    ssm_report$missing_topmed_vars <- missing_topmed_vars
+  }
 
   return(ssm_report)
 }
