@@ -55,14 +55,23 @@ Stephanie
 		- ok if there are more records in dbgap files (e.g., for quarantined samples) - function should report out on this
 		- master scan annot should have final word on samples to include
 			- __no.post__ samples: should not be anywhere in dbgap files (note the corresponding subject id may be in files)
-			- __quarantine__ samples: generally don't worry about these samples - they may be released with future freezes, so we don't want to exclude them from dbgap files now
+			- __quarantine__ samples: generally don't worry about these samples - they may be released with future freezes, so oreference is for quarantine=T samples to remain in SI's dbgap files
+			we don't want to exclude them from dbgap files now
 				- but preparing analyst should not include them in the dataframe of expected samples and subjs for the given release
 	- check correspondence between sample id and subject id
 	- sample attributes file - will have several TOPmed specific values
+		- most studies will likely be lacking these cols altogether
+		- whether these cols will be populated for samples not in the current release will vary case by case. if SI has info, they can populate it; otherwise ok to leave as blank
 		- master scan annot will have study, top med proj, sequencing center
 		- need to ask Quenna how to systematically get phase and funding info
 			- looks like Phase info is on website: https://www.nhlbiwgs.org/group/project-studies
+	- check between files - perhaps as a series of pairwise checks?
+		- i.e., subject consent <> SSM
+		- pedigree <> subject consent
+		- etc.
 - write outputs (DS and DD)
+	- TBD how much can be "functionalized" here
+	- one idea: take reports output by checking functions and feed them back into revising functions
 
 ## conventions
 looks like GAC is heavy into dplyr, so use where possible
@@ -83,6 +92,9 @@ best way to develop package will be to start working through dbgap file prep for
 	- answer might be to add a column to the main tracking sheet - though these may be sample-level variables rather than study-level
 	- need for "phs encyclopedia" across sample qc and pheno harm - Adrienne may have skeleton
 	- there is master NWD ID list of Cathy's indicating sequencing batch - that may be tied to funding source (and phase?)
+	- _Updates_
+		- phase info is available on TOPMed website
+		- Stephanie is going to make study-level tracking worksheet on Team Drive - will include a column that Quenna can populate to indicate if a study is all TOPMed funding; when that's not the case, will need to go to Quenna to try and puzzle it out. __Not straightforward__ 
 
 # package names?
 - unclear to me what style conventions exist
@@ -94,7 +106,7 @@ best way to develop package will be to start working through dbgap file prep for
  
  
 # Ongoing questions 
-1. Are DDs required to have row1=column names?
+
  
 
 

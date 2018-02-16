@@ -25,6 +25,7 @@ file_types <- c("samp_subj_mapping",
 #' the number of header lines in the file
 #'
 #' @rdname count_hdr_lines
+
 .count_hdr_lines <- function(filename, colname=NA) {
   con <- file(filename, "r")
   nskip <- 0
@@ -69,6 +70,8 @@ file_types <- c("samp_subj_mapping",
 #' @rdname read_ds_file
 .read_ds_file <- function(filename, dd=FALSE) {
 
+  stopifnot(file.exists(filename))
+
   ## exit if file extension indicates other than .txt (e.g., csv, xlsx)
   ext <- tools::file_ext(filename)
   if(ext != "txt") {
@@ -89,6 +92,7 @@ file_types <- c("samp_subj_mapping",
     }
     header <- scan(filename, sep = "\t", skip = nskip, nlines = 1, what = "character", quiet = TRUE)
     empty_check <- stringr::str_match(header[1], REGEX_BLANK_DATA_FILE)
+    # TO DO - see if I really need the REGEX in constants.R
     if (!is.na(empty_check[1, 1])) {
       # there are no data lines in this file
       return(NULL)
@@ -134,6 +138,8 @@ file_types <- c("samp_subj_mapping",
 #' @rdname read_dd_file
 
 .read_dd_file <- function(filename){
+
+  stopifnot(file.exists(filename))
   
   ## read in data dictionary files. could be txt or Excel
   ## exit if file extension indicates other than .txt or .xlsx)
@@ -176,166 +182,7 @@ file_types <- c("samp_subj_mapping",
     dd
 }
 
-# adapt my 'preview' function for use with a verbose/preview option?
-
 #### I. checking dbGaP files  
-
-#' Check sample subject mapping file
-#'
-#' Check contents of a sample subject mapping file for dbGaP posting.
-#'
-#' @param dsfile Path to the data file on disk
-#' @param ddfile Path to the data dictionary file on disk
-#' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)
-#' @param sample_uses Either a single string for expected SAMPLE_USE across all samples, or a data frame with SAMPLE_ID and SAMPLE_USE values
-#' @param topmed Logical to indicate TOPMed study
-#'
-#' @details
-#' When (\code{ssm_exp != NULL}), checks for expected correspondence between
-#' SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
-#' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
-#' will be returned in the output.
-#' If (\code{ssm_exp != NULL}) contains an additional logical field 'quarantine,'
-#' code will check that SAMPLE_USE=NA for this record. Will otherwise be treated as
-#' other records in terms of checking for missing or extra subjects or samples.
-#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
-#' correspondence between column names in data file and entries in data dictionary.
-#' When (\code{TOPMed = TRUE}) checks for presence of additional, TOPMed-specific
-#' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
-#' TOPMed_Project, Study_Name.
-#'
-#' @return ssm_report, a list of the following issues (when present):
-#' \item{missing_vars}{Missing and required variables}
-#' Additionally, if (\code{ddfile != NULL}):
-#' \item{dd_errors}{Differences in fields between data file and data dictionary}
-#' Additionally, if (\code{ssm_exp != NULL}):
-#' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
-#' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
-#' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
-#' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
-#' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file. }
-#' Additionally, if (\code{sample == uses}):
-#' \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
-#' Additionally, if (\code{topmed == TRUE}):
-#' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
-#' 
-#' @rdname check_ssm
-
-check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
-                      sample_uses=NULL, topmed=FALSE, verbose=TRUE){
-
-  ## read in data file
-  ds <- .read_ds_file(dsfile)
-
-  ## cannot proceed without "SUBJECT_ID" and "SAMPLE_ID" columns
-  if(!is.element("SUBJECT_ID", names(ds)) | !is.element("SAMPLE_ID", names(ds))){
-    stop("Please check that dsfile contains columns 'SUBJECT_ID' and 'SAMPLE_ID'")
-  }
-
-  # read in data dictionary if provided
-  dd_errors <- NULL
-  if(!is.null(ddfile)){
-    dd <- .read_dd_file(ddfile)
-    dd_errors <- .check_dd(dd, ds=ds)
-    # need to verify that issues with DD are captured in dd_errors
-  }
-
-  # expected SSM if provided
-  ssm_diffs <- NULL
-  if(!is.null(ssm_exp)){
-
-    # check for matching subject ids
-    missing_subjects <- setdiff(ssm_exp$SUBJECT_ID, ds$SUBJECT_ID)
-    extra_subjects <- setdiff(ds$SUBJECT_ID, ssm_exp$SUBJECT_ID)
-
-    # check for matching sample ids
-    missing_samples <- setdiff(ssm_exp$SAMPLE_ID, ds$SAMPLE_ID)
-    extra_samples <- setdiff(ds$SAMPLE_ID, ssm_exp$SAMPLE_ID)
-
-    # mapping diffs are where only one of SAMPLE_ID and SUBJECT_ID match
-    ssm_exp$map <- with(ssm_exp, paste(SUBJECT_ID, SAMPLE_ID))
-    maps_ssm <- with(ds, paste(SUBJECT_ID, SAMPLE_ID))
-    ssm_diffs <- ssm_exp[!is.element(ssm_exp$map, maps_ssm),1:2]
-  }
-
-  # if TOPMed, sample uses should be "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" for all samples,
-  # except quarantine=TRUE samples
-  sample_uses_topmed <- "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
-  if(topmed & !is.null(sample_uses) & sample_uses!=sample_uses_topmed){
-    warning(paste0("Non TOPMed sample uses were provided; manually setting to ",
-                   sample_uses_topmed,". To check other sample_uses, set topmed=FALSE"))
-    sample_uses <- sample_uses_topmed
-
-    # if quarantine=TRUE samples are in ssm_exp, change expected sample use to NA
-    if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
-      sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
-                                SAMPLE_USE=sample_uses_topmed)
-      sample_uses$SAMPLE_USE[ssm_exp[,3]] <- "NA"
-    }
-  }
-
-  sampuse_diffs <- NULL
-  # check for expected sample uses
-  if(!is.null(sample_uses)){
-    ds.mini <- ds[,c("SAMPLE_ID","SAMPLE_USE")]
-    # determing if it's single string or a data frame
-    if(is.character(sample_uses)){
-      sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses,]
-    } else if(is.data.frame(sample_uses)){
-      sampuse_chk <- merge(sample_uses, ds.mini, by="SAMPLE_ID",
-                           suffixes=c(".exp",".ds"))
-      sampuse_diffs <- sampuse_chk[sampuse_chk$SAMPLE_USE.exp!=sampuse_chk$SAMPLE_USE.ds,]
-    } else {
-      warning("sample_uses was neither string nor data frame and could not be processed")
-    }
-  }
-
-  # check for required columns
-  req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
-  miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
-  
-  missing_topmed_vars <- NULL
-  # if TOPMed, check for TOPMed-specific variables
-  if(topmed){
-    topmed_vars <- c(req_vars, "SEQUENCING_CENTER", "Funding_Source",
-                     "TOPMed_Phase", "TOPMed_Project","Study_Name")
-    missing_topmed_vars <- setdiff(topmed_vars, names(ds))
-  }
-
-  # create and return results list
-  ssm_report <- list()
-
-  if(!is.na(missing_vars)){
-    ssm_report$missing_vars <- missing_vars
-  }
-  if(!is.null(dd_errors)){
-    ssm_report$dd_errors <- dd_errors
-  }
-  if(!is.null(extra_subjects)){
-    ssm_report$extra_subjects <- extra_subjects
-  }
-  if(!is.null(missing_subjects)){
-    ssm_report$missing_subjects <- missing_subjects
-  }  
-  if(!is.null(extra_samples)){
-    ssm_report$extra_samples <- extra_samples
-  }
-  if(!is.null(missing_samples)){
-    ssm_report$missing_samples <- missing_samples
-  }
-  if(!is.null(ssm_diffs)){
-    ssm_report$ssm_diffs <- ssm_diffs
-  }
-  if(!is.null(sampuse_diffs)){
-    ssm_report$sampuse_diffs <- sampuse_diffs
-  }
-  if(!is.null(missing_topmed_vars)){
-    ssm_report$missing_topmed_vars <- missing_topmed_vars
-  }
-
-  return(ssm_report)
-}
 
 #' Check data dictionary (generic)
 #'
@@ -346,6 +193,8 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #' Reports errors or issues as warnings.
 #' 
 #' @rdname check_dd
+
+# TO DO - return issues in a list, vs. echoing as warnings
 
 .check_dd <- function(dd, ds=NULL){
 
@@ -393,17 +242,23 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
         encoded_vars <- dd[!is.na(dd$VALUES), c(name_col, val_col:ncol(dd))]
 
         # check for multiple "=" statements within a cell
-        eq_count <- apply(encoded_vars, 2, function(x) {str_count(x, "=")} )
-        if(sum(rowMax(eq_count) > 1) > 0){
-          mult_eq_vars <- encoded_vars$VARNAME[rowMax(eq_count) > 1]
-          warning(mult_eq_vars, " variable(s) have multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
+        eq_count <- apply(encoded_vars, 2, function(x) {stringr::str_count(x, "=")})
+
+        # if only 1 VARNAME with VALUES, coerce 'eq_count' to 1 row matrix
+        if(is.null(dim(eq_count))){
+          eq_count <- matrix(eq_count, nrow=1, ncol=length(eq_count))
+        }
+        
+        if(sum(Biobase::rowMax(eq_count) > 1) > 0){
+          mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
+          warning(mult_eq_vars, " variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
         }
 
         # extract encoded values
         encoded_vars %<>%
-          mutate_all(function(x) str_replace(x, "=.*", "")) %>%
-            gather("column", "row", -VARNAME) %>%
-              spread(VARNAME, row) %>%
+          mutate_all(function(x) stringr::str_replace(x, "=.*", "")) %>%
+            tidyr::gather("column", "row", -VARNAME) %>%
+              tidyr::spread(VARNAME, row) %>%
                 select(-column)
 
         # if ds is also provided, check that all encoded values are defined
@@ -445,8 +300,319 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   }
 }
 
+#' Check sample subject mapping file
+#'
+#' Check contents of a sample subject mapping file for dbGaP posting.
+#'
+#' @param dsfile Path to the data file on disk
+#' @param ddfile Path to the data dictionary file on disk
+#' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)
+#' @param sampleID_col Column name for sample-level ID
+#' @param subjectID_col Column name for subject-level ID
+#' @param sample_uses Either a single string for expected SAMPLE_USE across all samples, or a data frame with SAMPLE_ID and SAMPLE_USE values
+#' @param topmed Logical to indicate TOPMed study
+#'
+#' @details
+#' When (\code{ssm_exp != NULL}), checks for expected correspondence between
+#' SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
+#' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
+#' will be returned in the output.
+#' If (\code{ssm_exp != NULL}) contains an additional logical field 'quarantine,'
+#' code will check that SAMPLE_USE is left blank for this record.
+#' Quarantined samples will otherwise be treated as
+#' other records in terms of checking for missing or extra subjects or samples.
+#' 
+#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+#' correspondence between column names in data file and entries in data dictionary.
+#'
+#' @return ssm_report, a list of the following issues (when present):
+#' \item{missing_vars}{Missing and required variables}
+#' \item{dup_samples}{List of duplicated sample IDs}
+#' \item(blank_idx}{Row index of blank/missing subject or sample IDs}
+#' Additionally, if (\code{ddfile != NULL}):
+#' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' Additionally, if (\code{ssm_exp != NULL}):
+#' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
+#' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+#' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
+#' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
+#' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file. }
+#' Additionally, if (\code{sample == uses}):
+#' \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
+#' Additionally, if (\code{topmed == TRUE}):
+#' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
+#' 
+#' @rdname check_ssm
+
+check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
+                      sampleID_col="SAMPLE_ID", subjectID_col="SUBJECT_ID",
+                      sample_uses=NULL, topmed=FALSE){
+
+  # read in data file
+  ds <- .read_ds_file(dsfile)
+
+  # cannot proceed without subject and sample ID cols
+  if(!is.element(subjectID_col, names(ds)) | !is.element(sampleID_col, names(ds))){
+    stop("Please check that dsfile contains columns for subject-level and sample-level IDs")
+  }
+
+  # issue warning for non-standard subjectID_col or sampleID_col names
+  if(subjectID_col != "SUBJECT_ID"){
+    warning("Note preferred subject-level ID column name is 'SUBJECT_ID'")
+  }
+  if(sampleID_col != "SAMPLE_ID"){
+    warning("Note preferred sample-level ID column name is 'SAMPLE_ID'")
+  }
+
+  # check for duplicated sample IDs
+  samplist <- ds[,sampleID_col]
+  dup_samples <- samplist[duplicated(samplist)]
+  if(length(dup_samples) %in% 0){
+    dup_samples <- NULL
+  }
+
+  # check for blank subject or sample IDs
+  blanks <- c("","NA",NA)
+  blank_idx <- which(trimws(ds[,sampleID_col]) %in% blanks |
+                     trimws(ds[,subjectID_col]) %in% blanks)
+  if(length(blank_idx) %in% 0){
+    blank_idx <- NULL
+  }
+  
+  # read in data dictionary if provided
+  dd_errors <- NULL
+  if(!is.null(ddfile)){
+    dd <- .read_dd_file(ddfile)
+    dd_errors <- .check_dd(dd, ds=ds)
+    # TO DO - need to capture all the 'warning' messages from .check_dd. tryCatch?
+  }
+
+  # expected SSM if provided
+  ssm_diffs <- missing_subjects <- extra_subjects <- missing_samples <- extra_samples <- NULL
+  if(!is.null(ssm_exp)){
+
+    # check for matching subject ids
+    missing_subjects <- setdiff(ssm_exp$SUBJECT_ID, ds[,subjectID_col])
+    extra_subjects <- setdiff(ds[,subjectID_col], ssm_exp$SUBJECT_ID)
+
+    # check for matching sample ids
+    missing_samples <- setdiff(ssm_exp$SAMPLE_ID, ds[,sampleID_col])
+    extra_samples <- setdiff(ds[,sampleID_col], ssm_exp$SAMPLE_ID)
+
+    # mapping diffs are where only one of SAMPLE_ID and SUBJECT_ID match
+    ssm_exp$map <- with(ssm_exp, paste(SUBJECT_ID, SAMPLE_ID))
+    maps_ssm <- paste(ds[,subjectID_col], ds[,sampleID_col])
+    ssm_diffs <- ssm_exp[!is.element(ssm_exp$map, maps_ssm),1:2]
+    if(nrow(ssm_diffs) %in% 0) {
+      ssm_diffs <- NULL
+    }
+  }
+
+  # if TOPMed, sample uses should be "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" for all samples,
+  # except quarantine=TRUE samples
+  # Note "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome" is also valid 
+  sample_uses_topmed <- "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
+  
+  if(topmed){
+    if(is.null(sample_uses)){
+      sample_uses <- sample_uses_topmed
+    } else if (!is.null(sample_uses) & !is.element(sample_uses, c(sample_uses_topmed, "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome"))){
+        warning(paste0("Non TOPMed sample uses were provided; manually setting to '",
+                   sample_uses_topmed,".' To check other sample_uses, set topmed=FALSE"))
+       sample_uses <- sample_uses_topmed
+       # if quarantine=TRUE samples are in ssm_exp, change expected sample use to blank
+        if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
+          sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
+                                    SAMPLE_USE=sample_uses_topmed)
+          sample_uses$SAMPLE_USE[ssm_exp[,3]] <- ""
+        }
+      }
+    }
+
+  sampuse_diffs <- NULL
+  # check for expected sample uses
+  if(!is.null(sample_uses)){
+    ds.mini <- ds[,c(sampleID_col,"SAMPLE_USE")]
+    names(ds.mini)[1] <- "SAMPLE_ID"
+    # determing if it's single string or a data frame
+    if(is.character(sample_uses)){
+      sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses,]
+    } else if(is.data.frame(sample_uses)){
+      sampuse_chk <- merge(sample_uses, ds.mini, by="SAMPLE_ID",
+                           suffixes=c(".exp",".ds"))
+      sampuse_diffs <- sampuse_chk[sampuse_chk$SAMPLE_USE.exp!=sampuse_chk$SAMPLE_USE.ds,]
+    } else {
+      warning("sample_uses was neither string nor data frame and could not be processed")
+    }
+
+    if(nrow(sampuse_diffs) %in% 0){
+      sampuse_diffs <- NULL
+    }
+  }
+
+  # check for required columns
+  # req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
+  # allow for other ID names
+  req_vars <- c(subjectID_col, sampleID_col, "SAMPLE_USE")
+  miss_vars <- setdiff(req_vars, names(ds))
+  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
+  
+  # create and return results list
+  ssm_report <- list()
+
+  if(!is.na(missing_vars)){
+    ssm_report$missing_vars <- missing_vars
+  }
+  if(!is.null(dup_samples)){
+   satt_report$dup_samples <- dup_samples
+  }
+  if(!is.null(blank_idx)){
+   satt_report$blank_idx <- blank_idx
+  }
+  if(!is.null(dd_errors)){
+    ssm_report$dd_errors <- dd_errors
+  }
+  if(!is.null(extra_subjects & length(extra_subjects > 0))){
+    ssm_report$extra_subjects <- extra_subjects
+  }
+  if(!is.null(missing_subjects & length(missing_subjects > 0))){
+    ssm_report$missing_subjects <- missing_subjects
+  }  
+  if(!is.null(extra_samples & length(extra_samples > 0))){
+    ssm_report$extra_samples <- extra_samples
+  }
+  if(!is.null(missing_samples) & length(missing_samples > 0)){
+    ssm_report$missing_samples <- missing_samples
+  }
+  if(!is.null(ssm_diffs)){
+    ssm_report$ssm_diffs <- ssm_diffs
+  }
+  if(!is.null(sampuse_diffs)){
+    ssm_report$sampuse_diffs <- sampuse_diffs
+  }
+  if(!is.null(missing_topmed_vars)){
+    ssm_report$missing_topmed_vars <- missing_topmed_vars
+  }
+
+  return(ssm_report)
+}
+
+#' Check sample attributes file
+#'
+#' Check contents of a sample attributes file for dbGaP posting.
+#'
+#' @param dsfile Path to the data file on disk
+#' @param ddfile Path to the data dictionary file on disk
+#' @param samp_exp List of expected sample ID
+#' @param sampleID_col Column name for sample-level ID
+#' @param topmed Logical to indicate TOPMed study
+#' 
+#' @detail
+#' When (\code{topmed = TRUE}) checks presence of additional, TOPMed-specific
+#' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
+#' TOPMed_Project, Study_Name.
+#'
+#' @return satt_report, a list of the following issues (when present):
+#' \item{missing_vars}{Missing and required variables}
+#' \item{dup_samples}{List of duplicated sample IDs}
+#' \item(blank_idx}{Row index of blank/missing sample IDs}
+#' Additionally, if (\code{ddfile != NULL}):
+#' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' Additionally, if (\code{samp_exp != NULL}):
+#' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
+#' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
+#' Additionally, if (\code{topmed == TRUE}):
+#' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
+
 
 # check_sattr
+check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
+                        sampleID_col="SAMPLE_ID", topmed=FALSE){
+
+  # read in data file
+  ds <- .read_ds_file(dsfile)
+
+  # cannot proceed without sample ID col
+  if(!is.element(sampleID_col, names(ds))){
+    stop("Please check that dsfile contains column for sample-level ID")
+  }
+
+  # issue warning for non-standard sampleID_col name
+  if(sampleID_col != "SAMPLE_ID"){
+    warning("Note preferred sample-level ID column name is 'SAMPLE_ID'")
+  }
+  
+  # check for duplicated sample IDs
+  # note might be acceptable where samples have a series of measurements,
+  #  or data is longitudinal
+  samplist <- ds[,sampleID_col]
+  dup_samples <- samplist[duplicated(samplist)]
+  if(length(dup_samples) %in% 0){
+    dup_samples <- NULL
+  }
+
+  # report any blank sample IDs by row idex
+  blanks <- c("","NA",NA)
+  blank_idx <- which(trimws(samplist) %in% blanks)
+  if(length(blank_idx) %in% 0){
+    blank_idx <- NULL
+  }
+  
+  # read in data dictionary if provided
+  dd_errors <- NULL
+  if(!is.null(ddfile)){
+    dd <- .read_dd_file(ddfile)
+    dd_errors <- .check_dd(dd, ds=ds)
+  }  
+
+  # check for required variables
+  req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","HISTOLOGICAL_TYPE","IS_TUMOR")
+  miss_vars <- setdiff(req_vars, names(ds))
+  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
+
+  # most common analyte type is "DNA"
+  if("ANALYTE_TYPE" %in% names(ds) & sum(ds$ANALYTE_TYPE != "DNA") > 0){
+    message("Note some entries have ANALYTE_TYPE other than DNA, which is the most common")
+  }
+
+  # check for presence of expected samples
+  missing_samples <- extra_samples <- NULL
+  if(!is.null(samp_exp)){
+    missing_samples <- setdiff(samp_exp, ds[,sampleID_col])
+    extra_samples <- setdiff(ds[,sampleID_col], samp_exp)
+  }
+
+  # if TOPMed, check for TOPMed-specific variables
+  missing_topmed_vars <- NULL
+  if(topmed){
+    topmed_vars <- c(req_vars, "SEQUENCING_CENTER", "Funding_Source",
+                     "TOPMed_Phase", "TOPMed_Project","Study_Name")
+    missing_topmed_vars <- setdiff(topmed_vars, names(ds))
+  }
+
+  # create and return results list
+  satt_report <- list()
+
+  if(!is.na(missing_vars)){
+   satt_report$missing_vars <- missing_vars
+  }
+  if(!is.null(dup_samples)){
+   satt_report$dup_samples <- dup_samples
+  }
+  if(!is.null(blank_idx)){
+   satt_report$blank_idx <- blank_idx
+  }
+  if(!is.null(dd_errors)){
+    satt_report$dd_errors <- dd_errors
+  }
+  if(!is.null(extra_samples) & length(extra_samples > 0)){
+    satt_report$extra_samples <- extra_samples
+  }
+  if(!is.null(missing_samples) & length(missing_samples > 0)){
+    satt_report$missing_samples <- missing_samples
+  }
+  return(satt_report)
+}
 
 # check_subj
 

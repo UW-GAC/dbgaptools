@@ -4,22 +4,27 @@
 \alias{check_ssm}
 \title{Check sample subject mapping file}
 \usage{
-check_ssm(dsfile, ddfile = NULL, ssm_exp = NULL, sample_uses = NULL,
-  topmed = FALSE, verbose = TRUE)
+check_ssm(dsfile, ddfile = NULL, ssm_exp = NULL, sampleID_col = SAMPLE_ID,
+  subjectID_col = SUBJECT_ID, sample_uses = NULL, topmed = FALSE,
+  verbose = TRUE)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID}
+\item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)}
+
+\item{sampleID_col}{Column name for sample-level ID}
+
+\item{subjectID_col}{Column name for subject-level ID}
 
 \item{sample_uses}{Either a single string for expected SAMPLE_USE across all samples, or a data frame with SAMPLE_ID and SAMPLE_USE values}
 
 \item{topmed}{Logical to indicate TOPMed study}
 }
 \value{
-ssm_report, a list of the following:
+ssm_report, a list of the following issues (when present):
 \item{missing_vars}{Missing and required variables}
 Additionally, if (\code{ddfile != NULL}):
 \item{dd_errors}{Differences in fields between data file and data dictionary}
@@ -40,8 +45,11 @@ Check contents of a sample subject mapping file for dbGaP posting.
 \details{
 When (\code{ssm_exp != NULL}), checks for expected correspondence between
 SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
-or a difference in the list of expectd SAMPLE_IDs or SUBJECT_IDs,
+or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 will be returned in the output.
+If (\code{ssm_exp != NULL}) contains an additional logical field 'quarantine,'
+code will check that SAMPLE_USE is left blank for this record. Will otherwise be treated as
+other records in terms of checking for missing or extra subjects or samples.
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 correspondence between column names in data file and entries in data dictionary.
 When (\code{TOPMed = TRUE}) checks for presence of additional, TOPMed-specific
