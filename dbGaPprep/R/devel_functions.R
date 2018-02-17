@@ -186,12 +186,22 @@ file_types <- c("samp_subj_mapping",
 
 #' Check data dictionary (generic)
 #'
-#' @param dd Data dictionary object
-#' @param ds Corresponding dataset object
+#' @param dd Data dictionary (DD) object
+#' @param ds Corresponding dataset (DS) object
 #'
 #' @details
 #' Reports errors or issues as warnings.
-#' 
+#'
+#' @return dd_report, a list of the following issues (when present):
+#' \item{lowercase}{Logical flag indicating non-upper case variable names}
+#' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
+#' \item{missing_vars}{Missing and required variables}
+#' \item{extra_vars}{Extra variables}
+#' \item{vals_warnings}{Vector of warnings about VALUES columns}
+#' \item{missing_dsvars}{Variables present in DS but not defined in DD}
+#' \item{minmax_errs}{Variables for which DS value are outside DD MIN and MAX range}
+#' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
+#'
 #' @rdname check_dd
 
 # TO DO - return issues in a list, vs. echoing as warnings
@@ -199,16 +209,24 @@ file_types <- c("samp_subj_mapping",
 .check_dd <- function(dd, ds=NULL){
 
   # all colnames should be upper case
+  lowercase <- NULL
   upp <- toupper(names(dd))
   if(!all.equal(upp, names(dd))){
     warning("All column names should be UPPER CASE")
     names(dd) <- upp
+    lowercase <- TRUE
   }
   
   # required first two columns
+  varname_vardesc <- NULL
   if(!all.equal(names(dd)[1:2], c("VARNAME","VARDESC"))){
     warning("First two columns required to be 'VARNAME' and 'VARDESC'")
   }
+
+  # required columns
+  req_vars <- c("VARNAME","VARDESC","UNITS","VALUES")
+  miss_vars <- setdiff(req_vars, names(dd))
+  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
 
   # check existing named columns against all possible columns
   # if there are trailing columns, they are likely because of encoded values -
@@ -220,16 +238,21 @@ file_types <- c("samp_subj_mapping",
                      "SOURCE_VARIABLE_ID", "VARIABLE_MAPPING", "UNIQUEKEY",
                      "COLLINTERVAL", "ORDER", "VALUES")
 
+  extra_vars <- NULL
   extra_cols <- setdiff(all_cols, possible_cols)
   if(length(extra_cols) > 0){
     warning("DD contains non-standard columns:", extra_cols)
+    extra_vars <- extra_cols
   }
 
+  # prepare to collect series of warnings about VALUES column
+  vals_warnings <- NULL
+  
   # if VALUES col exists, needs to be last
   if("VALUES" %in% toupper(names(dd))){
     nnames <- length(names(dd)[!grepl("X__", names(dd))])
     if("VALUES" != names(dd)[nnames]){
-      warning("'VALUES' must be last column")
+      warn0 <- "'VALUES' must be last column"
     }
 
     # extract encoded values
@@ -251,7 +274,7 @@ file_types <- c("samp_subj_mapping",
         
         if(sum(Biobase::rowMax(eq_count) > 1) > 0){
           mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
-          warning(mult_eq_vars, " variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
+          warn1 <- paste(mult_eq_vars, " variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
         }
 
         # extract encoded values
@@ -269,15 +292,19 @@ file_types <- c("samp_subj_mapping",
             var2 <- dplyr::pull(encoded_vars, var)
             undef_vals <- setdiff(var1, var2)
             if(length(undef_vals) > 0){
-              warning("For variable ", var,", the following values are undefined in the dd: ",
-                      paste(undef_vals, collapse=", "))
-            } # if extra vars
+              warn2 <- paste("For variable ", var,", the following values are undefined in the dd: ", paste(undef_vals, collapse=", "))
+            } # if extra values
           } # loop through encoded vars
         } #  if dataset is provided
-  } # if there are non-NA entires in VALUES column
+    } # if there are non-NA entires in VALUES column
   } # if VALUES col is present
-  
-  # if dataset provided, check for all vars
+  warns <- c(warn0, warn1, warn2)
+  if(length(warns)>0) vals_warnings <- warns
+
+  # if dataset provided:
+  # check for all vars
+  missing_dsvars <- NULL
+  minmax_errs <- NULL
   if(!is.null(ds)){
     miss.vars <- setdiff(names(ds), pull(dd, VARNAME))
     if(length(miss.vars) > 0){
@@ -287,17 +314,47 @@ file_types <- c("samp_subj_mapping",
     if(length(extra.vars) > 0){
       warning("Data dictionary has extra variables not in dataset:", extra.vars)
     }
+    # check MIN and MAX values
+      idx <- which(!is.na(dplyr::pull(dd, "MIN")) | !is.na(dplyr::pull(dd, "MAX")))
+      if(lenght(idx) > 0){
+        dd.tmp <- dd[idx,]
+        ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
+        # convert to numeric if necessary
+        ds.tmp <- apply(ds.tmp, 2, as.numeric) 
+
+        dd.tmp$min.ds <- apply(ds.tmp, 2, min)
+        dd.tmp$max.ds <- apply(ds.tmp, 2, max)
+        range.errsel <- with(dd.tmp, min.ds < as.numeric(MIN)) |
+                        with(dd.tmp, max.ds > as.numeric(MAX))
+        range.err <- dd.tmp$VARNAME[range.errsel]
+        if(length(range.err) > 0){
+          minmax_errs <- paste(range.err, collapse="'; ")
+        }
+      } # if there are min and max defined      
   }
 
   # check for illegal characters in variable names: \ / , dbGaP
-  nms <- toupper(names(ds))
-  # nms[4:6] <- c("hi/ya", "VARDBGAP", "my,var")
-  ill_vars_sel <- stringr::str_detect(nms, "DBGAP|\\\\|/|,")
+  illegal_vars <- NULL
+  ill_vars_sel <- stringr::str_detect(upp, "DBGAP|\\\\|/|,")
   
   if(sum(ill_vars_sel) > 0){
     ill_vars <- nms[ill_vars_sel]
-    warning("Illegal characers '\', '/', ',' (comma), or 'dbGaP' are present in the following variable(s): ", paste(ill_vars, collapse="; "))
+    illegal_vars <- paste(ill_vars, collapse="; ")
   }
+
+  # construct list object to return
+  dd_report  <- list()
+
+  if(!is.null(lowercase)) dd_report$lowercase <- lowercase
+  if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
+  if(!is.null(missing_vars))  dd_report$missing_vars <- missing_vars
+  if(!is.null(extra_vars))  dd_report$extra_vars <- extra_vars
+  if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings
+  if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
+  if(!is.null(minmax_errs))  dd_report$minmax_errs <- minmax_erss
+  if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
+
+  return(dd_report)
 }
 
 #' Check sample subject mapping file
@@ -469,9 +526,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   if(!is.null(blank_idx)){
    satt_report$blank_idx <- blank_idx
   }
-  if(!is.null(dd_errors)){
-    ssm_report$dd_errors <- dd_errors
-  }
+  if(!is.null(dd_errors))  ssm_report$dd_errors <- dd_errors
   if(!is.null(extra_subjects & length(extra_subjects > 0))){
     ssm_report$extra_subjects <- extra_subjects
   }
@@ -484,15 +539,9 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   if(!is.null(missing_samples) & length(missing_samples > 0)){
     ssm_report$missing_samples <- missing_samples
   }
-  if(!is.null(ssm_diffs)){
-    ssm_report$ssm_diffs <- ssm_diffs
-  }
-  if(!is.null(sampuse_diffs)){
-    ssm_report$sampuse_diffs <- sampuse_diffs
-  }
-  if(!is.null(missing_topmed_vars)){
-    ssm_report$missing_topmed_vars <- missing_topmed_vars
-  }
+  if(!is.null(ssm_diffs)) ssm_report$ssm_diffs <- ssm_diffs
+  if(!is.null(sampuse_diffs))  ssm_report$sampuse_diffs <- sampuse_diffs
+  if(!is.null(missing_topmed_vars)) ssm_report$missing_topmed_vars <- missing_topmed_vars
 
   return(ssm_report)
 }
@@ -593,18 +642,10 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   # create and return results list
   satt_report <- list()
 
-  if(!is.na(missing_vars)){
-   satt_report$missing_vars <- missing_vars
-  }
-  if(!is.null(dup_samples)){
-   satt_report$dup_samples <- dup_samples
-  }
-  if(!is.null(blank_idx)){
-   satt_report$blank_idx <- blank_idx
-  }
-  if(!is.null(dd_errors)){
-    satt_report$dd_errors <- dd_errors
-  }
+  if(!is.na(missing_vars))  satt_report$missing_vars <- missing_vars
+  if(!is.null(dup_samples)) satt_report$dup_samples <- dup_samples
+  if(!is.null(blank_idx)) satt_report$blank_idx <- blank_idx
+  if(!is.null(dd_errors)) satt_report$dd_errors <- dd_errors
   if(!is.null(extra_samples) & length(extra_samples > 0)){
     satt_report$extra_samples <- extra_samples
   }

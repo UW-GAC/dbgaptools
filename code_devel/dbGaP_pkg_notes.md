@@ -94,6 +94,7 @@ best way to develop package will be to start working through dbgap file prep for
 	- there is master NWD ID list of Cathy's indicating sequencing batch - that may be tied to funding source (and phase?)
 	- _Updates_
 		- phase info is available on TOPMed website
+		    * __turns out this is not up to date__ 
 		- Stephanie is going to make study-level tracking worksheet on Team Drive - will include a column that Quenna can populate to indicate if a study is all TOPMed funding; when that's not the case, will need to go to Quenna to try and puzzle it out. __Not straightforward__ 
 
 # package names?
