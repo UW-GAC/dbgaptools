@@ -1,0 +1,194 @@
+## adapted from dbTopmed::.countHeaderLines
+#' Count the header lines in a data file
+#'
+#' @param filename The path to the data file on disk
+#' @param colname One or more expected column names
+#'
+#' @details
+#' Header lines are considered to start with # or to be a blank line.
+#' Optionally, providing a \code{colname} argument, a character vector
+#' of one or more colunm names,  will consider any rows before
+#' that containing the specified column name(s) to be a header row.
+#'
+#' @return
+#' the number of header lines in the file
+#'
+#' @rdname count_hdr_lines
+
+.count_hdr_lines <- function(filename, colname=NA) {
+  con <- file(filename, "r")
+  nskip <- 0
+  done <- FALSE
+  while (!done) {
+    tmp <- readLines(con, n = 1)
+
+    chkname <- FALSE
+    if (!is.na(colname)){
+      chkname <- !grepl(colname, tmp)
+    }
+
+    if ( substr(tmp, 1, 1) %in% c("#", "") | chkname) {
+      nskip <- nskip + 1
+    } else {
+      done <- TRUE
+    }
+  }
+  close(con)
+  nskip
+}
+
+## adapted from dbTopmed::.readTraitFile
+
+#' Read in a data file
+#' 
+#' Works for tab-delimited (.txt) data files
+#'
+#' @param filename The path to the file on disk
+#' @param dd Logical, where \code{TRUE} indicates a data dictionary file
+#'
+#' @details
+#' The only string considered to be NA is the blank string: "". "NA" does not necessarily indicate
+#' NA: for example, it could be an encoded value meaning "North America".
+#'
+#' @return
+#' A data frame from the file
+#'
+#' @details
+#' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
+#' 
+#' @rdname read_ds_file
+.read_ds_file <- function(filename, dd=FALSE) {
+
+  stopifnot(file.exists(filename))
+
+  ## exit if file extension indicates other than .txt (e.g., csv, xlsx)
+  ext <- tools::file_ext(filename)
+  if(ext != "txt") {
+    stop("Expected tab-delimited input file (.txt), not .", ext)
+  }
+
+  ## add name of file to error message in case of failure
+  tryCatch({
+    ## may be comment characters in the data fields. first decide how many lines to skip
+    if(!dd) {
+      nskip <- .count_hdr_lines(filename)
+    } else if (dd) {
+      nskip <- .count_hdr_lines(filename, colname="VARNAME")
+    }
+    
+    if(nskip > 0){
+      warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
+    }
+    header <- scan(filename, sep = "\t", skip = nskip, nlines = 1, what = "character", quiet = TRUE)
+    empty_check <- stringr::str_match(header[1], REGEX_BLANK_DATA_FILE)
+    # TO DO - see if I really need the REGEX in constants.R
+    if (!is.na(empty_check[1, 1])) {
+      # there are no data lines in this file
+      return(NULL)
+    }
+    col_classes <- rep("character", length(header))
+    # suppressWarnings because we get cols  =  3 != length(data)  =  4 when there are
+    # missing end delimiters. unfortunately we have to suppress *all* warnings
+    dat <- suppressWarnings(utils::read.table(filename, header = FALSE, sep = "\t", as.is = TRUE,
+                                        check.names = FALSE, skip = nskip + 1, fill = TRUE,
+                                        strip.white = TRUE, quote = "", comment.char = "",
+                                        colClasses = col_classes, na.strings = ""))
+    names(dat) <- header
+    ## # deal with extra delimiters at end of line. thanks, phs001013.
+    ## extra_columns <- is.na(names(dat))
+    ## for (column in rev(which(extra_columns))) {
+    ##   # reverse the loop because we are removing columns; otherwise column numbers shift lower
+    ##   dat[[column]] <- NULL
+    ## }
+
+    ## remove rows and columns with all NAs
+    ## note in DDs, some rows with encoded VALUEs will lack header
+    blank.rows <- rowSums(!is.na(dat)) %in% 0
+    blank.cols <- colSums(!is.na(dat)) %in% 0 & names(dat) %in% "" 
+    dat <- dat[!blank.rows,!blank.cols]
+     
+  }, error = function(e) {
+    stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
+  })
+
+  dat
+}
+
+#' Read data dictionary file
+#' 
+#' @param filename The path to the file on disk
+#'
+#' @details
+#' Expects .txt or .xlsx file. 
+#' dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
+#' @return
+#' A data frame from the file
+#'
+#' @rdname read_dd_file
+
+.read_dd_file <- function(filename){
+
+  stopifnot(file.exists(filename))
+  
+  ## read in data dictionary files. could be txt or Excel
+  ## exit if file extension indicates other than .txt or .xlsx)
+  ext <- tools::file_ext(filename)
+  if(!ext %in% c("txt", "xlsx","xls")) {
+    stop("Expected tab-delimited or Excel input file, not .", ext)
+  }  
+  ## add name of file to error message in case of failure
+  tryCatch({
+
+    ## method for reading in DD depends on file type
+    if(ext %in% "txt"){
+      dd <- .read_ds_file(filename, dd=TRUE)
+      # tibbles can't have unnamed columns
+      names(dd)[names(dd) %in% ""] <- paste0("X__",1:sum(names(dd) %in% ""))
+      dd <- as_tibble(dd)
+    } else if (ext %in% c("xls","xlsx")) {
+
+      sheet_arg <- NULL
+      # check if there are multiple sheets
+      sheets <- readxl::excel_sheets(filename)
+      if(length(sheets) > 1){
+        warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
+        sheetArg <- sheets[1]
+      }
+      dd <- readxl::read_excel(filename, sheet=sheet_arg, col_types="text")
+      
+      # identify if first row was not column headers
+      if(!is.element("VARNAME", toupper(names(dd)))){
+        warning("Detected extra header rows (before column names) in your Excel data dictionary; these should be removed")
+        colnames_row <- which(stringr::str_detect(dd, "VARDESC") |
+                              stringr::str_detect(dd, "vardesc"))
+        dd <- readxl::read_excel(filename, sheet=sheet_arg,
+                                 skip=colnames_row+1, col_types="text")
+      }
+    }
+  }, error = function(e) {
+    stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
+  })
+    dd
+}
+
+#### I. checking dbGaP files  
+
+#' Check data dictionary (generic)
+#'
+#' @param dd Data dictionary (DD) object
+#' @param ds Corresponding dataset (DS) object
+#'
+#' @details
+#' Reports errors or issues as warnings.
+#'
+#' @return dd_report, a list of the following issues (when present):
+#' \item{lowercase}{Logical flag indicating non-upper case variable names}
+#' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
+#' \item{missing_vars}{Missing and required variables}
+#' \item{extra_vars}{Extra variables}
+#' \item{vals_warnings}{Vector of warnings about VALUES columns}
+#' \item{missing_dsvars}{Variables present in DS but not defined in DD}
+#' \item{minmax_errs}{Variables for which DS value are outside DD MIN and MAX range}
+#' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
+#'
+#' @rdname check_dd
