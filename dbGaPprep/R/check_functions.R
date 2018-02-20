@@ -1,196 +1,11 @@
-# Building functions for dbGaP files R package
-# SN, 1/24/18
-
-file_types <- c("samp_subj_mapping",
-                "samp_attributes",
-                "subj_consent",
-                "phenotype",
-                "pedigree")
-           
-#### 0. utility functions
-
-## adapted from dbTopmed::.countHeaderLines
-#' Count the header lines in a data file
-#'
-#' @param filename The path to the data file on disk
-#' @param colname One or more expected column names
-#'
-#' @details
-#' Header lines are considered to start with # or to be a blank line.
-#' Optionally, providing a \code{colname} argument, a character vector
-#' of one or more colunm names,  will consider any rows before
-#' that containing the specified column name(s) to be a header row.
-#'
-#' @return
-#' the number of header lines in the file
-#'
-#' @rdname count_hdr_lines
-
-.count_hdr_lines <- function(filename, colname=NA) {
-  con <- file(filename, "r")
-  nskip <- 0
-  done <- FALSE
-  while (!done) {
-    tmp <- readLines(con, n = 1)
-
-    chkname <- FALSE
-    if (!is.na(colname)){
-      chkname <- !grepl(colname, tmp)
-    }
-
-    if ( substr(tmp, 1, 1) %in% c("#", "") | chkname) {
-      nskip <- nskip + 1
-    } else {
-      done <- TRUE
-    }
-  }
-  close(con)
-  nskip
-}
-
-## adapted from dbTopmed::.readTraitFile
-
-#' Read in a data file
-#' 
-#' Works for tab-delimited (.txt) data files
-#'
-#' @param filename The path to the file on disk
-#' @param dd Logical, where \code{TRUE} indicates a data dictionary file
-#'
-#' @details
-#' The only string considered to be NA is the blank string: "". "NA" does not necessarily indicate
-#' NA: for example, it could be an encoded value meaning "North America".
-#'
-#' @return
-#' A data frame from the file
-#'
-#' @details
-#' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
-#' 
-#' @rdname read_ds_file
-.read_ds_file <- function(filename, dd=FALSE) {
-
-  stopifnot(file.exists(filename))
-
-  ## exit if file extension indicates other than .txt (e.g., csv, xlsx)
-  ext <- tools::file_ext(filename)
-  if(ext != "txt") {
-    stop("Expected tab-delimited input file (.txt), not .", ext)
-  }
-
-  ## add name of file to error message in case of failure
-  tryCatch({
-    ## may be comment characters in the data fields. first decide how many lines to skip
-    if(!dd) {
-      nskip <- .count_hdr_lines(filename)
-    } else if (dd) {
-      nskip <- .count_hdr_lines(filename, colname="VARNAME")
-    }
-    
-    if(nskip > 0){
-      warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
-    }
-    header <- scan(filename, sep = "\t", skip = nskip, nlines = 1, what = "character", quiet = TRUE)
-    empty_check <- stringr::str_match(header[1], REGEX_BLANK_DATA_FILE)
-    # TO DO - see if I really need the REGEX in constants.R
-    if (!is.na(empty_check[1, 1])) {
-      # there are no data lines in this file
-      return(NULL)
-    }
-    col_classes <- rep("character", length(header))
-    # suppressWarnings because we get cols  =  3 != length(data)  =  4 when there are
-    # missing end delimiters. unfortunately we have to suppress *all* warnings
-    dat <- suppressWarnings(utils::read.table(filename, header = FALSE, sep = "\t", as.is = TRUE,
-                                        check.names = FALSE, skip = nskip + 1, fill = TRUE,
-                                        strip.white = TRUE, quote = "", comment.char = "",
-                                        colClasses = col_classes, na.strings = ""))
-    names(dat) <- header
-    ## # deal with extra delimiters at end of line. thanks, phs001013.
-    ## extra_columns <- is.na(names(dat))
-    ## for (column in rev(which(extra_columns))) {
-    ##   # reverse the loop because we are removing columns; otherwise column numbers shift lower
-    ##   dat[[column]] <- NULL
-    ## }
-
-    ## remove rows and columns with all NAs
-    ## note in DDs, some rows with encoded VALUEs will lack header
-    blank.rows <- rowSums(!is.na(dat)) %in% 0
-    blank.cols <- colSums(!is.na(dat)) %in% 0 & names(dat) %in% "" 
-    dat <- dat[!blank.rows,!blank.cols]
-     
-  }, error = function(e) {
-    stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
-  })
-
-  dat
-}
-
-#' Read data dictionary file
-#' 
-#' @param filename The path to the file on disk
-#'
-#' @details
-#' Expects .txt or .xlsx file. 
-#' dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
-#' @return
-#' A data frame from the file
-#'
-#' @rdname read_dd_file
-
-.read_dd_file <- function(filename){
-
-  stopifnot(file.exists(filename))
-  
-  ## read in data dictionary files. could be txt or Excel
-  ## exit if file extension indicates other than .txt or .xlsx)
-  ext <- tools::file_ext(filename)
-  if(!ext %in% c("txt", "xlsx","xls")) {
-    stop("Expected tab-delimited or Excel input file, not .", ext)
-  }  
-  ## add name of file to error message in case of failure
-  tryCatch({
-
-    ## method for reading in DD depends on file type
-    if(ext %in% "txt"){
-      dd <- .read_ds_file(filename, dd=TRUE)
-      # tibbles can't have unnamed columns
-      names(dd)[names(dd) %in% ""] <- paste0("X__",1:sum(names(dd) %in% ""))
-      dd <- as_tibble(dd)
-    } else if (ext %in% c("xls","xlsx")) {
-
-      sheet_arg <- NULL
-      # check if there are multiple sheets
-      sheets <- readxl::excel_sheets(filename)
-      if(length(sheets) > 1){
-        warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
-        sheetArg <- sheets[1]
-      }
-      dd <- readxl::read_excel(filename, sheet=sheet_arg, col_types="text")
-      
-      # identify if first row was not column headers
-      if(!is.element("VARNAME", toupper(names(dd)))){
-        warning("Detected extra header rows (before column names) in your Excel data dictionary; these should be removed")
-        colnames_row <- which(stringr::str_detect(dd, "VARDESC") |
-                              stringr::str_detect(dd, "vardesc"))
-        dd <- readxl::read_excel(filename, sheet=sheet_arg,
-                                 skip=colnames_row+1, col_types="text")
-      }
-    }
-  }, error = function(e) {
-    stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
-  })
-    dd
-}
-
-#### I. checking dbGaP files  
-
 #' Check data dictionary (generic)
 #'
 #' @param dd Data dictionary (DD) object
 #' @param ds Corresponding dataset (DS) object
 #'
 #' @details
-#' Reports errors or issues as warnings.
+#' Reports errors or issues with DD file.
+#' When the corresponding DS file is also provided, checks for consistency between the two.
 #'
 #' @return dd_report, a list of the following issues (when present):
 #' \item{lowercase}{Logical flag indicating non-upper case variable names}
@@ -199,12 +14,11 @@ file_types <- c("samp_subj_mapping",
 #' \item{extra_vars}{Extra variables}
 #' \item{vals_warnings}{Vector of warnings about VALUES columns}
 #' \item{missing_dsvars}{Variables present in DS but not defined in DD}
-#' \item{minmax_errs}{Variables for which DS value are outside DD MIN and MAX range}
+#' \item{min_errs}{Variables for which DS value are < DD MIN}
+#' \item{max_errs}{Variables for which DS value are > DD MAX}
 #' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
 #'
 #' @rdname check_dd
-
-# TO DO - return issues in a list, vs. echoing as warnings
 
 .check_dd <- function(dd, ds=NULL){
 
@@ -226,7 +40,7 @@ file_types <- c("samp_subj_mapping",
   # required columns
   req_vars <- c("VARNAME","VARDESC","UNITS","VALUES")
   miss_vars <- setdiff(req_vars, names(dd))
-  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
+  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
   # check existing named columns against all possible columns
   # if there are trailing columns, they are likely because of encoded values -
@@ -249,10 +63,12 @@ file_types <- c("samp_subj_mapping",
   vals_warnings <- NULL
   
   # if VALUES col exists, needs to be last
+  warn0 <- warn1 <- warn2 <- NULL
   if("VALUES" %in% toupper(names(dd))){
     nnames <- length(names(dd)[!grepl("X__", names(dd))])
     if("VALUES" != names(dd)[nnames]){
       warn0 <- "'VALUES' must be last column"
+      warning(warn0)
     }
 
     # extract encoded values
@@ -266,6 +82,8 @@ file_types <- c("samp_subj_mapping",
 
         # check for multiple "=" statements within a cell
         eq_count <- apply(encoded_vars, 2, function(x) {stringr::str_count(x, "=")})
+        # replace NA with 0
+        eq_count[is.na(eq_count)] <- 0
 
         # if only 1 VARNAME with VALUES, coerce 'eq_count' to 1 row matrix
         if(is.null(dim(eq_count))){
@@ -275,6 +93,7 @@ file_types <- c("samp_subj_mapping",
         if(sum(Biobase::rowMax(eq_count) > 1) > 0){
           mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
           warn1 <- paste(mult_eq_vars, " variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
+          warning(warn1)
         }
 
         # extract encoded values
@@ -293,18 +112,20 @@ file_types <- c("samp_subj_mapping",
             undef_vals <- setdiff(var1, var2)
             if(length(undef_vals) > 0){
               warn2 <- paste("For variable ", var,", the following values are undefined in the dd: ", paste(undef_vals, collapse=", "))
+              warning(warn2)
             } # if extra values
           } # loop through encoded vars
         } #  if dataset is provided
     } # if there are non-NA entires in VALUES column
   } # if VALUES col is present
+  
   warns <- c(warn0, warn1, warn2)
   if(length(warns)>0) vals_warnings <- warns
 
   # if dataset provided:
   # check for all vars
   missing_dsvars <- NULL
-  minmax_errs <- NULL
+  min_errors <- max_errors <- NULL
   if(!is.null(ds)){
     miss.vars <- setdiff(names(ds), pull(dd, VARNAME))
     if(length(miss.vars) > 0){
@@ -314,23 +135,28 @@ file_types <- c("samp_subj_mapping",
     if(length(extra.vars) > 0){
       warning("Data dictionary has extra variables not in dataset:", extra.vars)
     }
+    
     # check MIN and MAX values
-      idx <- which(!is.na(dplyr::pull(dd, "MIN")) | !is.na(dplyr::pull(dd, "MAX")))
-      if(lenght(idx) > 0){
-        dd.tmp <- dd[idx,]
-        ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
-        # convert to numeric if necessary
-        ds.tmp <- apply(ds.tmp, 2, as.numeric) 
+    if("MIN" %in% names(dd)){
+      dd.tmp <- dd[,"MIN"]
+      ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
+      # convert to numeric if necessary
+      ds.tmp <- apply(ds.tmp, 2, as.numeric)
+      dd.tmp$min.ds <- apply(ds.tmp, 2, min)
+      range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(MIN)]
+      if(length(range.err) > 0) min_errors <- range_err
 
-        dd.tmp$min.ds <- apply(ds.tmp, 2, min)
-        dd.tmp$max.ds <- apply(ds.tmp, 2, max)
-        range.errsel <- with(dd.tmp, min.ds < as.numeric(MIN)) |
-                        with(dd.tmp, max.ds > as.numeric(MAX))
-        range.err <- dd.tmp$VARNAME[range.errsel]
-        if(length(range.err) > 0){
-          minmax_errs <- paste(range.err, collapse="'; ")
-        }
-      } # if there are min and max defined      
+    }
+       
+    if("MAX" %in% names(dd)){
+      dd.tmp <- dd[,"MAX"]
+      ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
+      # convert to numeric if necessary
+      ds.tmp <- apply(ds.tmp, 2, as.numeric)
+      dd.tmp$max.ds <- apply(ds.tmp, 2, max)
+      range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(MAX)]
+      if(length(range.err) > 0) max_errors <- range_err
+    }
   }
 
   # check for illegal characters in variable names: \ / , dbGaP
@@ -347,14 +173,18 @@ file_types <- c("samp_subj_mapping",
 
   if(!is.null(lowercase)) dd_report$lowercase <- lowercase
   if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
-  if(!is.null(missing_vars))  dd_report$missing_vars <- missing_vars
+  if(!is.null(missing_vars) & !is.na(missing_vars))  dd_report$missing_vars <- missing_vars
   if(!is.null(extra_vars))  dd_report$extra_vars <- extra_vars
   if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings
   if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
   if(!is.null(minmax_errs))  dd_report$minmax_errs <- minmax_erss
   if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
 
-  return(dd_report)
+  if(length(dd_report) > 0) {
+    return(dd_report)
+  } else {
+    return(NULL)
+  }
 }
 
 #' Check sample subject mapping file
@@ -385,18 +215,14 @@ file_types <- c("samp_subj_mapping",
 #' @return ssm_report, a list of the following issues (when present):
 #' \item{missing_vars}{Missing and required variables}
 #' \item{dup_samples}{List of duplicated sample IDs}
-#' \item(blank_idx}{Row index of blank/missing subject or sample IDs}
-#' Additionally, if (\code{ddfile != NULL}):
+#' \item{blank_idx}{Row index of blank/missing subject or sample IDs}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
-#' Additionally, if (\code{ssm_exp != NULL}):
 #' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 #' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 #' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
-#' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file. }
-#' Additionally, if (\code{sample == uses}):
+#' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
 #' \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
-#' Additionally, if (\code{topmed == TRUE}):
 #' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
 #' 
 #' @rdname check_ssm
@@ -507,25 +333,19 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
     }
   }
 
-  # check for required columns
+  # check for required variables
   # req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
   # allow for other ID names
   req_vars <- c(subjectID_col, sampleID_col, "SAMPLE_USE")
   miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
+  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
   
   # create and return results list
   ssm_report <- list()
 
-  if(!is.na(missing_vars)){
-    ssm_report$missing_vars <- missing_vars
-  }
-  if(!is.null(dup_samples)){
-   satt_report$dup_samples <- dup_samples
-  }
-  if(!is.null(blank_idx)){
-   satt_report$blank_idx <- blank_idx
-  }
+  if(!is.na(missing_vars))   ssm_report$missing_vars <- missing_vars
+  if(!is.null(dup_samples))  satt_report$dup_samples <- dup_samples
+  if(!is.null(blank_idx))  satt_report$blank_idx <- blank_idx
   if(!is.null(dd_errors))  ssm_report$dd_errors <- dd_errors
   if(!is.null(extra_subjects & length(extra_subjects > 0))){
     ssm_report$extra_subjects <- extra_subjects
@@ -556,7 +376,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #' @param sampleID_col Column name for sample-level ID
 #' @param topmed Logical to indicate TOPMed study
 #' 
-#' @detail
+#' @details
 #' When (\code{topmed = TRUE}) checks presence of additional, TOPMed-specific
 #' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 #' TOPMed_Project, Study_Name.
@@ -564,15 +384,11 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #' @return satt_report, a list of the following issues (when present):
 #' \item{missing_vars}{Missing and required variables}
 #' \item{dup_samples}{List of duplicated sample IDs}
-#' \item(blank_idx}{Row index of blank/missing sample IDs}
-#' Additionally, if (\code{ddfile != NULL}):
+#' \item{blank_idx}{Row index of blank/missing sample IDs}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
-#' Additionally, if (\code{samp_exp != NULL}):
 #' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 #' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
-#' Additionally, if (\code{topmed == TRUE}):
 #' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
-
 
 # check_sattr
 check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
@@ -600,7 +416,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
     dup_samples <- NULL
   }
 
-  # report any blank sample IDs by row idex
+  # check for blank sample IDs by row idex
   blanks <- c("","NA",NA)
   blank_idx <- which(trimws(samplist) %in% blanks)
   if(length(blank_idx) %in% 0){
@@ -617,7 +433,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   # check for required variables
   req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","HISTOLOGICAL_TYPE","IS_TUMOR")
   miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars %in% 0), NA, miss_vars)
+  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
   # most common analyte type is "DNA"
   if("ANALYTE_TYPE" %in% names(ds) & sum(ds$ANALYTE_TYPE != "DNA") > 0){
@@ -657,7 +473,116 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 
 # check_subj
 
+#' Check subject consent file
+#'
+#' Check contents of a subject consent file for dbGaP posting.
+#'
+#' @param dsfile Path to the data file on disk
+#' @param ddfile Path to the data dictionary file on disk
+#' @param subj_exp Dataframe of expected subject ID (column 1) and consent value (column 2)
+#' @param subjectID_col Column name for subject-level ID
+#'
+#' @details
+#' When (\code{subj_exp != NULL}), checks for presence of expected subject IDs,
+#' and correspondence between subject ID and consent value.
+#' If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID, returns a warning
+#' indicating that both variables must be submitted together.
+#' Checks that all consent groups are coded using an integer(1, 2, 3, etc).
+#' 
+#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+#' correspondence between column names in data file and entries in data dictionary.
+#'
+#' @return subj_report, a list of the following issues (when present):
+#' \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
+#' \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted.}
+#' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
+#' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+#' \item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}
+#' \item{consent_nonints}{List of non-integer consent values.}
+#' \item{potential_pheno_vars}{List of potential phenotype variable names in DS. Note phenotype should only be in one of these two files: phenotype file or subject consent file.}
+#' 
+#' @rdname check_subj
+
+check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
+                      subjectID_col="SUBJECT_ID", consent_col="CONSENT"){
+
+  # read in data file
+  ds <- .read_ds_file(dsfile)
+
+  # cannot proceed without subject ID col
+  if(!is.element(subjectID_col, names(ds))) {
+    stop("Please check that dsfile contains column for subject-level ID")
+  }
+
+  # check CONSENT colum name
+  consent_varname <- NULL
+  if(consent_col != "CONSENT") {
+    warning("Consent variable name should be 'CONSENT'")
+    consent_varname <- TRUE
+  }
+
+  ## the two checks above count as checking for required variables (only 2)
+  # check for required variables (only 2)
+  # req_vars <- c(subjectID_col, "CONSENT")
+  # miss_vars <- setdiff(req_vars, names(ds))
+  # missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+
+  # if one of the alias columns is provided, check that both are
+  alias_missvar <- NULL
+  alias_vars <- c("SUBJECT_SOURCE","SOURCE_SUBJECT_ID")
+  alias_vars_pres <- intersect(alias_vars, names(ds))
+  alias_vars_miss <- setdiff(alias_vars, names(ds))
+  if(length(alias_vars_pres) > 0 & length(alias_vars_miss) > 0 ){
+    warning("Datafile has", alias_vars_pres,", but missing ",alias_vars_miss)
+    alias_missvar <- TRUE
+  }
+
+  # read in data dictionary if provided
+  dd_errors <- NULL
+  if(!is.null(ddfile)){
+    dd <- .read_dd_file(ddfile)
+    dd_errors <- .check_dd(dd, ds=ds)
+  }
+
+  # check for presence of expected subjects, with expected consent values
+  missing_subjects <- extra_subjects <- consent_diffs <- NULL
+  if(!is.null(subj_exp)){
+    missing_subjects <- setdiff(subj_exp[,1], ds[,subjectID_col])
+    extra_subjects <- setdiff(ds[,subjectID_col], subj_exp[,1])
+
+    # check for expected consent values
+    subj_exp$map <- paste(subj_exp[,1], subj_exp[,2])
+    maps_subj <- paste(ds[,subjectID_col], ds[,consent_col])
+    consent_diffs <- subj_exp[!is.element(subj_exp$map, maps_subj),1:2]
+    if(nrow(consent_diffs) %in% 0) consent_diffs <- NULL 
+
+  }
+
+  # check that consent codes are integers (or can be coerced to integers)
+  consent_nonints <- NULL
+  consents <- unique(ds[,consent_col])
+  digits_sel <- grepl("^[[:digit:]]*$", consxents)
+  if(sum(!digits_sel) > 0) consent_nonints <- consents[!digits_sel]
+  
+  # check for column name that looks like phenotype - issue warning that if present here,
+  #  should not be included in pheno file, so as to avoid conflicts
+  potential_pheno_vars <- NULL
+  pheno_vars <- names(ds)[grepl("aff|pheno|case|status", names(ds), ignore.case=TRUE)]
+  if(length(pheno_vars) %in% 0)  potential_pheno_vars <- paste(pheno_vars, collapse="; ")
+
+  # create and return results list
+  subj_report <- list()
+  if(!is.null(consent_varname)) subj_report$consent_varname <- consent_varname
+  if(!is.null(alias_missvar)) subj_report$alias_missvar <- alias_missvar
+  if(!is.null(dd_errors)) subj_report$dd_errors <- dd_errors
+  if(!is.null(missing_subjects)) subj_report$missing_subjects <- missing_subjects
+  if(!is.null(extra_subjects)) subj_report$extra_subjects <- extra_subjects
+  if(!is.null(consent_diffs)) subj_report$consent_diffs <- consent_diffs
+  if(!is.null(consent_nonints))  subj_report$consent_nonints <- consent_nonints
+  if(!is.null(potential_pheno_vars)) subj_report$potential_pheno_vars <- potential_pheno_vars
+  
+} # end function definition
 
 
-#### II. writing dbGaP files
-# expected inputs? R datas? 
+
