@@ -5,6 +5,7 @@
 #' @param pheno_dd Logical on whether this is a DD for a phenotype file.
 #'
 #' @details
+#' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #' Reports errors or issues with DD file.
 #' When the corresponding DS file is also provided, checks for consistency between the two.
 #' If \code{pheno_dd=TRUE}, checks for required UNITS variable.
@@ -42,7 +43,7 @@
   # required columns
   req_vars <- c("VARNAME","VARDESC", "VALUES")
   # need to ask dbGaP about this
-  if(pheno) req_vars <- c(req_vars, "UNITS")
+  if(pheno_dd) req_vars <- c(req_vars, "UNITS")
   miss_vars <- setdiff(req_vars, names(dd))
   missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
@@ -204,6 +205,7 @@
 #' @param topmed Logical to indicate TOPMed study
 #'
 #' @details
+#' The sample subject mapping file should be a tab-delimited .txt file.
 #' When (\code{ssm_exp != NULL}), checks for expected correspondence between
 #' SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 #' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
@@ -215,6 +217,7 @@
 #' 
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
+#' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
 #' @return ssm_report, a list of the following issues (when present):
 #' \item{missing_vars}{Missing and required variables}
@@ -380,10 +383,15 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #' @param topmed Logical to indicate TOPMed study
 #' 
 #' @details
+#' The sample attributes file should be a tab-delimited .txt file.
 #' When (\code{topmed = TRUE}) checks presence of additional, TOPMed-specific
 #' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 #' TOPMed_Project, Study_Name.
 #'
+#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+#' correspondence between column names in data file and entries in data dictionary.
+#' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
+#' 
 #' @return satt_report, a list of the following issues (when present):
 #' \item{missing_vars}{Missing and required variables}
 #' \item{dup_samples}{List of duplicated sample IDs}
@@ -487,6 +495,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 #' @param subjectID_col Column name for subject-level ID
 #'
 #' @details
+#' The subject consent file should be a tab-delimited .txt file.
 #' When (\code{subj_exp != NULL}), checks for presence of expected subject IDs,
 #' and correspondence between subject ID and consent value.
 #' If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID is present, returns a warning
@@ -495,6 +504,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 #' 
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
+#' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
 #' @return subj_report, a list of the following issues (when present):
 #' \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}

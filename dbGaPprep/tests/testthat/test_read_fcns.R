@@ -1,6 +1,3 @@
-library(testthat)
-library(dbGaPprep)
-
 context("Reading in dataset and data dictionary files")
 
 # Load in example data files
@@ -41,14 +38,14 @@ test_that("DD file with header generates a warning",{
   expect_warning(.read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")  
 })
 
-test_that("Non existent file paths generate stop message"),{
+test_that("Non existent file paths generate stop message",{
   expect_error(.read_ds_file("myDSfile.txt"), "file.exists(filename) is not TRUE",
                fixed=TRUE)
   expect_error(.read_dd_file("myDDfile.xlsx"), "file.exists(filename) is not TRUE",
                fixed=TRUE)
 })
 
-test_that("Unexpected file extensions generate expected stop messages"),{
+test_that("Unexpected file extensions generate expected stop messages",{
   expect_error(.read_ds_file(satt_dd),
                "Expected tab-delimited input file (.txt), not .xlsx", fixed=TRUE)
   expect_error(.read_dd_file(dd_nohdr_csv),
@@ -56,7 +53,7 @@ test_that("Unexpected file extensions generate expected stop messages"),{
   
 })
 
-test_that("Mult sheet Excel workbooks reads in first sheet as DD"), {
+test_that("Mult sheet Excel workbooks reads in first sheet as DD", {
   expect_warning(.read_dd_file(dd_nohdr_multsheet),
 "Data dictionary Excel contains multiple sheets; assuming first is the DD", fixed=TRUE)
 })
