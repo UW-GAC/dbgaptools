@@ -2,11 +2,13 @@
 #'
 #' @param dd Data dictionary (DD) object
 #' @param ds Corresponding dataset (DS) object
+#' @param pheno_dd Logical on whether this is a DD for a phenotype file.
 #'
 #' @details
 #' Reports errors or issues with DD file.
 #' When the corresponding DS file is also provided, checks for consistency between the two.
-#'
+#' If \code{pheno_dd=TRUE}, checks for required UNITS variable.
+#' 
 #' @return dd_report, a list of the following issues (when present):
 #' \item{lowercase}{Logical flag indicating non-upper case variable names}
 #' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
@@ -20,7 +22,7 @@
 #'
 #' @rdname check_dd
 
-.check_dd <- function(dd, ds=NULL){
+.check_dd <- function(dd, ds=NULL, pheno_dd=FALSE){
 
   # all colnames should be upper case
   lowercase <- NULL
@@ -38,7 +40,9 @@
   }
 
   # required columns
-  req_vars <- c("VARNAME","VARDESC","UNITS","VALUES")
+  req_vars <- c("VARNAME","VARDESC", "VALUES")
+  # need to ask dbGaP about this
+  if(pheno) req_vars <- c(req_vars, "UNITS")
   miss_vars <- setdiff(req_vars, names(dd))
   missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
@@ -223,7 +227,6 @@
 #' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
 #' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
 #' \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
-#' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
 #' 
 #' @rdname check_ssm
 
@@ -343,17 +346,17 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   # create and return results list
   ssm_report <- list()
 
-  if(!is.na(missing_vars))   ssm_report$missing_vars <- missing_vars
-  if(!is.null(dup_samples))  satt_report$dup_samples <- dup_samples
-  if(!is.null(blank_idx))  satt_report$blank_idx <- blank_idx
-  if(!is.null(dd_errors))  ssm_report$dd_errors <- dd_errors
-  if(!is.null(extra_subjects & length(extra_subjects > 0))){
+  if(!is.na(missing_vars)) ssm_report$missing_vars <- missing_vars
+  if(!is.null(dup_samples)) ssm_report$dup_samples <- dup_samples
+  if(!is.null(blank_idx)) ssm_report$blank_idx <- blank_idx
+  if(!is.null(dd_errors)) ssm_report$dd_errors <- dd_errors
+  if(!is.null(extra_subjects) & length(extra_subjects > 0)){
     ssm_report$extra_subjects <- extra_subjects
   }
-  if(!is.null(missing_subjects & length(missing_subjects > 0))){
+  if(!is.null(missing_subjects) & length(missing_subjects > 0)){
     ssm_report$missing_subjects <- missing_subjects
   }  
-  if(!is.null(extra_samples & length(extra_samples > 0))){
+  if(!is.null(extra_samples) & length(extra_samples > 0)){
     ssm_report$extra_samples <- extra_samples
   }
   if(!is.null(missing_samples) & length(missing_samples > 0)){
@@ -361,7 +364,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   }
   if(!is.null(ssm_diffs)) ssm_report$ssm_diffs <- ssm_diffs
   if(!is.null(sampuse_diffs))  ssm_report$sampuse_diffs <- sampuse_diffs
-  if(!is.null(missing_topmed_vars)) ssm_report$missing_topmed_vars <- missing_topmed_vars
+
 
   return(ssm_report)
 }
@@ -468,6 +471,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   if(!is.null(missing_samples) & length(missing_samples > 0)){
     satt_report$missing_samples <- missing_samples
   }
+  if(!is.null(missing_topmed_vars)) satt_report$missing_topmed_vars <- missing_topmed_vars
   return(satt_report)
 }
 
@@ -485,19 +489,19 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 #' @details
 #' When (\code{subj_exp != NULL}), checks for presence of expected subject IDs,
 #' and correspondence between subject ID and consent value.
-#' If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID, returns a warning
+#' If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID is present, returns a warning
 #' indicating that both variables must be submitted together.
-#' Checks that all consent groups are coded using an integer(1, 2, 3, etc).
+#' Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 #' 
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
 #'
 #' @return subj_report, a list of the following issues (when present):
 #' \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
-#' \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted.}
+#' \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
-#' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
-#' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+#' \item{extra_subjects}{Subjects in data file missing from \code{subj_exp}}
+#' \item{missing_subjects}{Subjects in \code{subj_exp} missing from data file}
 #' \item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}
 #' \item{consent_nonints}{List of non-integer consent values.}
 #' \item{potential_pheno_vars}{List of potential phenotype variable names in DS. Note phenotype should only be in one of these two files: phenotype file or subject consent file.}

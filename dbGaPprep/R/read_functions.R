@@ -57,6 +57,7 @@
 #' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 #' 
 #' @rdname read_ds_file
+
 .read_ds_file <- function(filename, dd=FALSE) {
 
   stopifnot(file.exists(filename))
@@ -158,7 +159,7 @@
       
       # identify if first row was not column headers
       if(!is.element("VARNAME", toupper(names(dd)))){
-        warning("Detected extra header rows (before column names) in your Excel data dictionary; these should be removed")
+        warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
         colnames_row <- which(stringr::str_detect(dd, "VARDESC") |
                               stringr::str_detect(dd, "vardesc"))
         dd <- readxl::read_excel(filename, sheet=sheet_arg,
@@ -171,24 +172,4 @@
     dd
 }
 
-#### I. checking dbGaP files  
 
-#' Check data dictionary (generic)
-#'
-#' @param dd Data dictionary (DD) object
-#' @param ds Corresponding dataset (DS) object
-#'
-#' @details
-#' Reports errors or issues as warnings.
-#'
-#' @return dd_report, a list of the following issues (when present):
-#' \item{lowercase}{Logical flag indicating non-upper case variable names}
-#' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
-#' \item{missing_vars}{Missing and required variables}
-#' \item{extra_vars}{Extra variables}
-#' \item{vals_warnings}{Vector of warnings about VALUES columns}
-#' \item{missing_dsvars}{Variables present in DS but not defined in DD}
-#' \item{minmax_errs}{Variables for which DS value are outside DD MIN and MAX range}
-#' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
-#'
-#' @rdname check_dd
