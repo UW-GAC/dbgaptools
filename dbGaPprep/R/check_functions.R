@@ -13,12 +13,12 @@
 #' @return dd_report, a list of the following issues (when present):
 #' \item{lowercase}{Logical flag indicating non-upper case variable names}
 #' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
-#' \item{missing_vars}{Missing and required variables}
+#' \item{missing_reqvars}{Missing and required variables}
 #' \item{extra_vars}{Extra variables}
 #' \item{vals_warnings}{Vector of warnings about VALUES columns}
 #' \item{missing_dsvars}{Variables present in DS but not defined in DD}
-#' \item{min_errs}{Variables for which DS value are < DD MIN}
-#' \item{max_errs}{Variables for which DS value are > DD MAX}
+#' \item{min_errors}{Variables for which DS value are < DD MIN}
+#' \item{max_errors}{Variables for which DS value are > DD MAX}
 #' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
 #'
 #' @rdname check_dd
@@ -28,7 +28,7 @@
   # all colnames should be upper case
   lowercase <- NULL
   upp <- toupper(names(dd))
-  if(!all.equal(upp, names(dd))){
+  if(sum(upp != names(dd)) > 0 ){
     warning("All column names should be UPPER CASE")
     names(dd) <- upp
     lowercase <- TRUE
@@ -36,7 +36,7 @@
   
   # required first two columns
   varname_vardesc <- NULL
-  if(!all.equal(names(dd)[1:2], c("VARNAME","VARDESC"))){
+  if(sum(names(dd)[1:2] != c("VARNAME","VARDESC")) > 0){
     warning("First two columns required to be 'VARNAME' and 'VARDESC'")
   }
 
@@ -45,7 +45,7 @@
   # need to ask dbGaP about this
   if(pheno_dd) req_vars <- c(req_vars, "UNITS")
   miss_vars <- setdiff(req_vars, names(dd))
-  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+  missing_reqvars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
   # check existing named columns against all possible columns
   # if there are trailing columns, they are likely because of encoded values -
@@ -60,7 +60,7 @@
   extra_vars <- NULL
   extra_cols <- setdiff(all_cols, possible_cols)
   if(length(extra_cols) > 0){
-    warning("DD contains non-standard columns:", extra_cols)
+    warning("DD contains non-standard columns: ", paste(extra_cols, collapse="; "))
     extra_vars <- extra_cols
   }
 
@@ -69,7 +69,7 @@
   
   # if VALUES col exists, needs to be last
   warn0 <- warn1 <- warn2 <- NULL
-  if("VALUES" %in% toupper(names(dd))){
+  if("VALUES" %in% names(dd)){
     nnames <- length(names(dd)[!grepl("X__", names(dd))])
     if("VALUES" != names(dd)[nnames]){
       warn0 <- "'VALUES' must be last column"
@@ -97,26 +97,27 @@
         
         if(sum(Biobase::rowMax(eq_count) > 1) > 0){
           mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
-          warn1 <- paste(mult_eq_vars, " variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
+          warn1 <- paste(paste(mult_eq_vars,collapse="; "), "variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
           warning(warn1)
         }
 
-        # extract encoded values
-        encoded_vars %<>%
-          mutate_all(function(x) stringr::str_replace(x, "=.*", "")) %>%
-            tidyr::gather("column", "row", -VARNAME) %>%
-              tidyr::spread(VARNAME, row) %>%
-                select(-column)
-
         # if ds is also provided, check that all encoded values are defined
         if(!is.null(ds)){
+
+         # extract encoded values
+          encoded_vars %<>%
+            dplyr::mutate_all(function(x) stringr::str_replace(x, "=.*", "")) %>%
+              tidyr::gather("column", "row", -VARNAME) %>%
+                tidyr::spread(VARNAME, row) %>%
+                  dplyr::select(-column)
+          
           vars_chk <- names(encoded_vars)
           for(var in vars_chk){
             var1 <- as.character(unique(ds[,var]))
             var2 <- dplyr::pull(encoded_vars, var)
             undef_vals <- setdiff(var1, var2)
             if(length(undef_vals) > 0){
-              warn2 <- paste("For variable ", var,", the following values are undefined in the dd: ", paste(undef_vals, collapse=", "))
+              warn2 <- c(warn2, paste0("For variable ", var,", the following values are undefined in the dd: ", paste(undef_vals, collapse=", ")))
               warning(warn2)
             } # if extra values
           } # loop through encoded vars
@@ -130,46 +131,47 @@
   # if dataset provided:
   # check for all vars
   missing_dsvars <- NULL
+  extra_ddvars <- NULL
   min_errors <- max_errors <- NULL
   if(!is.null(ds)){
-    miss.vars <- setdiff(names(ds), pull(dd, VARNAME))
-    if(length(miss.vars) > 0){
-      warning("Data dictionary missing following dataset variables:", miss.vars)
+    missing_dsvars <- setdiff(names(ds), dplyr::pull(dd, VARNAME))
+    if(length(missing_dsvars) > 0){
+      warning("Data dictionary missing following dataset variables: ", missing_dsvars)
     }
-    extra.vars <- setdiff(pull(dd, VARNAME), names(ds))
-    if(length(extra.vars) > 0){
-      warning("Data dictionary has extra variables not in dataset:", extra.vars)
+    extra_ddvars <- setdiff(dplyr::pull(dd, VARNAME), names(ds))
+    if(length(extra_ddvars) > 0){
+      warning("Data dictionary has extra variables not in dataset: ", extra_ddvars)
     }
     
     # check MIN and MAX values
-    if("MIN" %in% names(dd)){
-      dd.tmp <- dd[,"MIN"]
+    if("MIN" %in% names(dd) & sum(!is.na(dd$MIN)) > 0 ){
+      dd.tmp <- dd[!is.na(dd$MIN),c("VARNAME","MIN")]
       ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
       # convert to numeric if necessary
       ds.tmp <- apply(ds.tmp, 2, as.numeric)
       dd.tmp$min.ds <- apply(ds.tmp, 2, min)
-      range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(MIN)]
-      if(length(range.err) > 0) min_errors <- range_err
+      range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(dd.tmp$MIN)]
+      if(length(range_err) > 0) min_errors <- range_err
 
     }
        
-    if("MAX" %in% names(dd)){
-      dd.tmp <- dd[,"MAX"]
+    if("MAX" %in% names(dd)  & sum(!is.na(dd$MAX)) > 0){
+      dd.tmp <- dd[!is.na(dd$MAX),c("VARNAME","MAX")]
       ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
       # convert to numeric if necessary
       ds.tmp <- apply(ds.tmp, 2, as.numeric)
       dd.tmp$max.ds <- apply(ds.tmp, 2, max)
-      range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(MAX)]
-      if(length(range.err) > 0) max_errors <- range_err
+      range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(dd.tmp$MAX)]
+      if(length(range_err) > 0) max_errors <- range_err
     }
   }
 
   # check for illegal characters in variable names: \ / , dbGaP
   illegal_vars <- NULL
-  ill_vars_sel <- stringr::str_detect(upp, "DBGAP|\\\\|/|,")
+  ill_vars_sel <- stringr::str_detect(dd$VARNAME, "DBGAP|\\\\|/|,")
   
   if(sum(ill_vars_sel) > 0){
-    ill_vars <- nms[ill_vars_sel]
+    ill_vars <- dd$VARNAME[ill_vars_sel]
     illegal_vars <- paste(ill_vars, collapse="; ")
   }
 
@@ -178,11 +180,13 @@
 
   if(!is.null(lowercase)) dd_report$lowercase <- lowercase
   if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
-  if(!is.null(missing_vars) & !is.na(missing_vars))  dd_report$missing_vars <- missing_vars
-  if(!is.null(extra_vars))  dd_report$extra_vars <- extra_vars
-  if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings
+  if(!is.null(missing_reqvars) & !is.na(missing_reqvars))  dd_report$missing_reqvars <- missing_reqvars
+  if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
   if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
-  if(!is.null(minmax_errs))  dd_report$minmax_errs <- minmax_erss
+  if(!is.null(extra_ddvars))  dd_report$extra_ddvars <- extra_ddvars
+  if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings
+  if(!is.null(min_errors)) dd_report$min_errors <- min_errors
+  if(!is.null(max_errors)) dd_report$max_errors <- max_errors  
   if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
 
   if(length(dd_report) > 0) {
@@ -461,7 +465,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   # if TOPMed, check for TOPMed-specific variables
   missing_topmed_vars <- NULL
   if(topmed){
-    topmed_vars <- c(req_vars, "SEQUENCING_CENTER", "Funding_Source",
+    topmed_vars <- c("SEQUENCING_CENTER", "Funding_Source",
                      "TOPMed_Phase", "TOPMed_Project","Study_Name")
     missing_topmed_vars <- setdiff(topmed_vars, names(ds))
   }
@@ -576,7 +580,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   # check that consent codes are integers (or can be coerced to integers)
   consent_nonints <- NULL
   consents <- unique(ds[,consent_col])
-  digits_sel <- grepl("^[[:digit:]]*$", consxents)
+  digits_sel <- grepl("^[[:digit:]]*$", consents)
   if(sum(!digits_sel) > 0) consent_nonints <- consents[!digits_sel]
   
   # check for column name that looks like phenotype - issue warning that if present here,
