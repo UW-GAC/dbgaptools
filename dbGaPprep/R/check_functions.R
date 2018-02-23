@@ -189,11 +189,10 @@
   if(!is.null(max_errors)) dd_report$max_errors <- max_errors  
   if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
 
-  if(length(dd_report) > 0) {
-    return(dd_report)
-  } else {
-    return(NULL)
-  }
+  # if list is empty, return NULL
+  if(length(dd_report) > 0) dd_report <- NULL
+
+  return(dd_report)
 }
 
 #' Check sample subject mapping file
@@ -373,6 +372,9 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   if(!is.null(sampuse_diffs))  ssm_report$sampuse_diffs <- sampuse_diffs
 
 
+  # if list is empty, return NULL
+  if(lenght(ssm_report) == 0) ssm_report <- NULL
+  
   return(ssm_report)
 }
 
@@ -382,7 +384,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param samp_exp List of expected sample ID
+#' @param samp_exp List of expected sample IDs
 #' @param sampleID_col Column name for sample-level ID
 #' @param topmed Logical to indicate TOPMed study
 #' 
@@ -450,10 +452,11 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   miss_vars <- setdiff(req_vars, names(ds))
   missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
-  # most common analyte type is "DNA"
-  if("ANALYTE_TYPE" %in% names(ds) & sum(ds$ANALYTE_TYPE != "DNA") > 0){
-    message("Note some entries have ANALYTE_TYPE other than DNA, which is the most common")
-  }
+  ## ## removing this assumption
+  ## # most common analyte type is "DNA"
+  ## if("ANALYTE_TYPE" %in% names(ds) & sum(ds$ANALYTE_TYPE != "DNA") > 0){
+  ##   message("Note some entries have ANALYTE_TYPE other than DNA, which is the most common")
+  ## }
 
   # check for presence of expected samples
   missing_samples <- extra_samples <- NULL
@@ -484,6 +487,10 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
     satt_report$missing_samples <- missing_samples
   }
   if(!is.null(missing_topmed_vars)) satt_report$missing_topmed_vars <- missing_topmed_vars
+
+  # if list is empty, return NULL
+  if(length(satt_report) == 0) satt_report <- NULL
+  
   return(satt_report)
 }
 
@@ -599,6 +606,11 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   if(!is.null(consent_diffs)) subj_report$consent_diffs <- consent_diffs
   if(!is.null(consent_nonints))  subj_report$consent_nonints <- consent_nonints
   if(!is.null(potential_pheno_vars)) subj_report$potential_pheno_vars <- potential_pheno_vars
+
+  # if list is empty, return NULL
+  if(length(subj_report) == 0) subj_report <- NULL
+
+  return(subj_report)
   
 } # end function definition
 

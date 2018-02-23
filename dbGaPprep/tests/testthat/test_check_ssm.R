@@ -4,9 +4,8 @@ ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx", package
 ssm_ds <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbGaPprep", mustWork = TRUE)
 
 test_that("Compliant files run error free",{
-  expect_equal(check_ssm(dsfile=ssm_ds), list())
-  out <- check_ssm(dsfile=ssm_ds, ddfile=ssm_dd)
-  expect_equal(out, list())
+  expect_null(check_ssm(dsfile=ssm_ds))
+  expect_null(check_ssm(dsfile=ssm_ds, ddfile=ssm_dd))
 })
 
 test_that("Missing ID columns are detected",{
