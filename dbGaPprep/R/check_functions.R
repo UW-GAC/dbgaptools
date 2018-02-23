@@ -81,9 +81,10 @@
     name_col <- which(names(dd) %in% "VARNAME")
 
     # only proceed with this check if there are non NA entries in VALUES column
-    if(sum(!is.na(dd$VALUES)) > 0) {
+    if(sum(!is.na(dd$VALUES) & dd$VALUES != "NA") > 0) {
     
-        encoded_vars <- dd[!is.na(dd$VALUES), c(name_col, val_col:ncol(dd))]
+        encoded_vars <- dd[!is.na(dd$VALUES) & dd$VALUES != "NA",
+                           c(name_col, val_col:ncol(dd))]
 
         # check for multiple "=" statements within a cell
         eq_count <- apply(encoded_vars, 2, function(x) {stringr::str_count(x, "=")})
@@ -113,20 +114,26 @@
           
           vars_chk <- names(encoded_vars)
           for(var in vars_chk){
-            var1 <- as.character(unique(ds[,var]))
+            var1 <- unique(ds[,var])
+            # remove NAs as encoded values
+            var1 <- var1[!is.na(var1)]
             var2 <- dplyr::pull(encoded_vars, var)
+            var2 <- var2[!is.na(var2)]
             undef_vals <- setdiff(var1, var2)
             if(length(undef_vals) > 0){
-              warn2 <- c(warn2, paste0("For variable ", var,", the following values are undefined in the dd: ", paste(undef_vals, collapse=", ")))
-              warning(warn2)
-            } # if extra values
+                for(undef in undef_vals){
+                  warn_undef <- paste0("For variable ", var,", the following values are undefined in the dd: ", undef)
+                  warning(warn_undef)
+                  warn2 <- c(warn2, warn_undef)
+                }
+            }
           } # loop through encoded vars
         } #  if dataset is provided
     } # if there are non-NA entires in VALUES column
   } # if VALUES col is present
   
   warns <- c(warn0, warn1, warn2)
-  if(length(warns)>0) vals_warnings <- warns
+  if(length(warns) > 0) vals_warnings <- warns
 
   # if dataset provided:
   # check for all vars
@@ -137,34 +144,43 @@
     missing_dsvars <- setdiff(names(ds), dplyr::pull(dd, VARNAME))
     if(length(missing_dsvars) > 0){
       warning("Data dictionary missing following dataset variables: ", missing_dsvars)
+    } else {
+      # set back to null
+      missing_dsvars <- NULL
     }
     extra_ddvars <- setdiff(dplyr::pull(dd, VARNAME), names(ds))
     if(length(extra_ddvars) > 0){
       warning("Data dictionary has extra variables not in dataset: ", extra_ddvars)
+    } else {
+      # set back to null
+      extra_ddvars <- NULL
     }
     
     # check MIN and MAX values
-    if("MIN" %in% names(dd) & sum(!is.na(dd$MIN)) > 0 ){
-      dd.tmp <- dd[!is.na(dd$MIN),c("VARNAME","MIN")]
-      ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
-      # convert to numeric if necessary
-      ds.tmp <- apply(ds.tmp, 2, as.numeric)
-      dd.tmp$min.ds <- apply(ds.tmp, 2, min)
-      range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(dd.tmp$MIN)]
-      if(length(range_err) > 0) min_errors <- range_err
-
-    }
+    if("MIN" %in% names(dd)){
+      if(sum(!is.na(dd$MIN)) > 0){
+          dd.tmp <- dd[!is.na(dd$MIN),c("VARNAME","MIN")]
+          ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
+          # convert to numeric if necessary
+          ds.tmp <- apply(ds.tmp, 2, as.numeric)
+          dd.tmp$min.ds <- apply(ds.tmp, 2, min)
+          range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(dd.tmp$MIN)]
+          if(length(range_err) > 0) min_errors <- range_err
+        } # if non-NA MINS
+    } # if MIN is col
        
-    if("MAX" %in% names(dd)  & sum(!is.na(dd$MAX)) > 0){
-      dd.tmp <- dd[!is.na(dd$MAX),c("VARNAME","MAX")]
-      ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
-      # convert to numeric if necessary
-      ds.tmp <- apply(ds.tmp, 2, as.numeric)
-      dd.tmp$max.ds <- apply(ds.tmp, 2, max)
-      range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(dd.tmp$MAX)]
-      if(length(range_err) > 0) max_errors <- range_err
-    }
-  }
+    if("MAX" %in% names(dd)){
+      if(sum(!is.na(dd$MAX)) > 0) {
+          dd.tmp <- dd[!is.na(dd$MAX),c("VARNAME","MAX")]
+          ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
+          # convert to numeric if necessary
+          ds.tmp <- apply(ds.tmp, 2, as.numeric)
+          dd.tmp$max.ds <- apply(ds.tmp, 2, max)
+          range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(dd.tmp$MAX)]
+          if(length(range_err) > 0) max_errors <- range_err
+        } # if non-NA MAX
+    } # if MAX is col
+  } # if DS is provided
 
   # check for illegal characters in variable names: \ / , dbGaP
   illegal_vars <- NULL
@@ -180,17 +196,19 @@
 
   if(!is.null(lowercase)) dd_report$lowercase <- lowercase
   if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
-  if(!is.null(missing_reqvars) & !is.na(missing_reqvars))  dd_report$missing_reqvars <- missing_reqvars
+  if(!is.null(missing_reqvars) & !is.na(missing_reqvars)) {
+    dd_report$missing_reqvars <- missing_reqvars
+  }
   if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
   if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
-  if(!is.null(extra_ddvars))  dd_report$extra_ddvars <- extra_ddvars
+  if(!is.null(extra_ddvars)) dd_report$extra_ddvars <- extra_ddvars
   if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings
   if(!is.null(min_errors)) dd_report$min_errors <- min_errors
   if(!is.null(max_errors)) dd_report$max_errors <- max_errors  
   if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
 
   # if list is empty, return NULL
-  if(length(dd_report) > 0) dd_report <- NULL
+  if(length(dd_report) == 0) dd_report <- NULL
 
   return(dd_report)
 }
@@ -514,7 +532,8 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 #' Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 #' 
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
-#' correspondence between column names in data file and entries in data dictionary.
+#' for agreement between data file and data dictionary.
+#' Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP automatically codes as subjects used as genotyping controls and/or pedigree linking members.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
 #' @return subj_report, a list of the following issues (when present):
@@ -540,6 +559,11 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
     stop("Please check that dsfile contains column for subject-level ID")
   }
 
+  # cannot proceed without consent col
+  if(!is.element(consent_col, names(ds))) {
+    stop("Please check that dsfile contains column for consent")
+  }
+  
   # check CONSENT colum name
   consent_varname <- NULL
   if(consent_col != "CONSENT") {
@@ -559,7 +583,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   alias_vars_pres <- intersect(alias_vars, names(ds))
   alias_vars_miss <- setdiff(alias_vars, names(ds))
   if(length(alias_vars_pres) > 0 & length(alias_vars_miss) > 0 ){
-    warning("Datafile has", alias_vars_pres,", but missing ",alias_vars_miss)
+    warning("Datafile has ", alias_vars_pres,", but missing ",alias_vars_miss)
     alias_missvar <- TRUE
   }
 
@@ -568,6 +592,20 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   if(!is.null(ddfile)){
     dd <- .read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds)
+
+    # for subject consent file, dbGaP will define consent=0 for user
+    # remove this error (but not other CONSENT mapping errors)
+    str <- paste0("For variable ",consent_col,", the following values are undefined in the dd: 0")
+    val_warns <-  dd_errors$vals_warnings
+    val_warns <- val_warns[which(val_warns != str)]
+
+    dd_errors$vals_warnings <- val_warns
+    
+    # if that's all that was there dd__errors$vals_warnings, remove
+    if(length(dd_errors$vals_warnings) == 0 ) dd_errors$vals_warnings <- NULL
+
+    # if that's all that was in dd_errors, remove
+    if(length(dd_errors) == 0) dd_errors <- NULL
   }
 
   # check for presence of expected subjects, with expected consent values
@@ -581,8 +619,11 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
     maps_subj <- paste(ds[,subjectID_col], ds[,consent_col])
     consent_diffs <- subj_exp[!is.element(subj_exp$map, maps_subj),1:2]
     if(nrow(consent_diffs) %in% 0) consent_diffs <- NULL 
-
   }
+  # if empty, convert back to NULL
+  if(length(missing_subjects) == 0) missing_subjects <- NULL
+  if(length(extra_subjects) == 0) extra_subjects <- NULL
+  if(length(consent_diffs) == 0) consent_diffs <- NULL  
 
   # check that consent codes are integers (or can be coerced to integers)
   consent_nonints <- NULL
@@ -594,7 +635,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   #  should not be included in pheno file, so as to avoid conflicts
   potential_pheno_vars <- NULL
   pheno_vars <- names(ds)[grepl("aff|pheno|case|status", names(ds), ignore.case=TRUE)]
-  if(length(pheno_vars) %in% 0)  potential_pheno_vars <- paste(pheno_vars, collapse="; ")
+  if(length(pheno_vars) > 0) potential_pheno_vars <- paste(pheno_vars, collapse="; ")
 
   # create and return results list
   subj_report <- list()

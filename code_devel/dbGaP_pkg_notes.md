@@ -98,12 +98,18 @@ best way to develop package will be to start working through dbgap file prep for
 		- Stephanie is going to make study-level tracking worksheet on Team Drive - will include a column that Quenna can populate to indicate if a study is all TOPMed funding; when that's not the case, will need to go to Quenna to try and puzzle it out. __Not straightforward__ 
 
 # package names?
-- unclear to me what style conventions exist
-- wickham says no underscores
+- wickham says all lower case (convention)
+- no underscores (requirement)
 - ideas
-	- "dbGaPfileprep"
-	- "dbGaPprep"
-	- "dbGaPrepr
+	- "dbGaPfileprep", dbgapfileprep
+	- "dbGaPprep", dbgapprep; dbgaprep
+	- "dbGaPrepr, dbgapprep; dbgaprepr
+	- dbgapfilemakr
+	- dbgapmakr (Ben's)
+	- prepdbgap
+	- dbgapsubmitr (b/c it's for submitters to dbGaP)
+	- dbgaphelpr
+- https://www.njtierney.com/post/2017/10/27/change-pkg-name/
  
  
 # Ongoing questions 

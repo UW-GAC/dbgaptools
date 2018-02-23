@@ -120,7 +120,7 @@
 #' @param filename The path to the file on disk
 #'
 #' @details
-#' Expects .txt or .xlsx file. 
+#' Expects (tab-delimited) .txt or .xlsx file. 
 #' dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 #' @return
 #' A data frame from the file
@@ -145,7 +145,7 @@
       dd <- .read_ds_file(filename, dd=TRUE)
       # tibbles can't have unnamed columns
       names(dd)[names(dd) %in% ""] <- paste0("X__",1:sum(names(dd) %in% ""))
-      dd <- as_tibble(dd)
+      dd <- tibble::as_tibble(dd)
     } else if (ext %in% c("xls","xlsx")) {
 
       sheet_arg <- NULL

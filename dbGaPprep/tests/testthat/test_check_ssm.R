@@ -36,7 +36,7 @@ test_that("Duplicated sample IDs are detected",{
   unlink(ds.rev.fn)
 })
 
-test_that("Duplicated sample IDs are detected",{
+test_that("Blank sample IDs are detected",{
   ds.rev <- .read_ds_file(ssm_ds)
   ds.rev$SAMPLE_ID[3] <- ""
   ds.rev.fn <-  tempfile(fileext=".txt")
