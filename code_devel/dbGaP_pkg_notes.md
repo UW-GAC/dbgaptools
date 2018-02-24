@@ -108,7 +108,9 @@ best way to develop package will be to start working through dbgap file prep for
 	- dbgapmakr (Ben's)
 	- prepdbgap
 	- dbgapsubmitr (b/c it's for submitters to dbGaP)
-	- dbgaphelpr
+	- dbgaphelpr (pronounced "dbgaphelper" by Adrienne)
+	- dbgaputils
+	- dbgaptools
 - https://www.njtierney.com/post/2017/10/27/change-pkg-name/
  
  

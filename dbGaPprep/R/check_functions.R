@@ -81,10 +81,9 @@
     name_col <- which(names(dd) %in% "VARNAME")
 
     # only proceed with this check if there are non NA entries in VALUES column
-    if(sum(!is.na(dd$VALUES) & dd$VALUES != "NA") > 0) {
+    if(sum(!is.na(dd$VALUES)) > 0) {
     
-        encoded_vars <- dd[!is.na(dd$VALUES) & dd$VALUES != "NA",
-                           c(name_col, val_col:ncol(dd))]
+        encoded_vars <- dd[!is.na(dd$VALUES), c(name_col, val_col:ncol(dd))]
 
         # check for multiple "=" statements within a cell
         eq_count <- apply(encoded_vars, 2, function(x) {stringr::str_count(x, "=")})

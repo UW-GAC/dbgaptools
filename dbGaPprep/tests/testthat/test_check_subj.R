@@ -11,12 +11,12 @@ test_that("Compliant files run error free",{
   ds.rev$CONSENT <- 1
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
-              quote=FALSE, sep="\t")
+              quote=FALSE, sep="\t", na="")
   dd.rev <- .read_dd_file(subj_dd)
   dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS",]
   dd.rev.fn <- tempfile(fileext=".txt")
   write.table(dd.rev, file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
-              quote=FALSE, sep="\t")  
+              quote=FALSE, sep="\t", na="")  
 
   expect_null(check_subj(dsfile=ds.rev.fn))
   expect_null(check_subj(dsfile=ds.rev.fn, ddfile=dd.rev.fn))
@@ -41,7 +41,7 @@ test_that("Incorrect consent column name is detected",{
   names(ds.rev)[names(ds.rev) %in% "CONSENT"] <- "myconsent"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
-              quote=FALSE, sep="\t")
+              quote=FALSE, sep="\t", na="")
   
   str <- "Consent variable name should be 'CONSENT'"
   expect_warning(check_subj(ds.rev.fn, consent_col="myconsent"), str, fixed=TRUE)
@@ -53,7 +53,7 @@ test_that("Presence of only one alias column is detected",{
   ds.rev$SUBJECT_SOURCE <- NULL
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
-              quote=FALSE, sep="\t")
+              quote=FALSE, sep="\t", na="")
 
   str <- "Datafile has SOURCE_SUBJECT_ID, but missing SUBJECT_SOURCE"
   expect_warning(out <- check_subj(ds.rev.fn), str, fixed=TRUE)
@@ -98,7 +98,7 @@ test_that("Non integer consent values are reported", {
   ds$CONSENT[5:10] <- "HMB"
   ds.rev.fn <-  tempfile(fileext=".txt")
   write.table(ds, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
-              quote=FALSE, sep="\t")
+              quote=FALSE, sep="\t", na="")
   
   out <- check_subj(ds.rev.fn)
   expect_equal(out$consent_nonints, "HMB")
@@ -116,10 +116,10 @@ test_that("Unmapped, non-0 consent values are reported", {
   ds$CONSENT[5:10] <- 2
   ds.rev.fn <-  tempfile(fileext=".txt")
   write.table(ds, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
-              quote=FALSE, sep="\t")
+              quote=FALSE, sep="\t", na="")
 
   str <- "For variable CONSENT, the following values are undefined in the dd: 2"
   expect_warning(out <- check_subj(ds.rev.fn, subj_dd), str, fixed=TRUE)
-  expect_equal(out$vals_warnings, str)
+  expect_equal(out$dd_errors$vals_warnings, str)
   unlink(ds.rev.fn)
 })
