@@ -71,7 +71,8 @@ test_that("Mapping differences detected",{
   ssm_exp <- ds[,1:2]
   ssm_exp$SAMPLE_ID[3] <- "S999"
   out <- check_ssm(ssm_ds, ssm_exp=ssm_exp)
-  expect_equivalent(out$ssm_diffs, data.frame(SUBJECT_ID="3", SAMPLE_ID="S999"))
+  expect_equivalent(out$ssm_diffs,
+                    data.frame(SUBJECT_ID="3", SAMPLE_ID="S999", stringsAsFactors=FALSE))
 })
 
 test_that("Non TOPMed sample uses are detected",{
@@ -86,6 +87,7 @@ test_that("Discrepant sample uses are detected",{
   expect_equal(nrow(out$sampuse_diffs), 12)
 
   # data frame of sample uses values
+  ds <- .read_ds_file(ssm_ds)  
   samp_use <- ds[,c(2,5)]
   samp_use$SAMPLE_USE[1:2] <- "Array_SNP"
   out <- check_ssm(ssm_ds, sample_use=samp_use)

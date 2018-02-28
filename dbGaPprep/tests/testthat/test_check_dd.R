@@ -62,19 +62,22 @@ test_that("Undefined encoded vars in DS returns warning", {
   dd <- .read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL
 
-  # one encoded var  
+  # one encoded var
+  ds.save <- ds
   ds$IS_TUMOR[sample(1:nrow(ds),4)] <- "M"
   str <- "For variable IS_TUMOR, the following values are undefined in the dd: M"
   expect_warning(out <- .check_dd(dd, ds), str, fixed=TRUE)
   expect_equal(out$vals_warnings, str)
 
   # two encoded vars
+  ds <- ds.save
   dd[9,15:16] <- c("G2=grade2", "G3=grade3")
-  str2 <- "For variable TUMOR_GRADE, the following values are undefined in the dd: N/A, G4, GX"
-  expect_warning(out <- .check_dd(dd, ds), str)
-  expect_warning(out <- .check_dd(dd, ds), str2)  
-  expect_equal(out$vals_warnings[1], str)
-  expect_equal(out$vals_warnings[2], str2)
+  str2 <- "For variable TUMOR_GRADE, the following values are undefined in the dd: G4"
+  str3 <- "For variable TUMOR_GRADE, the following values are undefined in the dd: GX"  
+  expect_warning(out <- .check_dd(dd, ds), str2)
+  expect_warning(out <- .check_dd(dd, ds), str3)  
+  expect_equal(out$vals_warnings[1], str2)
+  expect_equal(out$vals_warnings[2], str3)
 })
 
 

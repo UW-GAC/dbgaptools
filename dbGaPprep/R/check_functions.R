@@ -390,7 +390,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 
 
   # if list is empty, return NULL
-  if(lenght(ssm_report) == 0) ssm_report <- NULL
+  if(length(ssm_report) == 0) ssm_report <- NULL
   
   return(ssm_report)
 }

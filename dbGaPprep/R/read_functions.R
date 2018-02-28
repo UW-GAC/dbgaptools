@@ -90,10 +90,12 @@
     col_classes <- rep("character", length(header))
     # suppressWarnings because we get cols  =  3 != length(data)  =  4 when there are
     # missing end delimiters. unfortunately we have to suppress *all* warnings
-    dat <- suppressWarnings(utils::read.table(filename, header = FALSE, sep = "\t", as.is = TRUE,
-                                        check.names = FALSE, skip = nskip + 1, fill = TRUE,
-                                        strip.white = TRUE, quote = "", comment.char = "",
-                                        colClasses = col_classes, na.strings = ""))
+    dat <- suppressWarnings(utils::read.table(filename, header = FALSE, sep = "\t",
+                                              as.is = TRUE, check.names = FALSE,
+                                              skip = nskip + 1, fill = TRUE,
+                                              strip.white = TRUE, quote = "",
+                                              comment.char = "", colClasses = col_classes,
+                                              na.strings = c("","NA","N/A","na","n/a")))
     names(dat) <- header
     ## # deal with extra delimiters at end of line. thanks, phs001013.
     ## extra_columns <- is.na(names(dat))
