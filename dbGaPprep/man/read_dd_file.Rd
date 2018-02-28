@@ -16,6 +16,6 @@ A data frame from the file
 Read data dictionary file
 }
 \details{
-Expects .txt or .xlsx file. 
+Expects (tab-delimited) .txt or .xlsx file. 
 dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 }

@@ -19,10 +19,10 @@ check_subj(dsfile, ddfile = NULL, subj_exp = NULL,
 \value{
 subj_report, a list of the following issues (when present):
 \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
-\item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted.}
+\item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted}
 \item{dd_errors}{Differences in fields between data file and data dictionary}
-\item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
-\item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+\item{extra_subjects}{Subjects in data file missing from \code{subj_exp}}
+\item{missing_subjects}{Subjects in \code{subj_exp} missing from data file}
 \item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}
 \item{consent_nonints}{List of non-integer consent values.}
 \item{potential_pheno_vars}{List of potential phenotype variable names in DS. Note phenotype should only be in one of these two files: phenotype file or subject consent file.}
@@ -31,12 +31,15 @@ subj_report, a list of the following issues (when present):
 Check contents of a subject consent file for dbGaP posting.
 }
 \details{
+The subject consent file should be a tab-delimited .txt file.
 When (\code{subj_exp != NULL}), checks for presence of expected subject IDs,
 and correspondence between subject ID and consent value.
-If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID, returns a warning
+If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID is present, returns a warning
 indicating that both variables must be submitted together.
-Checks that all consent groups are coded using an integer(1, 2, 3, etc).
+Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
-correspondence between column names in data file and entries in data dictionary.
+for agreement between data file and data dictionary.
+Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP automatically codes as subjects used as genotyping controls and/or pedigree linking members.
+Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

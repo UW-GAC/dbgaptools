@@ -4,29 +4,40 @@
 \alias{.check_dd}
 \title{Check data dictionary (generic)}
 \usage{
-.check_dd(dd, ds = NULL)
+.check_dd(dd, ds = NULL, dstype)
 }
 \arguments{
 \item{dd}{Data dictionary (DD) object}
 
 \item{ds}{Corresponding dataset (DS) object}
+
+\item{dstype}{Type of corresponding DS file, one of "pheno","ped","sattr","ssm","subj."}
 }
 \value{
 dd_report, a list of the following issues (when present):
 \item{lowercase}{Logical flag indicating non-upper case variable names}
 \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
-\item{missing_vars}{Missing and required variables}
+\item{missing_reqvars}{Missing and required variables, based on dstype}
 \item{extra_vars}{Extra variables}
 \item{vals_warnings}{Vector of warnings about VALUES columns}
 \item{missing_dsvars}{Variables present in DS but not defined in DD}
-\item{min_errs}{Variables for which DS value are < DD MIN}
-\item{max_errs}{Variables for which DS value are > DD MAX}
+\item{min_errors}{Variables for which DS value are < DD MIN}
+\item{max_errors}{Variables for which DS value are > DD MAX}
 \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present}
 }
 \description{
 Check data dictionary (generic)
 }
 \details{
+Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 Reports errors or issues with DD file.
 When the corresponding DS file is also provided, checks for consistency between the two.
+
+Even if DS file is not provided, (\code{ds == NULL}), the (\code{dstype}) must
+be specified to check for customize check for UNITS and VALUES columns:
+pheno = phenotype DS; ped = pedigree DS, sattr =sample attributes DS, ssm=sample-subject mapping DS, subj=subject consent DS.
+Note VALUES are considered required for pheno, ped, sattr, and subj DS types.
+Additionally, UNITS are considered required for pheno and sattr DS types.
+Note some studies may not actually require VALUES and UNITS in these files types,
+but when missing they are reported out here for convenience.
 }

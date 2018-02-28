@@ -35,12 +35,12 @@ ssm_report, a list of the following issues (when present):
 \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
 \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
 \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
-\item{missing_topmed_vars}{Missing and required variables for TOPMed}
 }
 \description{
 Check contents of a sample subject mapping file for dbGaP posting.
 }
 \details{
+The sample subject mapping file should be a tab-delimited .txt file.
 When (\code{ssm_exp != NULL}), checks for expected correspondence between
 SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
@@ -52,4 +52,5 @@ other records in terms of checking for missing or extra subjects or samples.
 
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 correspondence between column names in data file and entries in data dictionary.
+Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

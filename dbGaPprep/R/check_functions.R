@@ -2,18 +2,25 @@
 #'
 #' @param dd Data dictionary (DD) object
 #' @param ds Corresponding dataset (DS) object
-#' @param pheno_dd Logical on whether this is a DD for a phenotype file.
+#' @param dstype Type of corresponding DS file, one of "pheno","ped","sattr","ssm","subj."
 #'
 #' @details
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #' Reports errors or issues with DD file.
 #' When the corresponding DS file is also provided, checks for consistency between the two.
-#' If \code{pheno_dd=TRUE}, checks for required UNITS variable.
+#'
+#' Even if DS file is not provided, (\code{ds == NULL}), the (\code{dstype}) must
+#' be specified to check for customize check for UNITS and VALUES columns:
+#' pheno = phenotype DS; ped = pedigree DS, sattr =sample attributes DS, ssm=sample-subject mapping DS, subj=subject consent DS.
+#' Note VALUES are considered required for pheno, ped, sattr, and subj DS types.
+#' Additionally, UNITS are considered required for pheno and sattr DS types.
+#' Note some studies may not actually require VALUES and UNITS in these files types,
+#' but when missing they are reported out here for convenience.
 #' 
 #' @return dd_report, a list of the following issues (when present):
 #' \item{lowercase}{Logical flag indicating non-upper case variable names}
 #' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
-#' \item{missing_reqvars}{Missing and required variables}
+#' \item{missing_reqvars}{Missing and required variables, based on dstype}
 #' \item{extra_vars}{Extra variables}
 #' \item{vals_warnings}{Vector of warnings about VALUES columns}
 #' \item{missing_dsvars}{Variables present in DS but not defined in DD}
@@ -23,7 +30,11 @@
 #'
 #' @rdname check_dd
 
-.check_dd <- function(dd, ds=NULL, pheno_dd=FALSE){
+.check_dd <- function(dd, ds=NULL, dstype){
+
+  # check for required
+  dstypes <- c("pheno","ped","sattr","ssm","subj")
+  if(!dstype %in% dstypes) stop("Please specify dstype, one of: ", paste(dstypes, collapse=", "))
 
   # all colnames should be upper case
   lowercase <- NULL
@@ -40,12 +51,18 @@
     warning("First two columns required to be 'VARNAME' and 'VARDESC'")
   }
 
-  # required columns
-  req_vars <- c("VARNAME","VARDESC", "VALUES")
-  # need to ask dbGaP about this
-  if(pheno_dd) req_vars <- c(req_vars, "UNITS")
-  miss_vars <- setdiff(req_vars, names(dd))
-  missing_reqvars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+  ### required columns, based on DS type
+  req_vars <- c("VARNAME","VARDESC")
+
+  # consent will always require encoded values
+  # sex likely will (in pedigree and pheno)
+  if(dstype %in% c("ped","pheno","sattr", "subj")) req_vars <- c(req_vars, "VALUES")
+
+  # add UNITS for sample attributes and pheno
+  if(dstype %in% c("pheno","sattr")) req_vars <- c(req_vars, "UNITS")
+  
+  missing_reqvars <- setdiff(req_vars, names(dd))
+  if(length(missing_reqvars) %in% 0) missing_reqvars <- NA
 
   # check existing named columns against all possible columns
   # if there are trailing columns, they are likely because of encoded values -
@@ -195,9 +212,7 @@
 
   if(!is.null(lowercase)) dd_report$lowercase <- lowercase
   if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
-  if(!is.null(missing_reqvars) & !is.na(missing_reqvars)) {
-    dd_report$missing_reqvars <- missing_reqvars
-  }
+  if(sum(!is.na(missing_reqvars)) > 0) dd_report$missing_reqvars <- missing_reqvars
   if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
   if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
   if(!is.null(extra_ddvars)) dd_report$extra_ddvars <- extra_ddvars
@@ -292,7 +307,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   dd_errors <- NULL
   if(!is.null(ddfile)){
     dd <- .read_dd_file(ddfile)
-    dd_errors <- .check_dd(dd, ds=ds)
+    dd_errors <- .check_dd(dd, ds=ds, dstype="ssm")
     # TO DO - need to capture all the 'warning' messages from .check_dd. tryCatch?
   }
 
@@ -461,7 +476,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   dd_errors <- NULL
   if(!is.null(ddfile)){
     dd <- .read_dd_file(ddfile)
-    dd_errors <- .check_dd(dd, ds=ds)
+    dd_errors <- .check_dd(dd, ds=ds, dstype="sattr")
   }  
 
   # check for required variables
@@ -581,16 +596,19 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   alias_vars <- c("SUBJECT_SOURCE","SOURCE_SUBJECT_ID")
   alias_vars_pres <- intersect(alias_vars, names(ds))
   alias_vars_miss <- setdiff(alias_vars, names(ds))
-  if(length(alias_vars_pres) > 0 & length(alias_vars_miss) > 0 ){
-    warning("Datafile has ", alias_vars_pres,", but missing ",alias_vars_miss)
-    alias_missvar <- TRUE
+  if(length(alias_vars_pres) > 0 ) {
+    message("Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value such as NA, N/A, etc.")
+    if(length(alias_vars_miss) > 0 ){
+      warning("Datafile has ", alias_vars_pres,", but missing ",alias_vars_miss)
+      alias_missvar <- TRUE
+    }
   }
 
   # read in data dictionary if provided
   dd_errors <- NULL
   if(!is.null(ddfile)){
     dd <- .read_dd_file(ddfile)
-    dd_errors <- .check_dd(dd, ds=ds)
+    dd_errors <- .check_dd(dd, ds=ds, dstype="subj")
 
     # for subject consent file, dbGaP will define consent=0 for user
     # remove this error (but not other CONSENT mapping errors)

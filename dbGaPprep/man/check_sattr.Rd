@@ -12,7 +12,7 @@ check_sattr(dsfile, ddfile = NULL, samp_exp = NULL,
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{samp_exp}{List of expected sample ID}
+\item{samp_exp}{List of expected sample IDs}
 
 \item{sampleID_col}{Column name for sample-level ID}
 
@@ -32,7 +32,12 @@ satt_report, a list of the following issues (when present):
 Check contents of a sample attributes file for dbGaP posting.
 }
 \details{
+The sample attributes file should be a tab-delimited .txt file.
 When (\code{topmed = TRUE}) checks presence of additional, TOPMed-specific
 sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 TOPMed_Project, Study_Name.
+
+If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+correspondence between column names in data file and entries in data dictionary.
+Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }
