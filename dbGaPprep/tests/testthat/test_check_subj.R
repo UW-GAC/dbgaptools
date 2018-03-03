@@ -60,6 +60,11 @@ test_that("Presence of only one alias column is detected",{
   expect_true(out$alias_missvar)
 })
 
+test_that("Message about blanks in SOURCE_SUBJECT_ID is returned", {
+  str <- "Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value such as NA, N/A, etc."
+  expect_message(out <- check_subj(subj_ds), str, fixed=TRUE)
+})
+
 test_that("Undefined CONSENT=0 returns warning but no dd_error output",{
   str <- "For variable CONSENT, the following values are undefined in the dd: 0"
   expect_warning(out <- check_subj(subj_ds, subj_dd), str, fixed=TRUE)

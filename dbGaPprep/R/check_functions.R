@@ -214,12 +214,12 @@
   if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
   if(sum(!is.na(missing_reqvars)) > 0) dd_report$missing_reqvars <- missing_reqvars
   if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
+  if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings  
   if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
   if(!is.null(extra_ddvars)) dd_report$extra_ddvars <- extra_ddvars
-  if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings
+  if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
   if(!is.null(min_errors)) dd_report$min_errors <- min_errors
   if(!is.null(max_errors)) dd_report$max_errors <- max_errors  
-  if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
 
   # if list is empty, return NULL
   if(length(dd_report) == 0) dd_report <- NULL
@@ -287,7 +287,14 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
   if(sampleID_col != "SAMPLE_ID"){
     warning("Note preferred sample-level ID column name is 'SAMPLE_ID'")
   }
-
+  
+  # check for required variables
+  # req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
+  # allow for other ID names
+  req_vars <- c(subjectID_col, sampleID_col, "SAMPLE_USE")
+  miss_vars <- setdiff(req_vars, names(ds))
+  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+  
   # check for duplicated sample IDs
   samplist <- ds[,sampleID_col]
   dup_samples <- samplist[duplicated(samplist)]
@@ -374,13 +381,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
     }
   }
 
-  # check for required variables
-  # req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
-  # allow for other ID names
-  req_vars <- c(subjectID_col, sampleID_col, "SAMPLE_USE")
-  miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
-  
+
   # create and return results list
   ssm_report <- list()
 
@@ -455,6 +456,11 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   if(sampleID_col != "SAMPLE_ID"){
     warning("Note preferred sample-level ID column name is 'SAMPLE_ID'")
   }
+
+  # check for required variables
+  req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","HISTOLOGICAL_TYPE","IS_TUMOR")
+  miss_vars <- setdiff(req_vars, names(ds))
+  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)  
   
   # check for duplicated sample IDs
   # note might be acceptable where samples have a series of measurements,
@@ -478,11 +484,6 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
     dd <- .read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds, dstype="sattr")
   }  
-
-  # check for required variables
-  req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","HISTOLOGICAL_TYPE","IS_TUMOR")
-  miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
   ## ## removing this assumption
   ## # most common analyte type is "DNA"
@@ -525,8 +526,6 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
   
   return(satt_report)
 }
-
-# check_subj
 
 #' Check subject consent file
 #'
@@ -576,6 +575,11 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   # cannot proceed without consent col
   if(!is.element(consent_col, names(ds))) {
     stop("Please check that dsfile contains column for consent")
+  }
+
+  # issue warning for non-standard subjectID_col
+  if(subjectID_col != "SUBJECT_ID"){
+    warning("Note preferred subject-level ID column name is 'SUBJECT_ID'")
   }
   
   # check CONSENT colum name
@@ -672,5 +676,137 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   
 } # end function definition
 
+
+#' Check pedigree file
+#'
+#' Check contents of a pedigree file for dbGaP posting
+#'
+#' @param dsfile Path to the data file on disk
+#' @param ddfile Path to the data dictionary file on disk
+#' @param subj_exp Vector of expected subject IDs
+#' @param subjectID_col Column name for subject-level ID
+#' @param check_incons Logical whether to report pedigree inconsistencies, using \code{GWASTools pedigreeCheck}
+#' @param male Encoded value for male in SEX column
+#' @param female  Encoded value for female in SEX column
+#'
+#' @details
+#' If an MZ twin column is detected, returns issues including column name other than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic twins are included (\code{chk_sex=TRUE}).
+#' 
+#' @return ped_report, a list of the following issues (when present):
+#' \item{lowercase}{Logical flag indicating non-upper case variable names}
+#' \item{missing_vars}{Missing and required variables}
+#' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
+#' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+#' \item{mztwin_errors}{List of potential errors with MZ twins}
+#'
+#' @rdname check_ped
+
+check_ped <- function(dsfile, ddfile=NULL, subj_exp=NULL,
+                      subjectID_col="SUBJECT_ID", check_incons=TRUE,
+                      male=1, female=2){
+
+  # read in data file
+  ds <- .read_ds_file(dsfile)
+
+  # cannot proceed without subject ID col
+  if(!is.element(subjectID_col, names(ds))) {
+    stop("Please check that dsfile contains column for subject-level ID")
+  }
+
+  # issue warning for non-standard subjectID_col
+  if(subjectID_col != "SUBJECT_ID"){
+    warning("Note preferred subject-level ID column name is 'SUBJECT_ID'")
+  }
+
+  # all colnames should be upper case
+  lowercase <- NULL
+  upp <- toupper(names(ds))
+  if(sum(upp != names(ds)) > 0 ){
+    warning("All column names should be UPPER CASE")
+    names(ds) <- upp
+    lowercase <- TRUE
+  }
+  
+  # check for required variable names
+  req_vars <- c(subjectID_col, "FAMILY_ID","FATHER","MOTHER","SEX")
+  miss_vars <- setdiff(req_vars, names(ds))
+  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+  
+  # read in data dictionary if provided
+  dd_errors <- NULL
+  if(!is.null(ddfile)){
+    dd <- .read_dd_file(ddfile)
+    dd_errors <- .check_dd(dd, ds=ds, dstype="ped")
+  }
+
+  # check male and female values
+  sexvals <- with(ds, unique(SEX))
+
+  # perform GWASTools pedigree check
+  if(check_incons){
+    if(!is.na(missing_vars)){
+      warning("Cannot check for pedigree inconsistencies until missing and required variables are added")
+    } else {
+      # prepare pedigree
+      ped <- ds[,c("FAMILY_ID",subjectID_col,"MOTHER","FATHER","SEX")]
+      names(ped) <- tolower(names(ped))
+      names(ped)[1:2] <- c("family","individ")
+      ped$sex[ped$sex %in% male] <- "M"
+      ped$sex[ped$sex %in% female] <- "F"
+      incon_report <- GWASTools::pedigreeCheck(ped)
+    }
+  }
+
+  # check for expected subjects
+  missing_subjects <- extra_subjects <- NULL
+  if(!is.null(subj_exp)){
+    missing_subjects <- setdiff(subj_exp, ds[,subjectID_col])
+    extra_subjects <- setdiff(ds[,subjectID_col], subj_exp)    
+  }
+  
+  # check for MZ twin column
+  mztwin_errors <- list()
+  twincol <- names(ds)[grepl("twin|mz", names(ds), ignore.case=TRUE)]
+  if(length(twincol) > 0){
+    if(twincol != "MZ_TWIN_ID") {
+      mztwin_errors$colname <- "MZ twin column should be named 'MZ_TWIN_ID'"
+    }
+    
+    twins_dat <- ds[!is.na(ds[,twincol]),]
+    twins_dat$chk_sex <- twins_dat$chk_subjectID <- twins_dat$chk_family <- FALSE
+    twins <- unlist(unique(twins_dat[twincol]))
+    
+    for(tw in twins) {
+      idx <- which(twins_dat[,twincol] %in% tw)
+      # twins should be in same family
+      if(length(unique(twins_dat$FAMILY_ID[idx])) > 1) twins_dat$chk_family <- TRUE
+      # twins should have different subject IDs (could be triplets)
+      if(length(unique(twins_dat[idx, subjectID_col])) != length(idx)) twins_dat$chk_subjectID <- TRUE
+      # twins should be the same sex (otherwise could be dizygotic twin
+      if(length(unique(twins_dat$SEX[idx])) > 1) twins_dat$chk_sex <- TRUE
+    } # end loop through twins
+
+    # if errors, return twins.dat
+    errs <- max(rowSums(twins_dat[,grep("chk",names(twins_dat))])) > 0
+    if(errs) mztwin_errors$twins_dat <- twins_dat
+  } # if twin col is present
+
+  # create and return results list
+  ped_report <- list()
+
+  if(!is.null(lowercase)) ped_report$lowercase <- lowercase
+  if(!is.na(missing_vars)) ped_report$missing_vars <- missing_vars
+  if(!is.null(dd_errors)) ped_report$dd_errors <- dd_errors
+  if(!is.null(incon_report)) ped_report$incon_report
+  if(!is.null(extra_subjects)) ped_report$extra_subjects <- extra_subjects
+  if(!is.null(missing_subjects)) ped_report$missing_sujbects <- missing_subjects
+  if(length(mztwin_errors) > 0) ped_report$mztwin_errors <- mztwin_errors
+
+  # if list is empty, return NULL
+  if(length(ped_report) == 0) ped_report <- NULL
+
+  return(ped_report)
+}
 
 
