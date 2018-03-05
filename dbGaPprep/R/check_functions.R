@@ -687,7 +687,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
 #' @param subjectID_col Column name for subject-level ID
 #' @param check_incons Logical whether to report pedigree inconsistencies, using \code{GWASTools pedigreeCheck}
 #' @param male Encoded value for male in SEX column
-#' @param female  Encoded value for female in SEX column
+#' @param female Encoded value for female in SEX column
 #'
 #' @details
 #' If an MZ twin column is detected, returns issues including column name other than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic twins are included (\code{chk_sex=TRUE}).
@@ -698,6 +698,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
 #' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+#' \item{extra_sexvals}{Additional values in SEX column beyond what's specified by \code{male} and \code{female} function arguments}
 #' \item{mztwin_errors}{List of potential errors with MZ twins}
 #'
 #' @rdname check_ped
@@ -730,8 +731,8 @@ check_ped <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   
   # check for required variable names
   req_vars <- c(subjectID_col, "FAMILY_ID","FATHER","MOTHER","SEX")
-  miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+  missing_vars <- setdiff(req_vars, names(ds))
+  if(length(missing_vars) %in% 0) missing_vars <- NULL
   
   # read in data dictionary if provided
   dd_errors <- NULL
@@ -742,12 +743,16 @@ check_ped <- function(dsfile, ddfile=NULL, subj_exp=NULL,
 
   # check male and female values
   sexvals <- with(ds, unique(SEX))
+  extra_sexvals <- setdiff(sexvals, c(male, female))
+  if(length(extra_sexvals) %in% 0) extra_sexvals <- NULL
 
   # perform GWASTools pedigree check
+  incon_report <- NULL
   if(check_incons){
-    if(!is.na(missing_vars)){
+    if(!is.null(missing_vars)){
       warning("Cannot check for pedigree inconsistencies until missing and required variables are added")
     } else {
+      message("\nRunning GWASTools pedigree check\n")
       # prepare pedigree
       ped <- ds[,c("FAMILY_ID",subjectID_col,"MOTHER","FATHER","SEX")]
       names(ped) <- tolower(names(ped))
@@ -780,28 +785,29 @@ check_ped <- function(dsfile, ddfile=NULL, subj_exp=NULL,
     for(tw in twins) {
       idx <- which(twins_dat[,twincol] %in% tw)
       # twins should be in same family
-      if(length(unique(twins_dat$FAMILY_ID[idx])) > 1) twins_dat$chk_family <- TRUE
+      if(length(unique(twins_dat$FAMILY_ID[idx])) > 1) twins_dat$chk_family[idx] <- TRUE
       # twins should have different subject IDs (could be triplets)
-      if(length(unique(twins_dat[idx, subjectID_col])) != length(idx)) twins_dat$chk_subjectID <- TRUE
+      if(length(unique(twins_dat[idx, subjectID_col])) != length(idx)) twins_dat$chk_subjectID[idx] <- TRUE
       # twins should be the same sex (otherwise could be dizygotic twin
-      if(length(unique(twins_dat$SEX[idx])) > 1) twins_dat$chk_sex <- TRUE
+      if(length(unique(twins_dat$SEX[idx])) > 1) twins_dat$chk_sex[idx] <- TRUE
     } # end loop through twins
 
     # if errors, return twins.dat
-    errs <- max(rowSums(twins_dat[,grep("chk",names(twins_dat))])) > 0
-    if(errs) mztwin_errors$twins_dat <- twins_dat
+    errSums <- rowSums(twins_dat[,grep("chk",names(twins_dat))])
+    if(max(errSums) > 0) mztwin_errors$twins_dat <- twins_dat[errSums > 0,]
   } # if twin col is present
 
   # create and return results list
   ped_report <- list()
 
   if(!is.null(lowercase)) ped_report$lowercase <- lowercase
-  if(!is.na(missing_vars)) ped_report$missing_vars <- missing_vars
+  if(!is.null(missing_vars)) ped_report$missing_vars <- missing_vars
   if(!is.null(dd_errors)) ped_report$dd_errors <- dd_errors
-  if(!is.null(incon_report)) ped_report$incon_report
+  if(!is.null(incon_report)) ped_report$incon_report <- incon_report
   if(!is.null(extra_subjects)) ped_report$extra_subjects <- extra_subjects
-  if(!is.null(missing_subjects)) ped_report$missing_sujbects <- missing_subjects
+  if(!is.null(missing_subjects)) ped_report$missing_subjects <- missing_subjects
   if(length(mztwin_errors) > 0) ped_report$mztwin_errors <- mztwin_errors
+  if(!is.null(extra_sexvals)) ped_report$extra_sexvals <- extra_sexvals
 
   # if list is empty, return NULL
   if(length(ped_report) == 0) ped_report <- NULL
