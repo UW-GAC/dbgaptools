@@ -15,10 +15,10 @@
 }
 \value{
 dd_report, a list of the following issues (when present):
-\item{lowercase}{Logical flag indicating non-upper case variable names}
-\item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
+\item{lowercase}{Logical flag indicating non-uppercase variable names}
 \item{missing_reqvars}{Missing and required variables, based on dstype}
 \item{extra_vars}{Extra variables}
+\item{uniquekey_flags}{Returns warning when UNIQUEKEY column is populated for file types other than phenotype (most common need for UNIQUEKEY) or sample attributes (which in some cases requires UNIQUEKEY). Returns warning if, in pheno or sattr dstypes, the UNIQUEKEY variable(s) do not specify unique rows in the DS.}
 \item{vals_warnings}{Vector of warnings about VALUES columns}
 \item{missing_dsvars}{Variables present in DS but not defined in DD}
 \item{min_errors}{Variables for which DS value are < DD MIN}
@@ -30,6 +30,7 @@ Check data dictionary (generic)
 }
 \details{
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
+The first two columns must be 'VARNAME' and 'VARDESC' in order for checks to proceed.
 Reports errors or issues with DD file.
 When the corresponding DS file is also provided, checks for consistency between the two.
 

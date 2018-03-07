@@ -4,12 +4,14 @@
 \alias{.read_ds_file}
 \title{Read in a data file}
 \usage{
-.read_ds_file(filename, dd = FALSE)
+.read_ds_file(filename, dd = FALSE, na_vals = c("NA", "N/A", "na", "n/a"))
 }
 \arguments{
 \item{filename}{The path to the file on disk}
 
 \item{dd}{Logical, where \code{TRUE} indicates a data dictionary file}
+
+\item{na_vals}{Vector of strings that should be read in as NA/missing (see details)}
 }
 \value{
 A data frame from the file
@@ -18,8 +20,11 @@ A data frame from the file
 Works for tab-delimited (.txt) data files
 }
 \details{
-The only string considered to be NA is the blank string: "". "NA" does not necessarily indicate
-NA: for example, it could be an encoded value meaning "North America".
+Missing values: The blank string "" will always be considered an NA or missing value. Additional strings that should be read in as missing values can be specified in the \code{na_vals} argument.
+The default set of additional NA values is "NA","N/A","na","n/a."
+Users should change the default if these values represent something beside missing ---
+ for example, "NA" could be an encoded value meaning "North America".
+Users may wish to add a value to the list, e.g. \code{na_vals=c("NA","N/A","na","n/a", "9999")}.
 
 dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 }

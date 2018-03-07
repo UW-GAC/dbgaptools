@@ -6,6 +6,7 @@
 #'
 #' @details
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
+#' The first two columns must be 'VARNAME' and 'VARDESC' in order for checks to proceed.
 #' Reports errors or issues with DD file.
 #' When the corresponding DS file is also provided, checks for consistency between the two.
 #'
@@ -18,10 +19,10 @@
 #' but when missing they are reported out here for convenience.
 #' 
 #' @return dd_report, a list of the following issues (when present):
-#' \item{lowercase}{Logical flag indicating non-upper case variable names}
-#' \item{varname_vardesc}{Logical flag indicating first two variables are not VARNAME, VARDESC}
+#' \item{lowercase}{Logical flag indicating non-uppercase variable names}
 #' \item{missing_reqvars}{Missing and required variables, based on dstype}
 #' \item{extra_vars}{Extra variables}
+#' \item{uniquekey_flags}{Returns warning when UNIQUEKEY column is populated for file types other than phenotype (most common need for UNIQUEKEY) or sample attributes (which in some cases requires UNIQUEKEY). Returns warning if, in pheno or sattr dstypes, the UNIQUEKEY variable(s) do not specify unique rows in the DS.}
 #' \item{vals_warnings}{Vector of warnings about VALUES columns}
 #' \item{missing_dsvars}{Variables present in DS but not defined in DD}
 #' \item{min_errors}{Variables for which DS value are < DD MIN}
@@ -32,10 +33,10 @@
 
 .check_dd <- function(dd, ds=NULL, dstype){
 
-  # check for required
+  # check for required dstype argument
   dstypes <- c("pheno","ped","sattr","ssm","subj")
   if(!dstype %in% dstypes) stop("Please specify dstype, one of: ", paste(dstypes, collapse=", "))
-
+  
   # all colnames should be upper case
   lowercase <- NULL
   upp <- toupper(names(dd))
@@ -45,10 +46,9 @@
     lowercase <- TRUE
   }
   
-  # required first two columns
-  varname_vardesc <- NULL
+  # required first two columns - needed to proceed with checks
   if(sum(names(dd)[1:2] != c("VARNAME","VARDESC")) > 0){
-    warning("First two columns required to be 'VARNAME' and 'VARDESC'")
+    stop("First two columns required to be 'VARNAME' and 'VARDESC'")
   }
 
   ### required columns, based on DS type
@@ -81,16 +81,34 @@
     extra_vars <- extra_cols
   }
 
+  # return flag if UNIQUEKEY appears in file other than phenotype or sample attributes
+  uniquekey_flags <- list()
+  if("UNIQUEKEY" %in% names(dd)) {
+    uniqkey_cols <- dd$VARNAME[!is.na(dd$UNIQUEKEY)]
+    if(!is.element(dstype, c("pheno","sattr")) & length(uniqkey_cols) > 0 ){
+      uniquekey_flags[["wrong_dstype"]] <- paste("UNIQUEKEY columns(s) should not be defined for dstype", dstype)
+    }
+    # check for only "X" in the columns
+    uniqkey_marks <- unique(dd[dd$VARNAME %in% uniqkey_cols,"UNIQUEKEY"])
+    if(uniqkey_marks != "X") uniquekey_flags[["wrong_mark"]] <- "Only 'X' should be used to flag UNIQUE key columns"
+
+    # check that uniquekey columns are unique
+    if(!is.null(ds)){
+      ds.uniq <- ds[,uniqkey_cols,drop=FALSE]
+      if(nrow(ds.uniq) != nrow(unique(ds.uniq))){
+        uniquekey_flags[["notunique"]] <- paste0("UNIQUEKEY columns (",paste(uniqkey_cols, collapse=","),") do not specify unique records in DS")
+      } # if unique key is non-unique
+    } # if ds is also provided
+  } # end unique key columns
+  
   # prepare to collect series of warnings about VALUES column
-  vals_warnings <- NULL
+  vals_warnings <- list()
   
   # if VALUES col exists, needs to be last
-  warn0 <- warn1 <- warn2 <- NULL
   if("VALUES" %in% names(dd)){
     nnames <- length(names(dd)[!grepl("X__", names(dd))])
     if("VALUES" != names(dd)[nnames]){
-      warn0 <- "'VALUES' must be last column"
-      warning(warn0)
+      vals_warnings[["lastcol_warn"]]<- "'VALUES' must be last column"
     }
 
     # extract encoded values
@@ -114,8 +132,9 @@
         
         if(sum(Biobase::rowMax(eq_count) > 1) > 0){
           mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
-          warn1 <- paste(paste(mult_eq_vars,collapse="; "), "variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
-          warning(warn1)
+          str <- paste(paste(mult_eq_vars,collapse="; "), "variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
+          vals_warnings[["multiple_vals_warn"]] <- str
+
         }
 
         # if ds is also provided, check that all encoded values are defined
@@ -137,19 +156,13 @@
             var2 <- var2[!is.na(var2)]
             undef_vals <- setdiff(var1, var2)
             if(length(undef_vals) > 0){
-                for(undef in undef_vals){
-                  warn_undef <- paste0("For variable ", var,", the following values are undefined in the dd: ", undef)
-                  warning(warn_undef)
-                  warn2 <- c(warn2, warn_undef)
-                }
+                warn_undef <- paste0("For variable ", var,", the following values are undefined in the dd: ", paste(sort(undef_vals), collapse=" "))
+                vals_warnings[["undefined_vals_warn"]] <- warn_undef
             }
           } # loop through encoded vars
         } #  if dataset is provided
     } # if there are non-NA entires in VALUES column
   } # if VALUES col is present
-  
-  warns <- c(warn0, warn1, warn2)
-  if(length(warns) > 0) vals_warnings <- warns
 
   # if dataset provided:
   # check for all vars
@@ -177,9 +190,11 @@
       if(sum(!is.na(dd$MIN)) > 0){
           dd.tmp <- dd[!is.na(dd$MIN),c("VARNAME","MIN")]
           ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
+          # remove non-numeric entries from DD MIN (e.g., >, < .etc)
+          dd.tmp$MIN <- stringr::str_replace_all(dd.tmp$MIN, "[^[:digit:]]", "")
           # convert to numeric if necessary
           ds.tmp <- apply(ds.tmp, 2, as.numeric)
-          dd.tmp$min.ds <- apply(ds.tmp, 2, min)
+          dd.tmp$min.ds <- apply(ds.tmp, 2, min, na.rm=TRUE)
           range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(dd.tmp$MIN)]
           if(length(range_err) > 0) min_errors <- range_err
         } # if non-NA MINS
@@ -189,9 +204,11 @@
       if(sum(!is.na(dd$MAX)) > 0) {
           dd.tmp <- dd[!is.na(dd$MAX),c("VARNAME","MAX")]
           ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
-          # convert to numeric if necessary
+          # remove non-numeric entries from DD MAX
+          dd.tmp$MAX <- stringr::str_replace_all(dd.tmp$MAX, "[^[:digit:]]", "")
+          # convert DS cols to numeric class
           ds.tmp <- apply(ds.tmp, 2, as.numeric)
-          dd.tmp$max.ds <- apply(ds.tmp, 2, max)
+          dd.tmp$max.ds <- apply(ds.tmp, 2, max, na.rm=TRUE)
           range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(dd.tmp$MAX)]
           if(length(range_err) > 0) max_errors <- range_err
         } # if non-NA MAX
@@ -214,7 +231,8 @@
   if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
   if(sum(!is.na(missing_reqvars)) > 0) dd_report$missing_reqvars <- missing_reqvars
   if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
-  if(!is.null(vals_warnings))  dd_report$vals_warnings <- vals_warnings  
+  if(length(uniquekey_flags) > 0) dd_report$uniquekey_flags <- uniquekey_flags
+  if(length(vals_warnings) > 0)  dd_report$vals_warnings <- vals_warnings  
   if(!is.null(missing_dsvars))  dd_report$missing_dsvars <- missing_dsvars
   if(!is.null(extra_ddvars)) dd_report$extra_ddvars <- extra_ddvars
   if(!is.null(illegal_vars))  dd_report$illegal_vars <- illegal_vars
@@ -233,6 +251,7 @@
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
 #' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)
 #' @param sampleID_col Column name for sample-level ID
 #' @param subjectID_col Column name for subject-level ID
@@ -268,12 +287,14 @@
 #' 
 #' @rdname check_ssm
 
-check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
+check_ssm <- function(dsfile, ddfile=NULL,
+                      na_vals=c("NA","N/A","na","n/a"),
+                      ssm_exp=NULL,
                       sampleID_col="SAMPLE_ID", subjectID_col="SUBJECT_ID",
                       sample_uses=NULL, topmed=FALSE){
 
   # read in data file
-  ds <- .read_ds_file(dsfile)
+  ds <- .read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject and sample ID cols
   if(!is.element(subjectID_col, names(ds)) | !is.element(sampleID_col, names(ds))){
@@ -417,6 +438,7 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
 #' @param samp_exp List of expected sample IDs
 #' @param sampleID_col Column name for sample-level ID
 #' @param topmed Logical to indicate TOPMed study
@@ -441,11 +463,13 @@ check_ssm <- function(dsfile, ddfile=NULL, ssm_exp=NULL,
 #' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
 
 # check_sattr
-check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
+check_sattr <- function(dsfile, ddfile=NULL,
+                        na_vals=c("NA","N/A","na","n/a"),
+                        samp_exp=NULL,
                         sampleID_col="SAMPLE_ID", topmed=FALSE){
 
   # read in data file
-  ds <- .read_ds_file(dsfile)
+  ds <- .read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without sample ID col
   if(!is.element(sampleID_col, names(ds))){
@@ -533,6 +557,7 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
 #' @param subj_exp Dataframe of expected subject ID (column 1) and consent value (column 2)
 #' @param subjectID_col Column name for subject-level ID
 #'
@@ -561,11 +586,13 @@ check_sattr <- function(dsfile, ddfile=NULL, samp_exp=NULL,
 #' 
 #' @rdname check_subj
 
-check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
-                      subjectID_col="SUBJECT_ID", consent_col="CONSENT"){
+check_subj <- function(dsfile, ddfile=NULL,
+                       na_vals=c("NA","N/A","na","n/a"),
+                       subj_exp=NULL,
+                       subjectID_col="SUBJECT_ID", consent_col="CONSENT"){
 
   # read in data file
-  ds <- .read_ds_file(dsfile)
+  ds <- .read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject ID col
   if(!is.element(subjectID_col, names(ds))) {
@@ -601,7 +628,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   alias_vars_pres <- intersect(alias_vars, names(ds))
   alias_vars_miss <- setdiff(alias_vars, names(ds))
   if(length(alias_vars_pres) > 0 ) {
-    message("Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value such as NA, N/A, etc.")
+    message("Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value strings such as NA, N/A, etc.")
     if(length(alias_vars_miss) > 0 ){
       warning("Datafile has ", alias_vars_pres,", but missing ",alias_vars_miss)
       alias_missvar <- TRUE
@@ -615,18 +642,28 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
     dd_errors <- .check_dd(dd, ds=ds, dstype="subj")
 
     # for subject consent file, dbGaP will define consent=0 for user
-    # remove this error (but not other CONSENT mapping errors)
-    str <- paste0("For variable ",consent_col,", the following values are undefined in the dd: 0")
-    val_warns <-  dd_errors$vals_warnings
-    val_warns <- val_warns[which(val_warns != str)]
+    # remove this error (but not other mapping errors for consent or othe rvars)
+    str <- paste0("For variable ",consent_col, ", the following values are undefined in the dd:")
+    val_warns <- dd_errors$vals_warnings$undefined_vals_warn
 
-    dd_errors$vals_warnings <- val_warns
+    # only clean up this warning if it exists
+    if(!is.null(val_warns)) {
+      # set aside any other varnames with undefined values warning
+      keep_warns <- val_warns[!grepl(str, val_warns)]
+      if(length(keep_warns) %in% 0) keep_warns <- NULL
+
+      # strip off the "0" from list of undefined consent values
+      fix_warns <- gsub(": 0", ":", val_warns[grepl(str, val_warns)])
+      if(length(fix_warns) > 0 & fix_warns == str) fix_warns <- NULL
+
+      dd_errors$vals_warnings$undefined_vals_warn <- c(fix_warns, keep_warns)
     
-    # if that's all that was there dd__errors$vals_warnings, remove
-    if(length(dd_errors$vals_warnings) == 0 ) dd_errors$vals_warnings <- NULL
+      # if that's all that was in dd_errors$vals_warnings, remove
+       if(length(dd_errors$vals_warnings) %in% 0) dd_errors$vals_warnings <- NULL
 
-    # if that's all that was in dd_errors, remove
-    if(length(dd_errors) == 0) dd_errors <- NULL
+      # if that's all that was in dd_errors, remove
+      if(length(dd_errors) == 0) dd_errors <- NULL
+    }
   }
 
   # check for presence of expected subjects, with expected consent values
@@ -683,6 +720,7 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
 #' @param subjectID_col Column name for subject-level ID
 #' @param check_incons Logical whether to report pedigree inconsistencies, using \code{GWASTools pedigreeCheck}
@@ -691,6 +729,10 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
 #'
 #' @details
 #' If an MZ twin column is detected, returns issues including column name other than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic twins are included (\code{chk_sex=TRUE}).
+#'
+#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+#' correspondence between column names in data file and entries in data dictionary.
+#' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #' 
 #' @return ped_report, a list of the following issues (when present):
 #' \item{lowercase}{Logical flag indicating non-upper case variable names}
@@ -703,12 +745,14 @@ check_subj <- function(dsfile, ddfile=NULL, subj_exp=NULL,
 #'
 #' @rdname check_ped
 
-check_ped <- function(dsfile, ddfile=NULL, subj_exp=NULL,
+check_ped <- function(dsfile, ddfile=NULL,
+                      na_vals=c("NA","N/A","na","n/a"),
+                      subj_exp=NULL,
                       subjectID_col="SUBJECT_ID", check_incons=TRUE,
                       male=1, female=2){
 
   # read in data file
-  ds <- .read_ds_file(dsfile)
+  ds <- .read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject ID col
   if(!is.element(subjectID_col, names(ds))) {
@@ -815,4 +859,78 @@ check_ped <- function(dsfile, ddfile=NULL, subj_exp=NULL,
   return(ped_report)
 }
 
+#' Check phenotype file
+#'
+#' Check contents of a phenotype file for dbGaP posting
+#'
+#' @param dsfile Path to the data file on disk
+#' @param ddfile Path to the data dictionary file on disk
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
+#' @param subj_exp Vector of expected subject IDs
+#' @param subjectID_col Column name for subject-level ID
+#'
+#' @details
+#' Because of the variability of phenotype file contents, the only required column checked here is the subject-level ID. Note dbGaP requests variables (1) described in the study description and/or study config; (2) affection status, if not already included in the subject consent file; (3) sex; and (4) race/ethnicity/ancestry/heritage.
+#'
+#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+#' correspondence between column names in data file and entries in data dictionary.
+#' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
+#' 
+#' @return pheno_report, a list of the following issues (when present):
+#' \item{flag_nonuniq_subjID}{TRUE when subject ID column is not unique, which would require definition of UNIQUEKEY columns in the corresponding data dictionary}
+#' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
+#' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
+#'
+#' @rdname check_ped
 
+check_pheno <- function(dsfile, ddfile=NULL,
+                        na_vals=c("NA","N/A","na","n/a"),
+                        subj_exp=NULL,
+                        subjectID_col="SUBJECT_ID"){
+
+  # read in data file
+  ds <- .read_ds_file(dsfile, na_vals=na_vals)
+
+  # cannot proceed without subject ID col
+  if(!is.element(subjectID_col, names(ds))) {
+    stop("Please check that dsfile contains column for subject-level ID")
+  }
+
+  # issue warning for non-standard subjectID_col
+  if(subjectID_col != "SUBJECT_ID"){
+    warning("Note preferred subject-level ID column name is 'SUBJECT_ID'")
+  }  
+  
+  # issue warning if subject ID is not unique
+  dup_subjs <- sum(duplicated(ds[,subjectID_col])) > 0
+
+  # if unique key is specified but not actually unique, .check_dd will catch it
+
+  # read in data dictionary if provided
+  dd_errors <- NULL
+  if(!is.null(ddfile)){
+    dd <- .read_dd_file(ddfile)
+    dd_errors <- .check_dd(dd, ds=ds, dstype="pheno")
+  }
+
+  # check for expected subjects
+  missing_subjects <- extra_subjects <- NULL
+  if(!is.null(subj_exp)){
+    missing_subjects <- setdiff(subj_exp, ds[,subjectID_col])
+    extra_subjects <- setdiff(ds[,subjectID_col], subj_exp)    
+  }
+  
+  pheno_report <- list()
+
+  if(dup_subjs) pheno_report$flag_nonuniq_subjID <- dup_subjs
+  if(!is.null(dd_errors)) pheno_report$dd_errors <- dd_errors
+  if(!is.null(extra_subjects) & length(extra_subjects) > 0) pheno_report$extra_subjects <- extra_subjects
+  if(!is.null(missing_subjects) & length(missing_subjects) > 0) pheno_report$missing_subjects <- missing_subjects
+
+  # if list is empty, return NULL
+  if(length(pheno_report) == 0) pheno_report <- NULL
+
+  return(pheno_report)  
+
+}

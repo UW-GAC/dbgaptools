@@ -4,13 +4,15 @@
 \alias{check_subj}
 \title{Check subject consent file}
 \usage{
-check_subj(dsfile, ddfile = NULL, subj_exp = NULL,
-  subjectID_col = "SUBJECT_ID", consent_col = "CONSENT")
+check_subj(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
+  subj_exp = NULL, subjectID_col = "SUBJECT_ID", consent_col = "CONSENT")
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
 
 \item{ddfile}{Path to the data dictionary file on disk}
+
+\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})}
 
 \item{subj_exp}{Dataframe of expected subject ID (column 1) and consent value (column 2)}
 

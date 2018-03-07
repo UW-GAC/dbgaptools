@@ -45,10 +45,14 @@
 #'
 #' @param filename The path to the file on disk
 #' @param dd Logical, where \code{TRUE} indicates a data dictionary file
+#' @param na_vals Vector of strings that should be read in as NA/missing (see details)
 #'
 #' @details
-#' The only string considered to be NA is the blank string: "". "NA" does not necessarily indicate
-#' NA: for example, it could be an encoded value meaning "North America".
+#' Missing values: The blank string "" will always be considered an NA or missing value. Additional strings that should be read in as missing values can be specified in the \code{na_vals} argument.
+#' The default set of additional NA values is "NA","N/A","na","n/a."
+#' Users should change the default if these values represent something beside missing ---
+#'  for example, "NA" could be an encoded value meaning "North America".
+#' Users may wish to add a value to the list, e.g. \code{na_vals=c("NA","N/A","na","n/a", "9999")}.
 #'
 #' @return
 #' A data frame from the file
@@ -58,7 +62,7 @@
 #' 
 #' @rdname read_ds_file
 
-.read_ds_file <- function(filename, dd=FALSE) {
+.read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a")) {
 
   stopifnot(file.exists(filename))
 
@@ -95,7 +99,7 @@
                                               skip = nskip + 1, fill = TRUE,
                                               strip.white = TRUE, quote = "",
                                               comment.char = "", colClasses = col_classes,
-                                              na.strings = c("","NA","N/A","na","n/a")))
+                                              na.strings = c("", na_vals)))
     names(dat) <- header
     ## # deal with extra delimiters at end of line. thanks, phs001013.
     ## extra_columns <- is.na(names(dat))

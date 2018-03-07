@@ -4,14 +4,16 @@
 \alias{check_ssm}
 \title{Check sample subject mapping file}
 \usage{
-check_ssm(dsfile, ddfile = NULL, ssm_exp = NULL,
-  sampleID_col = "SAMPLE_ID", subjectID_col = "SUBJECT_ID",
-  sample_uses = NULL, topmed = FALSE)
+check_ssm(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
+  ssm_exp = NULL, sampleID_col = "SAMPLE_ID",
+  subjectID_col = "SUBJECT_ID", sample_uses = NULL, topmed = FALSE)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
 
 \item{ddfile}{Path to the data dictionary file on disk}
+
+\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})}
 
 \item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)}
 

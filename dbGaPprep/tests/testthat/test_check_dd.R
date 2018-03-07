@@ -11,7 +11,7 @@ test_that("Missing DS type argument stops with error", {
 
 test_that("Non-standard DS type argument stops with error",{
    dd <- .read_dd_file(ddfn)  
-  expect_error(.check_dd(dd, dstype="other"), "Please specify dstype, one of: pheno, ped, sattr, ssm, subj")
+   expect_error(.check_dd(dd, dstype="other"), "Please specify dstype, one of: pheno, ped, sattr, ssm, subj")
 })
 
 test_that("Non-uppercase column names returns a warning",{
@@ -21,15 +21,13 @@ test_that("Non-uppercase column names returns a warning",{
   expect_true(out$lowercase)
 })
 
-test_that("Missing and required columns returns a warning",{
+test_that("Missing and required columns stops with error",{
   dd <- .read_dd_file(ddfn)
   names(dd)[1] <- "VARIABLE"
   str <- "First two columns required to be 'VARNAME' and 'VARDESC'"
-  expect_warning(.check_dd(dd, dstype="sattr"), str)
+  expect_error(.check_dd(dd, dstype="sattr"), str)
   names(dd)[1:2] <- c("VARNAME","DESC")
-  expect_warning(out <- .check_dd(dd, dstype="sattr"), str, fixed=TRUE)
-
-  expect_equal(out$missing_reqvars, "VARDESC")
+  expect_error(out <- .check_dd(dd, dstype="sattr"), str, fixed=TRUE)
 })
 
 test_that("Extra variables are reported",{
@@ -39,13 +37,21 @@ test_that("Extra variables are reported",{
   expect_equal(out$extra_vars, "VARIABLE_TERM")
 })
 
+test_that("Missing variables are reported",{
+  dd <- .read_dd_file(ddfn)
+  dd$UNITS <- NULL
+  # remove known extra variable to avoid that warning
+  dd$VARIABLE_TERM <- NULL
+  expect_equal(.check_dd(dd, dstype="sattr")$missing_reqvars,"UNITS")
+})
+
 test_that("Check VALUES position other than last returns warning",{
   dd <- .read_dd_file(ddfn)
   names(dd)[9] <- "VALUES"
   names(dd)[16] <- "COMMENT1"
+  dd$VARIABLE_TERM <- NULL  
   str <- "'VALUES' must be last column"
-  expect_warning(out <- .check_dd(dd, dstype="sattr"), str)
-  expect_equal(out$vals_warnings, str, fixed=TRUE)
+  expect_equal(.check_dd(dd, dstype="sattr")$vals_warnings$lastcol_warn, str, fixed=TRUE)
 })
 
 test_that("VALUES columns with multiple encodings returns warnings",{
@@ -55,14 +61,12 @@ test_that("VALUES columns with multiple encodings returns warnings",{
   dd$VARIABLE_TERM <- NULL
   dd$VALUES[4] <- "Y=Is Tumor, N/A=not applicable"
   str <- "IS_TUMOR variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell."
-  expect_warning(out <- .check_dd(dd, dstype="sattr"), str, fixed=TRUE)
-  expect_equal(out$vals_warnings, str)
+  expect_equal(.check_dd(dd, dstype="sattr")$vals_warnings$multiple_vals_warn, str)
 
   # two encoded var
   dd[9,15:16] <- c("1=one", "2=two, 3=three")
   str <- "IS_TUMOR; TUMOR_GRADE variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell."
-  expect_warning(out <- .check_dd(dd, dstype="sattr"), str, fixed=TRUE)
-  expect_equal(out$vals_warnings, str)  
+  expect_equal(.check_dd(dd, dstype="sattr")$vals_warnings$multiple_vals_warn, str)  
 })
 
 test_that("Undefined encoded vars in DS returns warning", {
@@ -76,18 +80,13 @@ test_that("Undefined encoded vars in DS returns warning", {
   ds.save <- ds
   ds$IS_TUMOR[sample(1:nrow(ds),4)] <- "M"
   str <- "For variable IS_TUMOR, the following values are undefined in the dd: M"
-  expect_warning(out <- .check_dd(dd, ds, dstype="sattr"), str, fixed=TRUE)
-  expect_equal(out$vals_warnings, str)
+  expect_equal(.check_dd(dd, ds, dstype="sattr")$vals_warnings$undefined_vals_warn, str)
 
   # two encoded vars
   ds <- ds.save
   dd[9,15:16] <- c("G2=grade2", "G3=grade3")
-  str2 <- "For variable TUMOR_GRADE, the following values are undefined in the dd: G4"
-  str3 <- "For variable TUMOR_GRADE, the following values are undefined in the dd: GX"  
-  expect_warning(out <- .check_dd(dd, ds, dstype="sattr"), str2)
-  expect_warning(out <- .check_dd(dd, ds, dstype="sattr"), str3)  
-  expect_equal(out$vals_warnings[1], str2)
-  expect_equal(out$vals_warnings[2], str3)
+  str2 <- "For variable TUMOR_GRADE, the following values are undefined in the dd: G4 GX"
+  expect_equal(.check_dd(dd, ds, dstype="sattr")$vals_warnings$undefined_vals_warn, str2)
 })
 
 test_that("Difference in DS and DD variables returns warning", {
@@ -152,3 +151,35 @@ test_that("Missing UNITS only reported for select filetypes", {
   expect_equal(.check_dd(dd, dstype="sattr")$missing_reqvars[2], "UNITS")  
 })
 
+test_that("Unique key marked with something besides 'X' is reported", {
+    dd.rev <- .read_dd_file(ddfn)
+    dd.rev$UNIQUEKEY[dd.rev$UNIQUEKEY %in% "X"] <- "Y"
+    # get rid of this non-standard column
+    dd.rev$VARIABLE_TERM <- NULL    
+    out <- .check_dd(dd.rev, dstype="sattr")
+    str <- "Only 'X' should be used to flag UNIQUE key columns"
+    expect_equal(out$uniquekey_flags$wrong_mark, str)
+})
+
+test_that("Non-unique uniquekey is reported",{
+  ds <- .read_ds_file(dsfn)
+  # change UNIQUEKEY
+  dd.rev <- .read_dd_file(ddfn)
+  # get rid of this non-standard column
+  dd.rev$VARIABLE_TERM <- NULL
+  dd.rev$UNIQUEKEY[dd.rev$UNIQUEKEY %in% "X"] <- NA
+  dd.rev$UNIQUEKEY[dd.rev$VARNAME %in% "GENOTYPING_CENTER"] <- "X"
+  out <- .check_dd(dd.rev, ds, dstype="sattr")
+  str <- "UNIQUEKEY columns (GENOTYPING_CENTER) do not specify unique records in DS"
+  expect_equal(out$uniquekey_flags$notunique, str)
+})
+
+test_that("Uniquekey for wrong file type is reportd",{
+  dd.rev <- .read_dd_file(ddfn)
+  # get rid of this non-standard column
+  dd.rev$VARIABLE_TERM <- NULL  
+  # pretend this is not a sample attributes file
+  out <- .check_dd(dd.rev, dstype="subj")
+  str <- "UNIQUEKEY columns(s) should not be defined for dstype subj"
+  expect_equal(out$uniquekey_flags$wrong_dstype, str)
+})

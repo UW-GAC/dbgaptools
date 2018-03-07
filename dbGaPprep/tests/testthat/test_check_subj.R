@@ -7,8 +7,6 @@ test_that("Compliant files run error free",{
   # remove affection status col so we don't get that notification  
   ds.rev <- .read_ds_file(subj_ds)
   ds.rev$AFFECTION_STATUS <- NULL
-  # remove consent=0, which doesn't need to be defined in DD
-  ds.rev$CONSENT <- 1
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
@@ -61,14 +59,12 @@ test_that("Presence of only one alias column is detected",{
 })
 
 test_that("Message about blanks in SOURCE_SUBJECT_ID is returned", {
-  str <- "Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value such as NA, N/A, etc."
+  str <- "Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value strings such as NA, N/A, etc."
   expect_message(out <- check_subj(subj_ds), str, fixed=TRUE)
 })
 
-test_that("Undefined CONSENT=0 returns warning but no dd_error output",{
-  str <- "For variable CONSENT, the following values are undefined in the dd: 0"
-  expect_warning(out <- check_subj(subj_ds, subj_dd), str, fixed=TRUE)
-  expect_null(out$dd_errors)
+test_that("Undefined CONSENT=0 does not return dd_error output",{
+  expect_null(out <- check_subj(subj_ds, subj_dd)$dd_errors$vals_warnings)
 })
 
 test_that("Extra subjects are detected", {
@@ -119,12 +115,12 @@ test_that("Phenotype columns are detected", {
 test_that("Unmapped, non-0 consent values are reported", {
   ds <- .read_ds_file(subj_ds)
   ds$CONSENT[5:10] <- 2
-  ds.rev.fn <-  tempfile(fileext=".txt")
+  ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
 
   str <- "For variable CONSENT, the following values are undefined in the dd: 2"
-  expect_warning(out <- check_subj(ds.rev.fn, subj_dd), str, fixed=TRUE)
-  expect_equal(out$dd_errors$vals_warnings, str)
+  out <- check_subj(ds.rev.fn, subj_dd)
+  expect_equal(out$dd_errors$vals_warnings$undefined_vals_warn, str)
   unlink(ds.rev.fn)
 })

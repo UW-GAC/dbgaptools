@@ -20,7 +20,7 @@ test_that("Warning of non-preferred subject ID col is issued",{
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
   str <- "Note preferred subject-level ID column name is 'SUBJECT_ID'"
-  expect_warning(check_ped(ds.rev.fn, subjectID_col="INDIVIDUAL_ID",), str)
+  expect_warning(check_ped(ds.rev.fn, subjectID_col="INDIVIDUAL_ID"), str)
   unlink(ds.rev.fn)
 })
 
@@ -98,7 +98,8 @@ test_that("Missing parental IDs cause pedigree check errors",{
   out <- check_ped(ds.rev.fn)
 
   # construct expected pedigree check report
-  row <- data.frame(row.num=1, family="100", no_individ_entry="both", parentID="1001;1002")
+  row <- data.frame(row.num=1, family="100", no_individ_entry="both", parentID="1001;1002",
+                    stringsAsFactors=FALSE)
   df.exp <- rbind(row, row)
   df.exp$row.num[2] <- 2
   expect_equivalent(out$incon_report$parent.no.individ.entry, df.exp)
