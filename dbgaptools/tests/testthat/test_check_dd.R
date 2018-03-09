@@ -1,8 +1,8 @@
 context("Checking data dictionary (DD) file")
 
 # use sample attributes as starting 
-ddfn <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbGaPprep", mustWork = TRUE)
-dsfn <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbGaPprep", mustWork = TRUE)
+ddfn <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+dsfn <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 test_that("Missing DS type argument stops with error", {
   dd <- .read_dd_file(ddfn)
@@ -16,13 +16,15 @@ test_that("Non-standard DS type argument stops with error",{
 
 test_that("Non-uppercase column names returns a warning",{
   dd <- .read_dd_file(ddfn)
+  dd$VARIABLE_TERM <- NULL  
   names(dd)[2] <- tolower(names(dd)[2])
   expect_warning(out <- .check_dd(dd, dstype="sattr"), "All column names should be UPPER CASE", fixed=TRUE)
   expect_true(out$lowercase)
 })
 
-test_that("Missing and required columns stops with error",{
+test_that("Missing and required initialcolumns stops with error",{
   dd <- .read_dd_file(ddfn)
+  dd$VARIABLE_TERM <- NULL
   names(dd)[1] <- "VARIABLE"
   str <- "First two columns required to be 'VARNAME' and 'VARDESC'"
   expect_error(.check_dd(dd, dstype="sattr"), str)

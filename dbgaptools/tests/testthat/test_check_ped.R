@@ -1,7 +1,7 @@
 context("Checking pedigree file")
 
-ped_dd <- system.file("extdata", "6b_dbGaP_PedigreeDD.xlsx", package = "dbGaPprep", mustWork = TRUE)
-ped_ds <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbGaPprep", mustWork = TRUE)
+ped_dd <- system.file("extdata", "6b_dbGaP_PedigreeDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+ped_ds <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 test_that("Compliant files run error free", {
   expect_null(check_ped(dsfile=ped_ds))

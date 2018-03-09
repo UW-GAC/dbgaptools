@@ -2,15 +2,11 @@
 % Please edit documentation in R/check_functions.R
 \name{check_ped}
 \alias{check_ped}
-\alias{check_pheno}
 \title{Check pedigree file}
 \usage{
 check_ped(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
   subj_exp = NULL, subjectID_col = "SUBJECT_ID", check_incons = TRUE,
   male = 1, female = 2)
-
-check_pheno(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
-  subj_exp = NULL, subjectID_col = "SUBJECT_ID")
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
@@ -28,16 +24,6 @@ check_pheno(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
 \item{male}{Encoded value for male in SEX column}
 
 \item{female}{Encoded value for female in SEX column}
-
-\item{dsfile}{Path to the data file on disk}
-
-\item{ddfile}{Path to the data dictionary file on disk}
-
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})}
-
-\item{subj_exp}{Vector of expected subject IDs}
-
-\item{subjectID_col}{Column name for subject-level ID}
 }
 \value{
 ped_report, a list of the following issues (when present):
@@ -48,26 +34,12 @@ ped_report, a list of the following issues (when present):
 \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 \item{extra_sexvals}{Additional values in SEX column beyond what's specified by \code{male} and \code{female} function arguments}
 \item{mztwin_errors}{List of potential errors with MZ twins}
-
-pheno_report, a list of the following issues (when present):
-\item{flag_nonuniq_subjID}{TRUE when subject ID column is not unique, which would require definition of UNIQUEKEY columns in the corresponding data dictionary}
-\item{dd_errors}{Differences in fields between data file and data dictionary}
-\item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
-\item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 }
 \description{
 Check contents of a pedigree file for dbGaP posting
-
-Check contents of a phenotype file for dbGaP posting
 }
 \details{
 If an MZ twin column is detected, returns issues including column name other than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic twins are included (\code{chk_sex=TRUE}).
-
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
-correspondence between column names in data file and entries in data dictionary.
-Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
-
-Because of the variability of phenotype file contents, the only required column checked here is the subject-level ID. Note dbGaP requests variables (1) described in the study description and/or study config; (2) affection status, if not already included in the subject consent file; (3) sex; and (4) race/ethnicity/ancestry/heritage.
 
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 correspondence between column names in data file and entries in data dictionary.

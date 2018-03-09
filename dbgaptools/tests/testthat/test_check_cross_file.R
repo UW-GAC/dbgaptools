@@ -1,10 +1,10 @@
 context("Checking cross-file checks")
 
-subj_file <- system.file("extdata", "4a_dbGaP_SubjectDS.txt", package = "dbGaPprep", mustWork = TRUE)
-ssm_file <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbGaPprep", mustWork = TRUE)
-sattr_file <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbGaPprep", mustWork = TRUE)
-pheno_file <- system.file("extdata", "2a_dbGaP_SubjectPhenotypesDS.txt", package = "dbGaPprep", mustWork = TRUE)
-ped_file <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbGaPprep", mustWork = TRUE)
+subj_file <- system.file("extdata", "4a_dbGaP_SubjectDS.txt", package = "dbgaptools", mustWork = TRUE)
+ssm_file <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbgaptools", mustWork = TRUE)
+sattr_file <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools", mustWork = TRUE)
+pheno_file <- system.file("extdata", "2a_dbGaP_SubjectPhenotypesDS.txt", package = "dbgaptools", mustWork = TRUE)
+ped_file <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 subjectID_col <- "SUBJECT_ID"
 consent_col <- "CONSENT"
@@ -196,6 +196,7 @@ test_that("Pedigree subjects that don't map to molecluar samples should have con
 })
 
 test_that("Molecular data samples not in pedigree are repored",{
+  ssm <- .read_ds_file(ssm_file)
   # remove pedigree record
   ped_rev <- .read_ds_file(ped_file)
   ped_rev <- ped_rev[-4,]

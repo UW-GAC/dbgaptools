@@ -17,6 +17,8 @@ check_subj(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
 \item{subj_exp}{Dataframe of expected subject ID (column 1) and consent value (column 2)}
 
 \item{subjectID_col}{Column name for subject-level ID}
+
+\item{consent_col}{Column name for consent variable}
 }
 \value{
 subj_report, a list of the following issues (when present):

@@ -38,7 +38,7 @@ cross_check_report, a list of the following issues (when present):
   \item{pheno_miss_molecular: List of molecular data samples missing from the phenotype file}
   \item{subj_miss_ped: Subjects in pedigree file that are missing from subject consent file}
   \item{ped_consent_err: List of subjects in pedigree file having non-0 consent and not mapping to a sample with molecular data}
-  \item{ped_miss_molecular}{List of molecular samples mapped to a subject not present in the pedigree file, and thus assumed to be singletons/unrelateds.}
+  \item{ped_miss_molecular: List of molecular samples mapped to a subject not present in the pedigree file, and thus assumed to be singletons/unrelateds}
 }
 }
 \description{

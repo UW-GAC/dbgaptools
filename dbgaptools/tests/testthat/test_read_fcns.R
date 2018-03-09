@@ -3,16 +3,16 @@ context("Reading in dataset and data dictionary files")
 # Load in example data files
 # Notes examples are downloaded from dbGaP Submission Guide, accessed Sep 30, 2017
 
-satt_dd <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbGaPprep", mustWork = TRUE)
-satt_ds <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbGaPprep", mustWork = TRUE)
+satt_dd <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+satt_ds <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 # variations on sample attributes DD
-dd_nohdr_txt <- system.file("extdata", "sampleAttributesDD_noheader.txt", package = "dbGaPprep", mustWork = TRUE)
-dd_nohdr_csv <- system.file("extdata", "sampleAttributesDD_noheader.csv", package = "dbGaPprep", mustWork = TRUE)
-dd_nohdr_xls <- system.file("extdata", "sampleAttributesDD_noheader.xlsx", package = "dbGaPprep", mustWork = TRUE)
-dd_hdr_txt <- system.file("extdata", "sampleAttributesDD_hasheader.txt", package = "dbGaPprep", mustWork = TRUE)
-dd_hdr_xls <- system.file("extdata", "sampleAttributesDD_hasheader.xlsx", package = "dbGaPprep", mustWork = TRUE)
-dd_nohdr_multsheet <- system.file("extdata", "sampleAttributesDD_noheader_multSheets.xlsx", package = "dbGaPprep", mustWork = TRUE)
+dd_nohdr_txt <- system.file("extdata", "sampleAttributesDD_noheader.txt", package = "dbgaptools", mustWork = TRUE)
+dd_nohdr_csv <- system.file("extdata", "sampleAttributesDD_noheader.csv", package = "dbgaptools", mustWork = TRUE)
+dd_nohdr_xls <- system.file("extdata", "sampleAttributesDD_noheader.xlsx", package = "dbgaptools", mustWork = TRUE)
+dd_hdr_txt <- system.file("extdata", "sampleAttributesDD_hasheader.txt", package = "dbgaptools", mustWork = TRUE)
+dd_hdr_xls <- system.file("extdata", "sampleAttributesDD_hasheader.xlsx", package = "dbgaptools", mustWork = TRUE)
+dd_nohdr_multsheet <- system.file("extdata", "sampleAttributesDD_noheader_multSheets.xlsx", package = "dbgaptools", mustWork = TRUE)
 
 test_that("Header lines are properly counted", {
   expect_equal(.count_hdr_lines(dd_nohdr_txt, colname="VARNAME"), 0)

@@ -1,7 +1,7 @@
 context("Checking phenotype file")
 
-pheno_dd <- system.file("extdata", "2b_dbGaP_SubjectPhenotypesDD.xlsx", package = "dbGaPprep", mustWork = TRUE)
-pheno_ds <- system.file("extdata", "2a_dbGaP_SubjectPhenotypesDS.txt", package = "dbGaPprep", mustWork = TRUE)
+pheno_dd <- system.file("extdata", "2b_dbGaP_SubjectPhenotypesDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+pheno_ds <- system.file("extdata", "2a_dbGaP_SubjectPhenotypesDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 dd <- .read_dd_file(pheno_dd)
 ds <- .read_ds_file(pheno_ds, na_vals=c("NA", "N/A", "na", "n/a","9999"))

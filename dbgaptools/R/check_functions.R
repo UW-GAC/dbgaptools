@@ -228,7 +228,6 @@
   dd_report  <- list()
 
   if(!is.null(lowercase)) dd_report$lowercase <- lowercase
-  if(!is.null(varname_vardesc))  dd_report$varname_vardesc <- varname_vardesc
   if(sum(!is.na(missing_reqvars)) > 0) dd_report$missing_reqvars <- missing_reqvars
   if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
   if(length(uniquekey_flags) > 0) dd_report$uniquekey_flags <- uniquekey_flags
@@ -560,6 +559,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
 #' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
 #' @param subj_exp Dataframe of expected subject ID (column 1) and consent value (column 2)
 #' @param subjectID_col Column name for subject-level ID
+#' @param consent_col Column name for consent variable
 #'
 #' @details
 #' The subject consent file should be a tab-delimited .txt file.
@@ -882,7 +882,7 @@ check_ped <- function(dsfile, ddfile=NULL,
 #' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 #'
-#' @rdname check_ped
+#' @rdname check_pheno
 
 check_pheno <- function(dsfile, ddfile=NULL,
                         na_vals=c("NA","N/A","na","n/a"),

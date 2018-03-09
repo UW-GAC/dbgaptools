@@ -1,7 +1,7 @@
 context("Checking subject consent file")
 
-subj_dd <- system.file("extdata", "4b_dbGaP_SubjectDD.xlsx", package = "dbGaPprep", mustWork = TRUE)
-subj_ds <- system.file("extdata", "4a_dbGaP_SubjectDS.txt", package = "dbGaPprep", mustWork = TRUE)
+subj_dd <- system.file("extdata", "4b_dbGaP_SubjectDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+subj_ds <- system.file("extdata", "4a_dbGaP_SubjectDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 test_that("Compliant files run error free",{
   # remove affection status col so we don't get that notification  

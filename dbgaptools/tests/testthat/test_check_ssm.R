@@ -1,7 +1,7 @@
 context("Checking sample subject mapping (SSM) file")
 
-ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx", package = "dbGaPprep", mustWork = TRUE)
-ssm_ds <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbGaPprep", mustWork = TRUE)
+ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+ssm_ds <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 test_that("Compliant files run error free",{
   expect_null(check_ssm(dsfile=ssm_ds))
