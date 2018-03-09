@@ -2,3 +2,6 @@
 *.html
 *#
 *.tar.gz
+*.msg
+*.Rhistory
+*log
