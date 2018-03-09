@@ -110,11 +110,12 @@ best way to develop package will be to start working through dbgap file prep for
 	- dbgapsubmitr (b/c it's for submitters to dbGaP)
 	- dbgaphelpr (pronounced "dbgaphelper" by Adrienne)
 	- dbgaputils
-	- dbgaptools
+	- **dbgaptools**
 - https://www.njtierney.com/post/2017/10/27/change-pkg-name/
  
  
 # Ongoing questions 
+when ready for github - can I use UW-GAC for my remote repo?
 
  
 
