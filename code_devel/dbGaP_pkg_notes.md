@@ -55,7 +55,7 @@ Stephanie
 		- ok if there are more records in dbgap files (e.g., for quarantined samples) - function should report out on this
 		- master scan annot should have final word on samples to include
 			- __no.post__ samples: should not be anywhere in dbgap files (note the corresponding subject id may be in files)
-			- __quarantine__ samples: generally don't worry about these samples - they may be released with future freezes, so oreference is for quarantine=T samples to remain in SI's dbgap files
+			- __quarantine__ samples: generally don't worry about these samples - they may be released with future freezes, so preference is for quarantine=T samples to remain in SI's dbgap files
 			we don't want to exclude them from dbgap files now
 				- but preparing analyst should not include them in the dataframe of expected samples and subjs for the given release
 	- check correspondence between sample id and subject id

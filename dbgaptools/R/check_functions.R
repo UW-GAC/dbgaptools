@@ -62,7 +62,7 @@
   if(dstype %in% c("pheno","sattr")) req_vars <- c(req_vars, "UNITS")
   
   missing_reqvars <- setdiff(req_vars, names(dd))
-  if(length(missing_reqvars) %in% 0) missing_reqvars <- NA
+  if(length(missing_reqvars) %in% 0) missing_reqvars <- NULL
 
   # check existing named columns against all possible columns
   # if there are trailing columns, they are likely because of encoded values -
@@ -228,7 +228,7 @@
   dd_report  <- list()
 
   if(!is.null(lowercase)) dd_report$lowercase <- lowercase
-  if(sum(!is.na(missing_reqvars)) > 0) dd_report$missing_reqvars <- missing_reqvars
+  if(!is.null(missing_reqvars)) dd_report$missing_reqvars <- missing_reqvars
   if(!is.null(extra_vars)) dd_report$extra_vars <- extra_vars
   if(length(uniquekey_flags) > 0) dd_report$uniquekey_flags <- uniquekey_flags
   if(length(vals_warnings) > 0)  dd_report$vals_warnings <- vals_warnings  
@@ -312,8 +312,8 @@ check_ssm <- function(dsfile, ddfile=NULL,
   # req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
   # allow for other ID names
   req_vars <- c(subjectID_col, sampleID_col, "SAMPLE_USE")
-  miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
+  missing_vars <- setdiff(req_vars, names(ds))
+  if(length(missing_vars) %in% 0) missing_vars <- NULL  
   
   # check for duplicated sample IDs
   samplist <- ds[,sampleID_col]
@@ -405,7 +405,7 @@ check_ssm <- function(dsfile, ddfile=NULL,
   # create and return results list
   ssm_report <- list()
 
-  if(!is.na(missing_vars)) ssm_report$missing_vars <- missing_vars
+  if(!is.null(missing_vars)) ssm_report$missing_vars <- missing_vars
   if(!is.null(dup_samples)) ssm_report$dup_samples <- dup_samples
   if(!is.null(blank_idx)) ssm_report$blank_idx <- blank_idx
   if(!is.null(dd_errors)) ssm_report$dd_errors <- dd_errors
@@ -482,8 +482,8 @@ check_sattr <- function(dsfile, ddfile=NULL,
 
   # check for required variables
   req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","HISTOLOGICAL_TYPE","IS_TUMOR")
-  miss_vars <- setdiff(req_vars, names(ds))
-  missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)  
+  missing_vars <- setdiff(req_vars, names(ds))
+  if(length(missing_vars) %in% 0) missing_vars <- NULL  
   
   # check for duplicated sample IDs
   # note might be acceptable where samples have a series of measurements,
@@ -532,7 +532,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
   # create and return results list
   satt_report <- list()
 
-  if(!is.na(missing_vars))  satt_report$missing_vars <- missing_vars
+  if(!is.null(missing_vars)) satt_report$missing_vars <- missing_vars
   if(!is.null(dup_samples)) satt_report$dup_samples <- dup_samples
   if(!is.null(blank_idx)) satt_report$blank_idx <- blank_idx
   if(!is.null(dd_errors)) satt_report$dd_errors <- dd_errors
