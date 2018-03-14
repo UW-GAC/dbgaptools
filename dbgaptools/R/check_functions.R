@@ -259,16 +259,19 @@
 #'
 #' @details
 #' The sample subject mapping file should be a tab-delimited .txt file.
-#' When (\code{ssm_exp != NULL}), checks for expected correspondence between
+#' When \code{ssm_exp != NULL}, checks for expected correspondence between
 #' SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 #' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 #' will be returned in the output.
-#' If (\code{ssm_exp != NULL}) contains an additional logical field 'quarantine,'
-#' code will check that SAMPLE_USE is left blank for this record.
+#' If \code{ssm_exp != NULL} contains an additional logical field 'quarantine,'
+#' code will check that SAMPLE_USE is left blank (read in as 'NA') for this record.
 #' Quarantined samples will otherwise be treated as
 #' other records in terms of checking for missing or extra subjects or samples.
+#'
+#' If \code{topmed}, then SAMPLE_USE is expected to be either "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" or "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome", except for
+#' samples marked as quarantine in \code{ssm_exp}.
 #' 
-#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+#' If a data dictionary is provided \code{ddfile != NULL}, additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
@@ -359,33 +362,45 @@ check_ssm <- function(dsfile, ddfile=NULL,
     }
   }
 
-  # if TOPMed, sample uses should be "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" for all samples,
-  # except quarantine=TRUE samples
-  # Note "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome" is also valid 
-  sample_uses_topmed <- "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
+  # if TOPMed, sample uses should be either "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
+  # or "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome" for all samples,
+  # except where quarantine=TRUE in ssm_exp
+  sample_uses_topmed <- c("Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV",
+                          "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome")
   
   if(topmed){
-    if(is.null(sample_uses)){
-      sample_uses <- sample_uses_topmed
-    } else if (!is.null(sample_uses) & !is.element(sample_uses, c(sample_uses_topmed, "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome"))){
-        warning(paste0("Non TOPMed sample uses were provided; manually setting to '",
-                   sample_uses_topmed,".' To check other sample_uses, set topmed=FALSE"))
-       sample_uses <- sample_uses_topmed
-       # if quarantine=TRUE samples are in ssm_exp, change expected sample use to blank
-        if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
-          sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
-                                    SAMPLE_USE=sample_uses_topmed)
-          sample_uses$SAMPLE_USE[ssm_exp[,3]] <- ""
-        }
-      }
+    # if a sample use dataframe was submitted, take only first value and return warning
+    if(is.data.frame(sample_uses)){
+      warning("Expecting unique sample_uses value for TOPMed; taking first value of sample_uses data frame")
+      sample_uses <- sample_uses[1,2]
     }
+    
+    # if no sample use was provided, set to TOPMed value
+    if(is.null(sample_uses)){
+      sample_uses <- sample_uses_topmed[1] # use first order
+    } else if (!is.null(sample_uses) & !sample_uses %in% sample_uses_topmed){
+      # 'unique' above takes care of a data frame being submitted as sample_uses
+        warning(paste0("Non TOPMed sample use was provided; manually setting to '",
+                   sample_uses_topmed[1],".' To check other sample_uses, set topmed=FALSE"))
+       sample_uses <- sample_uses_topmed[1]
+      }
+    
+   # if quarantine=TRUE samples are in ssm_exp, change expected sample use to blank
+    if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
+      sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
+                                SAMPLE_USE=sample_uses)
+      sample_uses$SAMPLE_USE[ssm_exp[,3]] <- ""
+      }
+    } # close if topmed
 
   sampuse_diffs <- NULL
   # check for expected sample uses
   if(!is.null(sample_uses)){
     ds.mini <- ds[,c(sampleID_col,"SAMPLE_USE")]
     names(ds.mini)[1] <- "SAMPLE_ID"
-    # determing if it's single string or a data frame
+    # change NA to blank string for purposes of checking
+    ds.mini$SAMPLE_USE[is.na(ds.mini$SAMPLE_USE)] <- ""
+    # determine if it's single string or a data frame
     if(is.character(sample_uses)){
       sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses,]
     } else if(is.data.frame(sample_uses)){
@@ -400,7 +415,6 @@ check_ssm <- function(dsfile, ddfile=NULL,
       sampuse_diffs <- NULL
     }
   }
-
 
   # create and return results list
   ssm_report <- list()
@@ -849,7 +863,7 @@ check_ped <- function(dsfile, ddfile=NULL,
   if(!is.null(dd_errors)) ped_report$dd_errors <- dd_errors
   if(!is.null(incon_report)) ped_report$incon_report <- incon_report
   if(!is.null(extra_subjects)) ped_report$extra_subjects <- extra_subjects
-  if(!is.null(missing_subjects)) ped_report$missing_subjects <- missing_subjects
+  if(!is.null(missing_subjects) & length(missing_subjects) > 0 ) ped_report$missing_subjects <- missing_subjects
   if(length(mztwin_errors) > 0) ped_report$mztwin_errors <- mztwin_errors
   if(!is.null(extra_sexvals)) ped_report$extra_sexvals <- extra_sexvals
 
