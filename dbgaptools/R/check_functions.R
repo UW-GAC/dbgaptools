@@ -31,7 +31,7 @@
 #'
 #' @rdname check_dd
 
-.check_dd <- function(dd, ds=NULL, dstype){
+.check_dd <- function(dd, ds=NULL, dstype=""){
 
   # check for required dstype argument
   dstypes <- c("pheno","ped","sattr","ssm","subj")
@@ -389,7 +389,7 @@ check_ssm <- function(dsfile, ddfile=NULL,
     if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
       sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
                                 SAMPLE_USE=sample_uses)
-      sample_uses$SAMPLE_USE[ssm_exp[,3]] <- ""
+      sample_uses$SAMPLE_USE[ssm_exp[,3]] <- NA
       }
     } # close if topmed
 
@@ -398,15 +398,20 @@ check_ssm <- function(dsfile, ddfile=NULL,
   if(!is.null(sample_uses)){
     ds.mini <- ds[,c(sampleID_col,"SAMPLE_USE")]
     names(ds.mini)[1] <- "SAMPLE_ID"
-    # change NA to blank string for purposes of checking
-    ds.mini$SAMPLE_USE[is.na(ds.mini$SAMPLE_USE)] <- ""
+
     # determine if it's single string or a data frame
     if(is.character(sample_uses)){
       sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses,]
     } else if(is.data.frame(sample_uses)){
       sampuse_chk <- merge(sample_uses, ds.mini, by="SAMPLE_ID",
                            suffixes=c(".exp",".ds"))
-      sampuse_diffs <- sampuse_chk[sampuse_chk$SAMPLE_USE.exp!=sampuse_chk$SAMPLE_USE.ds,]
+
+      # check if one is NA and the other isn't, or if they're non-NA and differing vals
+      bothNA <- with(sampuse_chk, is.na(SAMPLE_USE.exp) & is.na(SAMPLE_USE.ds))
+      flag <- with(sampuse_chk, xor(is.na(SAMPLE_USE.exp), is.na(SAMPLE_USE.ds)) |
+                   SAMPLE_USE.exp != SAMPLE_USE.ds & !bothNA)
+      # flag will be NA when both values are NA
+      sampuse_diffs <- sampuse_chk[flag,]
     } else {
       warning("sample_uses was neither string nor data frame and could not be processed")
     }
