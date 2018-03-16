@@ -39,6 +39,8 @@ When (\code{topmed = TRUE}) checks presence of additional, TOPMed-specific
 sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 TOPMed_Project, Study_Name.
 
+Note that none of the BioSample variables (BODY_SITE, ANALYTE_TYPE, HISTOLOGICAL_TYPE, IS_TUMOR) are strictly required in the sense that their absence will not break dbGaP processing pipeline or delay study release. However, their inclusion is strongly encouraged, and indeed necessary for cancer studies and other tissue-specific studies, and are thus considered "required" variables for the purposes of this checking script.
+
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.

@@ -4,7 +4,7 @@
 \alias{.check_dd}
 \title{Check data dictionary (generic)}
 \usage{
-.check_dd(dd, ds = NULL, dstype)
+.check_dd(dd, ds = NULL, dstype = "")
 }
 \arguments{
 \item{dd}{Data dictionary (DD) object}

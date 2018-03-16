@@ -401,7 +401,8 @@ check_ssm <- function(dsfile, ddfile=NULL,
 
     # determine if it's single string or a data frame
     if(is.character(sample_uses)){
-      sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses,]
+      sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses |
+                               is.na(ds.mini$SAMPLE_USE),]
     } else if(is.data.frame(sample_uses)){
       sampuse_chk <- merge(sample_uses, ds.mini, by="SAMPLE_ID",
                            suffixes=c(".exp",".ds"))
@@ -466,6 +467,8 @@ check_ssm <- function(dsfile, ddfile=NULL,
 #' When (\code{topmed = TRUE}) checks presence of additional, TOPMed-specific
 #' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 #' TOPMed_Project, Study_Name.
+#'
+#' Note that none of the BioSample variables (BODY_SITE, ANALYTE_TYPE, HISTOLOGICAL_TYPE, IS_TUMOR) are strictly required in the sense that their absence will not break dbGaP processing pipeline or delay study release. However, their inclusion is strongly encouraged, and indeed necessary for cancer studies and other tissue-specific studies, and are thus considered "required" variables for the purposes of this checking script.
 #'
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.

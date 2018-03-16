@@ -43,16 +43,19 @@ Check contents of a sample subject mapping file for dbGaP posting.
 }
 \details{
 The sample subject mapping file should be a tab-delimited .txt file.
-When (\code{ssm_exp != NULL}), checks for expected correspondence between
+When \code{ssm_exp != NULL}, checks for expected correspondence between
 SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 will be returned in the output.
-If (\code{ssm_exp != NULL}) contains an additional logical field 'quarantine,'
-code will check that SAMPLE_USE is left blank for this record.
+If \code{ssm_exp != NULL} contains an additional logical field 'quarantine,'
+code will check that SAMPLE_USE is left blank (read in as 'NA') for this record.
 Quarantined samples will otherwise be treated as
 other records in terms of checking for missing or extra subjects or samples.
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+If \code{topmed}, then SAMPLE_USE is expected to be either "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" or "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome", except for
+samples marked as quarantine in \code{ssm_exp}.
+
+If a data dictionary is provided \code{ddfile != NULL}, additionally checks 
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }
