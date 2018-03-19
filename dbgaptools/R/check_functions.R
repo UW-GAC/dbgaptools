@@ -172,14 +172,16 @@
   if(!is.null(ds)){
     missing_dsvars <- setdiff(names(ds), dplyr::pull(dd, VARNAME))
     if(length(missing_dsvars) > 0){
-      warning("Data dictionary missing following dataset variables: ", missing_dsvars)
+      warning("Data dictionary missing following dataset variables: ",
+              paste(missing_dsvars, collapse=", "))
     } else {
       # set back to null
       missing_dsvars <- NULL
     }
     extra_ddvars <- setdiff(dplyr::pull(dd, VARNAME), names(ds))
     if(length(extra_ddvars) > 0){
-      warning("Data dictionary has extra variables not in dataset: ", extra_ddvars)
+      warning("Data dictionary has extra variables not in dataset: ",
+              paste(extra_ddvars, collapse=", "))
     } else {
       # set back to null
       extra_ddvars <- NULL
@@ -405,7 +407,7 @@ check_ssm <- function(dsfile, ddfile=NULL,
                                is.na(ds.mini$SAMPLE_USE),]
     } else if(is.data.frame(sample_uses)){
       sampuse_chk <- merge(sample_uses, ds.mini, by="SAMPLE_ID",
-                           suffixes=c(".exp",".ds"))
+                           all=TRUE, suffixes=c(".exp",".ds"))
 
       # check if one is NA and the other isn't, or if they're non-NA and differing vals
       bothNA <- with(sampuse_chk, is.na(SAMPLE_USE.exp) & is.na(SAMPLE_USE.ds))
