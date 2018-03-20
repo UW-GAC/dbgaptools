@@ -6,7 +6,8 @@ dsfn <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbg
 
 test_that("Missing DS type argument stops with error", {
   dd <- .read_dd_file(ddfn)
-  expect_error(.check_dd(dd), "argument \"dstype\" is missing, with no default")
+  str <- "Please specify dstype, one of: pheno, ped, sattr, ssm, subj"
+  expect_error(.check_dd(dd), str)
 })
 
 test_that("Non-standard DS type argument stops with error",{

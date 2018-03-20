@@ -20,9 +20,8 @@ test_that("Check output file name for DS with study name" ,{
   x <- data.frame(col1=1:10, col2=1:10)
   write_dbgap(x, study_name="mystudy", dstype="ssm", generate_fn=TRUE)
 
-  exp_fn <- paste0("mystudy_ssm_DS_", format(Sys.Date(), "%Y%m%d"), ".txt")
+  exp_fn <- paste0("mystudy_SampleSubjectMappingDS_", format(Sys.Date(), "%Y%m%d"), ".txt")
   expect_true(exp_fn %in% list.files())
-
 })
 
 test_that("Check output file name for DD with study name" ,{
@@ -30,9 +29,8 @@ test_that("Check output file name for DD with study name" ,{
   x <- data.frame(col1=1:10, col2=1:10)
   write_dbgap(x, study_name="mystudy", dstype="sattr", DD=TRUE, generate_fn=TRUE)
 
-  exp_fn <- paste0("mystudy_sattr_DD_", format(Sys.Date(), "%Y%m%d"), ".txt")
+  exp_fn <- paste0("mystudy_SampleAttributesDD_", format(Sys.Date(), "%Y%m%d"), ".txt")
   expect_true(exp_fn %in% list.files())
-
 })
 
 test_that("Check output file name for provided file name",{

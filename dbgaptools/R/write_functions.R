@@ -32,6 +32,14 @@ write_dbgap <- function(x, file="",
     if(!dstype %in% dstypes){
       stop("Please specify dstype, one of: ", paste(dstypes, collapse=", "))
     }
+
+    # make verbose version of dstype
+    if(dstype %in% "pheno") ftype <- "Phenotype"
+    if(dstype %in% "ped") ftype <- "Pedigree"
+    if(dstype %in% "sattr") ftype <- "SampleAttributes"
+    if(dstype %in% "ssm") ftype <- "SampleSubjectMapping"
+    if(dstype %in% "subj") ftype <- "Subject"    
+    
     # generate file name
      if(is.null(study_name)){
        pt1 <- phs
@@ -41,9 +49,9 @@ write_dbgap <- function(x, file="",
        pt1 <- paste(study_name, phs, sep="_")
      }
 
-    ftype <- ifelse(DD, paste(dstype,"DD", sep="_"), paste(dstype,"DS", sep="_"))
+    ftype_str <- ifelse(DD, paste0(ftype,"DD"), paste0(ftype,"DS"))
 
-    file <- paste0(pt1, "_", ftype, "_", format(Sys.Date(), "%Y%m%d"), ".txt")
+    file <- paste0(pt1, "_", ftype_str, "_", format(Sys.Date(), "%Y%m%d"), ".txt")
   }  
 
   # stop with error if no file name is provided
@@ -53,6 +61,10 @@ write_dbgap <- function(x, file="",
   ext <- tools::file_ext(file)
   if(ext != "txt") warning("Output file name recommended to have .txt extension")
 
+  # if there is a column name like "X__*" in a DD, assume it's an encoded values
+  # colname and should be set to blank
+  if(DD) names(x)[grepl("X__", names(x))] <- ""
+                   
   # write file
   write.table(x, file, sep="\t",  na="",  col.names=TRUE, row.names=FALSE, quote=FALSE)
 
