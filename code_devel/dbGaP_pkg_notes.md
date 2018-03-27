@@ -65,6 +65,7 @@ Stephanie
 		- master scan annot will have study, top med proj, sequencing center
 		- need to ask Quenna how to systematically get phase and funding info
 			- looks like Phase info is on website: https://www.nhlbiwgs.org/group/project-studies
+			- one place to get sequencing center x phase info: Quenna's tracking reports on website
 	- check between files - perhaps as a series of pairwise checks?
 		- i.e., subject consent <> SSM
 		- pedigree <> subject consent

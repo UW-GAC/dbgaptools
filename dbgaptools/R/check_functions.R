@@ -566,7 +566,9 @@ check_sattr <- function(dsfile, ddfile=NULL,
   if(!is.null(missing_samples) & length(missing_samples > 0)){
     satt_report$missing_samples <- missing_samples
   }
-  if(!is.null(missing_topmed_vars)) satt_report$missing_topmed_vars <- missing_topmed_vars
+  if(!is.null(missing_topmed_vars) & length(missing_topmed_vars) > 0) {
+    satt_report$missing_topmed_vars <- missing_topmed_vars
+  }
 
   # if list is empty, return NULL
   if(length(satt_report) == 0) satt_report <- NULL

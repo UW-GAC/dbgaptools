@@ -8,7 +8,8 @@
 #' @param sattr_file Path to sample attributes file on disk
 #' @param pheno_file Path to phenotype file on disk
 #' @param ped_file Path to pedigree file on disk
-#' @param subjectID_col Column name for subject-level ID across files
+#' @param subjectID_col Column name for subject-level ID across file
+#' @param sampleID_col Column name for sample-level ID across files
 #' @param consent_col Column name for consent in subject file
 #'
 #' @details
@@ -45,7 +46,8 @@
 
 check_cross_file <- function(subj_file, ssm_file, molecular_samples,
                              sattr_file=NULL, pheno_file=NULL, ped_file=NULL,
-                             subjectID_col="SUBJECT_ID", consent_col="CONSENT"){
+                             subjectID_col="SUBJECT_ID", sampleID_col="SAMPLE_ID",
+                             consent_col="CONSENT"){
   
   # read in required files
   subj <- .read_ds_file(subj_file)
@@ -55,19 +57,29 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   if(!is.element(subjectID_col, names(subj)) | !is.element(subjectID_col, names(ssm))){
     stop("Please check that files contain columns for subject-level ID")
   }
-
+  
+  # cannot proceed without specified sample  ID col
+  if(!is.element(sampleID_col, names(subj)) | !is.element(sampleID_col, names(ssm))){
+    stop("Please check that files contain columns for sample-level ID")
+  }
+  
   # cannot proceed without specfied consent col
   if(!is.element(consent_col, names(subj))){
     stop("Please check that subject file contains consent column")
   }
   
   # check that all samples with molecular data are in ssm
-  ssm_miss_molecular <- setdiff(molecular_samples, ssm[,"SAMPLE_ID"])
+  ssm_miss_molecular <- setdiff(molecular_samples, ssm[,sampleID_col])
 
   # standardize column names
   if(subjectID_col != "SUBJECT_ID"){
     names(subj)[names(subj) %in% subjectID_col] <- "SUBJECT_ID"
     names(ssm)[names(ssm) %in% subjectID_col] <- "SUBJECT_ID"    
+  }
+
+  if(sampleID_col != "SAMPLE_ID"){
+    names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"        
+    if(!is.null(sattr_file)) names(sattr)[names(sattr) %in% sampleID_col] <- "SAMPLE_ID"
   }
   
   if(consent_col != "CONSENT"){

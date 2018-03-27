@@ -6,7 +6,7 @@
 \usage{
 check_cross_file(subj_file, ssm_file, molecular_samples, sattr_file = NULL,
   pheno_file = NULL, ped_file = NULL, subjectID_col = "SUBJECT_ID",
-  consent_col = "CONSENT")
+  sampleID_col = "SAMPLE_ID", consent_col = "CONSENT")
 }
 \arguments{
 \item{subj_file}{Path to subject consent file on disk}
@@ -21,7 +21,9 @@ check_cross_file(subj_file, ssm_file, molecular_samples, sattr_file = NULL,
 
 \item{ped_file}{Path to pedigree file on disk}
 
-\item{subjectID_col}{Column name for subject-level ID across files}
+\item{subjectID_col}{Column name for subject-level ID across file}
+
+\item{sampleID_col}{Column name for sample-level ID across files}
 
 \item{consent_col}{Column name for consent in subject file}
 }
