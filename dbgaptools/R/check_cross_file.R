@@ -59,7 +59,7 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   }
   
   # cannot proceed without specified sample  ID col
-  if(!is.element(sampleID_col, names(subj)) | !is.element(sampleID_col, names(ssm))){
+  if(!is.element(sampleID_col, names(ssm))){
     stop("Please check that files contain columns for sample-level ID")
   }
   
@@ -77,9 +77,12 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
     names(ssm)[names(ssm) %in% subjectID_col] <- "SUBJECT_ID"    
   }
 
-  if(sampleID_col != "SAMPLE_ID"){
-    names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"        
-    if(!is.null(sattr_file)) names(sattr)[names(sattr) %in% sampleID_col] <- "SAMPLE_ID"
+  if(!is.null(sattr_file)) {
+    sattr <- .read_ds_file(sattr_file)
+    if(sampleID_col != "SAMPLE_ID"){
+      names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"    
+      names(sattr)[names(sattr) %in% sampleID_col] <- "SAMPLE_ID"
+    }
   }
   
   if(consent_col != "CONSENT"){
@@ -114,7 +117,6 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   # check subj <> sattr
   sattr_consent_err <- sattr_miss_molecular <- NULL
   if(!is.null(sattr_file)){
-    sattr <- .read_ds_file(sattr_file)
     # all samples listed here must map to subject with consent >= 1 in subj file
     samps_ok <- ssm$SAMPLE_ID[ssm$SUBJECT_ID %in% subjs_study_cons]
     sattr_consent_err <- setdiff(sattr$SAMPLE_ID, samps_ok)

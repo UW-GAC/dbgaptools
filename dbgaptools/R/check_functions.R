@@ -81,24 +81,28 @@
     extra_vars <- extra_cols
   }
 
-  # return flag if UNIQUEKEY appears in file other than phenotype or sample attributes
+  # return flag if UNIQUEKEY is indicated in file other than phenotype or sample attributes
   uniquekey_flags <- list()
   if("UNIQUEKEY" %in% names(dd)) {
-    uniqkey_cols <- dd$VARNAME[!is.na(dd$UNIQUEKEY)]
-    if(!is.element(dstype, c("pheno","sattr")) & length(uniqkey_cols) > 0 ){
-      uniquekey_flags[["wrong_dstype"]] <- paste("UNIQUEKEY columns(s) should not be defined for dstype", dstype)
-    }
-    # check for only "X" in the columns
-    uniqkey_marks <- unique(dd[dd$VARNAME %in% uniqkey_cols,"UNIQUEKEY"])
-    if(uniqkey_marks != "X") uniquekey_flags[["wrong_mark"]] <- "Only 'X' should be used to flag UNIQUE key columns"
+    # only proceed with checks if a variable is actually marked as a unique key
+    keysel <- !is.na(dd$UNIQUEKEY)
+    if(sum(keysel) > 0) {
+        uniqkey_cols <- dd$VARNAME[!is.na(dd$UNIQUEKEY)]
+        if(!is.element(dstype, c("pheno","sattr")) & length(uniqkey_cols) > 0 ){
+          uniquekey_flags[["wrong_dstype"]] <- paste("UNIQUEKEY columns(s) should not be defined for dstype", dstype)
+        }
+        # check for only "X" in the columns
+        uniqkey_marks <- unique(dd[dd$VARNAME %in% uniqkey_cols,"UNIQUEKEY"])
+        if(uniqkey_marks != "X") uniquekey_flags[["wrong_mark"]] <- "Only 'X' should be used to flag UNIQUE key columns"
 
-    # check that uniquekey columns are unique
-    if(!is.null(ds)){
-      ds.uniq <- ds[,uniqkey_cols,drop=FALSE]
-      if(nrow(ds.uniq) != nrow(unique(ds.uniq))){
-        uniquekey_flags[["notunique"]] <- paste0("UNIQUEKEY columns (",paste(uniqkey_cols, collapse=","),") do not specify unique records in DS")
-      } # if unique key is non-unique
-    } # if ds is also provided
+        # check that uniquekey columns are unique
+        if(!is.null(ds)){
+          ds.uniq <- ds[,uniqkey_cols,drop=FALSE]
+          if(nrow(ds.uniq) != nrow(unique(ds.uniq))){
+            uniquekey_flags[["notunique"]] <- paste0("UNIQUEKEY columns (",paste(uniqkey_cols, collapse=","),") do not specify unique records in DS")
+          } # if unique key is non-unique
+        } # if ds is also provided
+      }# if a VARNAME is marked as unique
   } # end unique key columns
   
   # prepare to collect series of warnings about VALUES column
@@ -146,7 +150,7 @@
               tidyr::gather("column", "row", -VARNAME) %>%
                 tidyr::spread(VARNAME, row) %>%
                   dplyr::select(-column)
-          
+
           vars_chk <- names(encoded_vars)
           for(var in vars_chk){
             var1 <- unique(ds[,var])
@@ -154,7 +158,8 @@
             var1 <- var1[!is.na(var1)]
             var2 <- dplyr::pull(encoded_vars, var)
             var2 <- var2[!is.na(var2)]
-            undef_vals <- setdiff(var1, var2)
+            # remove leading or trailing white space
+            undef_vals <- setdiff(trimws(var1), trimws(var2))
             if(length(undef_vals) > 0){
                 warn_undef <- paste0("For variable ", var,", the following values are undefined in the dd: ", paste(sort(undef_vals), collapse=" "))
                 vals_warnings[["undefined_vals_warn"]] <- warn_undef
