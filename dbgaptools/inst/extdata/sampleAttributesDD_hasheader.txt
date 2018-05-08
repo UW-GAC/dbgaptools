@@ -1,0 +1,17 @@
+# COMMENTS																
+extra things																
+more extra things																
+VARNAME	VARDESC	DOCFILE	TYPE	UNITS	MIN	MAX	RESOLUTION	COMMENT1	COMMENT2	VARIABLE_SOURCE	VARIABLE_TERM	UNIQUEKEY	COLLINTERVAL	ORDER	VALUES	
+SAMPLE_ID	De-identified Sample ID		string									X				
+BODY_SITE	Body site where sample was collected		string													
+ANALYTE_TYPE	Analyte Type		string													
+IS_TUMOR	Tumor status		encoded values												Y=Is Tumor	N=Is not a tumor
+HISTOLOGICAL_TYPE	Cell or tissue type or subtype of sample		string													
+PRIMARY_METASTATIC_TUMOR	"Primary tumor, metastasis, or transformed cell line"		string													
+PRIMARY_TUMOR_LOCATION	Primary tumor location		string													
+TUMOR_STAGE	Tumor stage of sample		string													
+TUMOR_GRADE	Tumor grade of sample		string													
+TUMOR_TREATMENT	Type of tumor treatment for sample		string													
+GENOTYPING_CENTER	Name of the center which conducted genotyping		string					"examples: CIDR, BROAD"								
+SEQUENCING_CENTER	Name of the center which conducted sequencing		encoded values												1=BROAD	2=UW
+																

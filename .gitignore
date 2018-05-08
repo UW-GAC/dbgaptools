@@ -1,6 +1,12 @@
+# ignore code devel
+code_devel
+code_devel/*
+
 # History files
 .Rhistory
 .Rapp.history
+*.R~
+
 
 # Session Data files
 .RData
