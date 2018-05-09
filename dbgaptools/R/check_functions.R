@@ -197,13 +197,14 @@
       if(sum(!is.na(dd$MIN)) > 0){
           dd.tmp <- dd[!is.na(dd$MIN),c("VARNAME","MIN")]
           ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
-          # remove non-numeric entries from DD MIN (e.g., >, < .etc)
-          dd.tmp$MIN <- stringr::str_replace_all(dd.tmp$MIN, "[^[:digit:]]", "")
+          # remove greater than or less than signs from DD MIN (e.g., >, < .etc)
+          dd.tmp$MIN <- stringr::str_replace_all(dd.tmp$MIN, ">|<", "")
           # convert to numeric if necessary
           ds.tmp <- apply(ds.tmp, 2, as.numeric)
           dd.tmp$min.ds <- apply(ds.tmp, 2, min, na.rm=TRUE)
-          range_err <- dd.tmp$VARNAME[dd.tmp$min.ds < as.numeric(dd.tmp$MIN)]
-          if(length(range_err) > 0) min_errors <- range_err
+          # return df of variable name, expeced and observed min
+          range_err <- dd.tmp[dd.tmp$min.ds < as.numeric(dd.tmp$MIN),]
+          if(nrow(range_err) > 0) min_errors <- range_err
         } # if non-NA MINS
     } # if MIN is col
        
@@ -211,13 +212,14 @@
       if(sum(!is.na(dd$MAX)) > 0) {
           dd.tmp <- dd[!is.na(dd$MAX),c("VARNAME","MAX")]
           ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
-          # remove non-numeric entries from DD MAX
-          dd.tmp$MAX <- stringr::str_replace_all(dd.tmp$MAX, "[^[:digit:]]", "")
+          # remove greater than or less than signs from DD MAX (e.g., >, < .etc)
+          dd.tmp$MAX <- stringr::str_replace_all(dd.tmp$MAX, ">|<", "")
           # convert DS cols to numeric class
           ds.tmp <- apply(ds.tmp, 2, as.numeric)
           dd.tmp$max.ds <- apply(ds.tmp, 2, max, na.rm=TRUE)
-          range_err <- dd.tmp$VARNAME[dd.tmp$max.ds > as.numeric(dd.tmp$MAX)]
-          if(length(range_err) > 0) max_errors <- range_err
+          # return df of variable name, expeced and observed max
+          range_err <- dd.tmp[dd.tmp$max.ds > as.numeric(dd.tmp$MAX),]
+          if(nrow(range_err) > 0) max_errors <- range_err
         } # if non-NA MAX
     } # if MAX is col
   } # if DS is provided
