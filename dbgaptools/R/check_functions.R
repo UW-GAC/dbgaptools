@@ -166,7 +166,7 @@
             }
           } # loop through encoded vars
         } #  if dataset is provided
-    } # if there are non-NA entires in VALUES column
+    } # if there are non-NA entrie in VALUES column
   } # if VALUES col is present
 
   # if dataset provided:

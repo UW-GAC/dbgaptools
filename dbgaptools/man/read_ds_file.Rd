@@ -4,7 +4,8 @@
 \alias{.read_ds_file}
 \title{Read in a data file}
 \usage{
-.read_ds_file(filename, dd = FALSE, na_vals = c("NA", "N/A", "na", "n/a"))
+.read_ds_file(filename, dd = FALSE, na_vals = c("NA", "N/A", "na", "n/a"),
+  remove_empty = TRUE)
 }
 \arguments{
 \item{filename}{The path to the file on disk}
@@ -12,6 +13,8 @@
 \item{dd}{Logical, where \code{TRUE} indicates a data dictionary file}
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing (see details)}
+
+\item{remove_empty}{Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE}
 }
 \value{
 A data frame from the file

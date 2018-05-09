@@ -46,6 +46,7 @@
 #' @param filename The path to the file on disk
 #' @param dd Logical, where \code{TRUE} indicates a data dictionary file
 #' @param na_vals Vector of strings that should be read in as NA/missing (see details)
+#' @param remove_empty Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE
 #'
 #' @details
 #' Missing values: The blank string "" will always be considered an NA or missing value. Additional strings that should be read in as missing values can be specified in the \code{na_vals} argument.
@@ -62,7 +63,7 @@
 #' 
 #' @rdname read_ds_file
 
-.read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a")) {
+.read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"), remove_empty=TRUE) {
 
   stopifnot(file.exists(filename))
 
@@ -108,19 +109,13 @@
     ##   dat[[column]] <- NULL
     ## }
 
-    ## remove rows and columns with all NAs
-    ## note in DDs, some rows with encoded VALUE will lack header
-    blank.rows <- rowSums(!is.na(dat)) %in% 0
-    blank.cols <- colSums(!is.na(dat)) %in% 0 & names(dat) %in% "" 
-    dat <- dat[!blank.rows, !blank.cols]
-
-    # if DD, rename extra columns after VALUES as "X__*"
-    if(dd){
-        idx <- (grep("VALUES", names(dat), ignore.case=TRUE) + 1):ncol(dat)
-        new.nms <- paste0("X__", 1:length(idx))
-        names(dat)[idx] <- new.nms
+    if(remove_empty) {
+        ## remove rows and columns with all blanks/NAs
+        blank.rows <- rowSums(!is.na(dat)) %in% 0
+        blank.cols <- colSums(!is.na(dat)) %in% 0
+        dat <- dat[!blank.rows, !blank.cols]
         }
-     
+
   }, error = function(e) {
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
   })
@@ -131,6 +126,7 @@
 #' Read data dictionary file
 #' 
 #' @param filename The path to the file on disk
+#' @param remove_empty Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE
 #'
 #' @details
 #' Expects (tab-delimited) .txt or .xlsx file. 
@@ -140,7 +136,7 @@
 #'
 #' @rdname read_dd_file
 
-.read_dd_file <- function(filename){
+.read_dd_file <- function(filename, remove_empty=TRUE){
 
   stopifnot(file.exists(filename))
   
@@ -156,8 +152,10 @@
     ## method for reading in DD depends on file type
     if(ext %in% "txt"){
       dd <- .read_ds_file(filename, dd=TRUE)
-      # tibbles can't have unnamed columns
-      names(dd)[names(dd) %in% ""] <- paste0("X__",1:sum(names(dd) %in% ""))
+      # rename extra columns after VALUES as "X__*" and save as tibble      
+      idx <- (grep("VALUES", names(dd), ignore.case=TRUE) + 1):ncol(dd)
+      new.nms <- paste0("X__", 1:length(idx))
+      names(dd)[idx] <- new.nms
       dd <- tibble::as_tibble(dd)
     } else if (ext %in% c("xls","xlsx")) {
 
@@ -181,6 +179,14 @@
   }, error = function(e) {
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
   })
+
+    ## remove rows and columns with all blanks/NAs
+    if(remove_empty) {
+        blank.rows <- rowSums(!is.na(dd)) %in% 0
+        blank.cols <- colSums(!is.na(dd)) %in% 0
+        dd <- dd[!blank.rows, !blank.cols]
+        }
+    
     dd
 }
 
