@@ -109,10 +109,17 @@
     ## }
 
     ## remove rows and columns with all NAs
-    ## note in DDs, some rows with encoded VALUEs will lack header
+    ## note in DDs, some rows with encoded VALUE will lack header
     blank.rows <- rowSums(!is.na(dat)) %in% 0
     blank.cols <- colSums(!is.na(dat)) %in% 0 & names(dat) %in% "" 
-    dat <- dat[!blank.rows,!blank.cols]
+    dat <- dat[!blank.rows, !blank.cols]
+
+    # if DD, rename extra columns after VALUES as "X__*"
+    if(dd){
+        idx <- (grep("VALUES", names(dat), ignore.case=TRUE) + 1):ncol(dat)
+        new.nms <- paste0("X__", 1:length(idx))
+        names(dat)[idx] <- new.nms
+        }
      
   }, error = function(e) {
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
@@ -166,8 +173,7 @@
       # identify if first row was not column headers
       if(!is.element("VARNAME", toupper(names(dd)))){
         warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
-        colnames_row <- which(stringr::str_detect(dd, "VARDESC") |
-                              stringr::str_detect(dd, "vardesc"))
+        colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case=TRUE)))
         dd <- readxl::read_excel(filename, sheet=sheet_arg,
                                  skip=colnames_row+1, col_types="text")
       }
