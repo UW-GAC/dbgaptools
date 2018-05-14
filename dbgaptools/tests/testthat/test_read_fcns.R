@@ -22,7 +22,7 @@ test_that("Header lines are properly counted", {
 
 test_that("DD files have expected dimensions when read in", {
   dd <- .read_dd_file(satt_dd)
-  expect_equal(ncol(dd), 17)
+  expect_equal(ncol(dd), 7)
   expect_equal(nrow(dd), 12)
 })
 
@@ -57,6 +57,16 @@ test_that("Mult sheet Excel workbooks reads in first sheet as DD", {
   expect_warning(.read_dd_file(dd_nohdr_multsheet),
 "Data dictionary Excel contains multiple sheets; assuming first is the DD", fixed=TRUE)
 })
+
+test_that("DD with no 'VALUES' column reads in without error", {
+    dd <- .read_dd_file(satt_dd)
+    dd.rev.fn <- tempfile(fileext=".txt")
+    # keep only first 3 cols
+    write.table(dd[,1:3], file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
+                quote=FALSE, sep="\t", na="")
+    expect_error(.read_dd_file(dd.rev.fn), NA)
+})
+    
 
 # TO ADD:
 # .read_ds_file and .read_dd_file check that returns an error from the tryCatch
