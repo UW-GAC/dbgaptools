@@ -14,6 +14,7 @@
 #' the number of header lines in the file
 #'
 #' @rdname count_hdr_lines
+#' @export
 
 .count_hdr_lines <- function(filename, colname=NA) {
   con <- file(filename, "r")
@@ -62,6 +63,7 @@
 #' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 #' 
 #' @rdname read_ds_file
+#' @export
 
 .read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"), remove_empty=TRUE) {
 
@@ -135,6 +137,7 @@
 #' A data frame from the file
 #'
 #' @rdname read_dd_file
+#' @export
 
 .read_dd_file <- function(filename, remove_empty=TRUE){
 

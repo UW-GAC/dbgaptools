@@ -17,7 +17,7 @@
 ##' @return Write file to disk.
 ##' 
 ##' @rdname write_dbgap
-##'
+##' @export
 
 write_dbgap <- function(x, file="", 
                         study_name=NULL, phs=NULL, DD=FALSE,

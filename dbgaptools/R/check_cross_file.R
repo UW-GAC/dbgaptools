@@ -43,6 +43,7 @@
 #' }
 #'
 #' @rdname check_cross_file
+#' @export
 
 check_cross_file <- function(subj_file, ssm_file, molecular_samples,
                              sattr_file=NULL, pheno_file=NULL, ped_file=NULL,

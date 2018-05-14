@@ -30,6 +30,7 @@
 #' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
 #'
 #' @rdname check_dd
+#' @export
 
 .check_dd <- function(dd, ds=NULL, dstype=""){
 
@@ -297,6 +298,7 @@
 #' \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
 #' 
 #' @rdname check_ssm
+#' @export
 
 check_ssm <- function(dsfile, ddfile=NULL,
                       na_vals=c("NA","N/A","na","n/a"),
@@ -491,8 +493,11 @@ check_ssm <- function(dsfile, ddfile=NULL,
 #' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 #' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
 #' \item{missing_topmed_vars}{Missing and required variables for TOPMed}
+#'
+#' @rdname check_sattr
+#' @export
 
-# check_sattr
+
 check_sattr <- function(dsfile, ddfile=NULL,
                         na_vals=c("NA","N/A","na","n/a"),
                         samp_exp=NULL,
@@ -618,6 +623,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
 #' \item{potential_pheno_vars}{List of potential phenotype variable names in DS. Note phenotype should only be in one of these two files: phenotype file or subject consent file.}
 #' 
 #' @rdname check_subj
+#' @export
 
 check_subj <- function(dsfile, ddfile=NULL,
                        na_vals=c("NA","N/A","na","n/a"),
@@ -777,6 +783,7 @@ check_subj <- function(dsfile, ddfile=NULL,
 #' \item{mztwin_errors}{List of potential errors with MZ twins}
 #'
 #' @rdname check_ped
+#' @export
 
 check_ped <- function(dsfile, ddfile=NULL,
                       na_vals=c("NA","N/A","na","n/a"),
@@ -916,6 +923,7 @@ check_ped <- function(dsfile, ddfile=NULL,
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 #'
 #' @rdname check_pheno
+#' @export
 
 check_pheno <- function(dsfile, ddfile=NULL,
                         na_vals=c("NA","N/A","na","n/a"),
