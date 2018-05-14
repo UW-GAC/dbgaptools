@@ -109,18 +109,17 @@ test_that("Difference in DS and DD variables returns warning", {
 test_that("DS values outside of MIN and MAX ranges warning", {
   # remove first warning
   ds <- .read_ds_file(dsfn)
-  ds[,"VARIABLE_TERM"] <- NULL
   dd <- .read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL
   
   var <- "SEQUENCING_CENTER"
   dd$MIN[dd$VARNAME %in% var] <- 2
   dd$MAX[dd$VARNAME %in% var] <- 5
-  expect_equal(.check_dd(dd, ds, dstype="sattr")$min_errors, "SEQUENCING_CENTER")
+  expect_equal(.check_dd(dd, ds, dstype="sattr")$min_errors$VARNAME, "SEQUENCING_CENTER")
   
   dd$MIN[dd$VARNAME %in% var] <- 0
   dd$MAX[dd$VARNAME %in% var] <- 1
-  expect_equal(.check_dd(dd, ds, dstype="sattr")$max_errors, "SEQUENCING_CENTER")  
+  expect_equal(.check_dd(dd, ds, dstype="sattr")$max_errors$VARNAME, "SEQUENCING_CENTER")  
 })
 
 test_that("Illegal characters in variable names are reported", {
