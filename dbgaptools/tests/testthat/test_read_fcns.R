@@ -22,7 +22,7 @@ test_that("Header lines are properly counted", {
 
 test_that("DD files have expected dimensions when read in", {
   dd <- .read_dd_file(satt_dd)
-  expect_equal(ncol(dd), 7)
+  expect_equal(ncol(dd), 17)
   expect_equal(nrow(dd), 12)
 })
 

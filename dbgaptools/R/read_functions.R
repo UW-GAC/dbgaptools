@@ -47,7 +47,8 @@
 #' @param filename The path to the file on disk
 #' @param dd Logical, where \code{TRUE} indicates a data dictionary file
 #' @param na_vals Vector of strings that should be read in as NA/missing (see details)
-#' @param remove_empty Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE
+#' @param remove_empty_row Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE
+#' @param remove_empty_col Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE
 #'
 #' @details
 #' Missing values: The blank string "" will always be considered an NA or missing value. Additional strings that should be read in as missing values can be specified in the \code{na_vals} argument.
@@ -65,7 +66,8 @@
 #' @rdname read_ds_file
 #' @export
 
-.read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"), remove_empty=TRUE) {
+.read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
+                          remove_empty_row=TRUE, remove_empty_col=FALSE) {
 
   stopifnot(file.exists(filename))
 
@@ -111,11 +113,16 @@
     ##   dat[[column]] <- NULL
     ## }
 
-    if(remove_empty) {
-        ## remove rows and columns with all blanks/NAs
+    ## remove rows with all blanks/NAs
+    if(remove_empty_row) {
         blank.rows <- rowSums(!is.na(dat)) %in% 0
+        dat <- dat[!blank.rows,]
+        }
+    
+    ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
+    if(remove_empty_col) {
         blank.cols <- colSums(!is.na(dat)) %in% 0
-        dat <- dat[!blank.rows, !blank.cols]
+        dat <- dat[,!blank.cols]
         }
 
   }, error = function(e) {
@@ -128,8 +135,9 @@
 #' Read data dictionary file
 #' 
 #' @param filename The path to the file on disk
-#' @param remove_empty Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE
-#'
+#' @param remove_empty_row Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE
+#' @param remove_empty_col Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE
+#' 
 #' @details
 #' Expects (tab-delimited) .txt or .xlsx file. 
 #' dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
@@ -139,7 +147,7 @@
 #' @rdname read_dd_file
 #' @export
 
-.read_dd_file <- function(filename, remove_empty=TRUE){
+.read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE){
 
   stopifnot(file.exists(filename))
   
@@ -188,12 +196,17 @@
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
   })
 
-    ## remove rows and columns with all blanks/NAs
-    if(remove_empty) {
+    ## remove rows with all blanks/NAs
+    if(remove_empty_row) {
         blank.rows <- rowSums(!is.na(dd)) %in% 0
-        blank.cols <- colSums(!is.na(dd)) %in% 0
-        dd <- dd[!blank.rows, !blank.cols]
+        dd <- dd[!blank.rows,]
         }
+    
+    ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
+    if(remove_empty_col) {
+        blank.cols <- colSums(!is.na(dd)) %in% 0
+        dd <- dd[,!blank.cols]
+        }    
     
     dd
 }
