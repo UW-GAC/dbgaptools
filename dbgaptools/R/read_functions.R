@@ -164,11 +164,14 @@
     if(ext %in% "txt"){
       dd <- .read_ds_file(filename, dd=TRUE)
       
-      # rename extra columns after VALUES as "X__*" and save as tibble            
-      if("VALUES" %in% toupper(names(dd))){
-          idx <- (grep("VALUES", names(dd), ignore.case=TRUE) + 1):ncol(dd)
-          new.nms <- paste0("X__", 1:length(idx))
-          names(dd)[idx] <- new.nms
+      # rename extra columns after VALUES as "X__*" 
+      val.col <- grep("VALUES", names(dd), ignore.case=TRUE)
+      if(length(val.col) > 0) {
+         if(val.col < ncol(dd)){
+              idx <- (val.col + 1):ncol(dd)
+              new.nms <- paste0("X__", 1:length(idx))
+              names(dd)[idx] <- new.nms
+              }
           }
       
       # save as tibble (for consistency with Excel input processing, partly)
