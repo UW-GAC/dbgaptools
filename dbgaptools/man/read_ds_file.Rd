@@ -5,7 +5,7 @@
 \title{Read in a data file}
 \usage{
 .read_ds_file(filename, dd = FALSE, na_vals = c("NA", "N/A", "na", "n/a"),
-  remove_empty = TRUE)
+  remove_empty_row = TRUE, remove_empty_col = FALSE)
 }
 \arguments{
 \item{filename}{The path to the file on disk}
@@ -14,7 +14,9 @@
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing (see details)}
 
-\item{remove_empty}{Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE}
+\item{remove_empty_row}{Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE}
+
+\item{remove_empty_col}{Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE}
 }
 \value{
 A data frame from the file

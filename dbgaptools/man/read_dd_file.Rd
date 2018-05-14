@@ -4,12 +4,14 @@
 \alias{.read_dd_file}
 \title{Read data dictionary file}
 \usage{
-.read_dd_file(filename, remove_empty = TRUE)
+.read_dd_file(filename, remove_empty_row = TRUE, remove_empty_col = FALSE)
 }
 \arguments{
 \item{filename}{The path to the file on disk}
 
-\item{remove_empty}{Logical of whether to exclude empty (i.e. all missing values) rows and columns. Defaults to TRUE}
+\item{remove_empty_row}{Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE}
+
+\item{remove_empty_col}{Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE}
 }
 \value{
 A data frame from the file
