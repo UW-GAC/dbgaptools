@@ -153,6 +153,7 @@
                   dplyr::select(-column)
 
           vars_chk <- names(encoded_vars)
+          warn_undef <- NULL
           for(var in vars_chk){
             var1 <- unique(ds[,var])
             # remove NAs as encoded values
@@ -162,10 +163,14 @@
             # remove leading or trailing white space
             undef_vals <- setdiff(trimws(var1), trimws(var2))
             if(length(undef_vals) > 0){
-                warn_undef <- paste0("For variable ", var,", the following values are undefined in the dd: ", paste(sort(undef_vals), collapse=" "))
-                vals_warnings[["undefined_vals_warn"]] <- warn_undef
+                warn_tmp <- paste0("For variable ", var,", the following values are undefined in the dd: ", paste(sort(undef_vals), collapse=" "))
+                warn_undef <- c(warn_undef, warn_tmp)
             }
           } # loop through encoded vars
+
+         # save value warnings in returned objects   
+         vals_warnings[["undefined_vals_warn"]] <- warn_undef
+            
         } #  if dataset is provided
     } # if there are non-NA entrie in VALUES column
   } # if VALUES col is present
