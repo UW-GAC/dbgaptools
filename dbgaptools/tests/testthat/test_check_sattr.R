@@ -13,7 +13,7 @@ test_that("Missing ID columns are detected",{
 })
 
 test_that("Non-standard ID column names are detected",{
-  ds.rev <- .read_ds_file(sattr_ds)
+  ds.rev <- read_ds_file(sattr_ds)
   names(ds.rev)[1] <- "mysample"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -25,7 +25,7 @@ test_that("Non-standard ID column names are detected",{
 })
 
 test_that("Duplicated sample IDs are detected",{
-  ds.rev <- .read_ds_file(sattr_ds)
+  ds.rev <- read_ds_file(sattr_ds)
   ds.rev$SAMPLE_ID[3] <- ds.rev$SAMPLE_ID[2]
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -36,7 +36,7 @@ test_that("Duplicated sample IDs are detected",{
 })
 
 test_that("Blank sample IDs are detected",{
-  ds.rev <- .read_ds_file(sattr_ds)
+  ds.rev <- read_ds_file(sattr_ds)
   ds.rev$SAMPLE_ID[3] <- ""
   ds.rev.fn <-  tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -47,7 +47,7 @@ test_that("Blank sample IDs are detected",{
 })
 
 test_that("Extra samples are detected",{
-  ds <- .read_ds_file(sattr_ds)
+  ds <- read_ds_file(sattr_ds)
   samp_exp <- ds[,1]
   samp_exp_less <- samp_exp[-c(3:4)]
   out <- check_sattr(sattr_ds, samp_exp=samp_exp_less)
@@ -55,7 +55,7 @@ test_that("Extra samples are detected",{
 })
 
 test_that("Missing samples are detected",{
-  ds <- .read_ds_file(sattr_ds)
+  ds <- read_ds_file(sattr_ds)
   samp_exp <- ds[,1]
   samp_exp_more <- c(samp_exp, "S999")
   out <- check_sattr(sattr_ds, samp_exp=samp_exp_more)
@@ -63,7 +63,7 @@ test_that("Missing samples are detected",{
 })
 
 test_that("Missing and required variables are detected",{
-  ds.rev <- .read_ds_file(sattr_ds)
+  ds.rev <- read_ds_file(sattr_ds)
   ds.rev$BODY_SITE <- NULL
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,

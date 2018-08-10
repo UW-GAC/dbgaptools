@@ -13,7 +13,7 @@ check_ssm(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
 
 \item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)}
 

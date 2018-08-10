@@ -4,15 +4,16 @@
 \alias{check_sattr}
 \title{Check sample attributes file}
 \usage{
-check_sattr(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
-  samp_exp = NULL, sampleID_col = "SAMPLE_ID", topmed = FALSE)
+check_sattr(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na",
+  "n/a"), samp_exp = NULL, sampleID_col = "SAMPLE_ID",
+  topmed = FALSE)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
 
 \item{samp_exp}{List of expected sample IDs}
 

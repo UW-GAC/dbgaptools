@@ -14,7 +14,6 @@
 #' the number of header lines in the file
 #'
 #' @rdname count_hdr_lines
-#' @export
 
 .count_hdr_lines <- function(filename, colname=NA) {
   con <- file(filename, "r")
@@ -63,10 +62,10 @@
 #' @details
 #' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 #' 
-#' @rdname read_ds_file
+#' @rdnameread_ds_file
 #' @export
 
-.read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
+read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
                           remove_empty_row=TRUE, remove_empty_col=FALSE) {
 
   stopifnot(file.exists(filename))
@@ -144,10 +143,10 @@
 #' @return
 #' A data frame from the file
 #'
-#' @rdname read_dd_file
+#' @rdnameread_dd_file
 #' @export
 
-.read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE){
+read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE){
 
   stopifnot(file.exists(filename))
   
@@ -162,7 +161,7 @@
 
     ## method for reading in DD depends on file type
     if(ext %in% "txt"){
-      dd <- .read_ds_file(filename, dd=TRUE)
+      dd <-read_ds_file(filename, dd=TRUE)
       
       # rename extra columns after VALUES as "X__*" 
       val.col <- grep("VALUES", names(dd), ignore.case=TRUE)
@@ -185,13 +184,13 @@
         warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
         sheetArg <- sheets[1]
       }
-      dd <- readxl::read_excel(filename, sheet=sheet_arg, col_types="text")
+      dd <- readxl:read_excel(filename, sheet=sheet_arg, col_types="text")
       
       # identify if first row was not column headers
       if(!is.element("VARNAME", toupper(names(dd)))){
         warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
         colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case=TRUE)))
-        dd <- readxl::read_excel(filename, sheet=sheet_arg,
+        dd <- readxl:read_excel(filename, sheet=sheet_arg,
                                  skip=colnames_row+1, col_types="text")
       }
     }

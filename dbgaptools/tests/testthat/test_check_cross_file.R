@@ -10,7 +10,7 @@ subjectID_col <- "SUBJECT_ID"
 consent_col <- "CONSENT"
 
 test_that("Compliant files run error free", {
-  ssm <- .read_ds_file(ssm_file)  
+  ssm <- read_ds_file(ssm_file)  
   expect_null(check_cross_file(subj_file, ssm_file, molecular_samples=ssm$SAMPLE_ID))
   
   # ok to have pheno and ped missing non-molecular samples (indeed these are HapMaps)
@@ -20,21 +20,21 @@ test_that("Compliant files run error free", {
 })
 
 test_that("Missing subject ID column stops with error",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   str <- "Please check that files contain columns for subject-level ID"
   expect_error(check_cross_file(subj_file, ssm_file, molecular_samples=ssm$SAMPLE_ID,
                                 subjectID_col="mysubject"), str, fixed=TRUE)  
 })
 
 test_that("Missing consent column stops with error",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   str <- "Please check that subject file contains consent column"
   expect_error(check_cross_file(subj_file, ssm_file, molecular_samples=ssm$SAMPLE_ID  ,
                                 consent_col="mycons"), str, fixed=TRUE)  
 })
 
 test_that("Report molecular data samples missing from ssm",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   extras <- c("S888","S999")
   molecular_samples <- c(ssm$SAMPLE_ID, extras)
   out <- check_cross_file(subj_file, ssm_file, molecular_samples)
@@ -42,8 +42,8 @@ test_that("Report molecular data samples missing from ssm",{
 })
 
 test_that("Invalid consent code removed and reported: negative integer",{
-  ssm <- .read_ds_file(ssm_file)
-  subj_rev <- .read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev$CONSENT[10] <- "-99"
   exp_df <- subj_rev[10,]
   subj_rev_fn <- tempfile(fileext=".txt")
@@ -57,8 +57,8 @@ test_that("Invalid consent code removed and reported: negative integer",{
 })
 
 test_that("Invalid consent code removed and reported: NA/missing",{
-  ssm <- .read_ds_file(ssm_file)
-  subj_rev <- .read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev$CONSENT[11] <- NA
   exp_df <- subj_rev[11,]
   subj_rev_fn <- tempfile(fileext=".txt")
@@ -73,8 +73,8 @@ test_that("Invalid consent code removed and reported: NA/missing",{
 })
 
 test_that("Invalid consent code removed and reported: string",{
-  ssm <- .read_ds_file(ssm_file)
-  subj_rev <- .read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev$CONSENT[12] <- "GRU"
   exp_df <- subj_rev[12,]
   subj_rev_fn <- tempfile(fileext=".txt")
@@ -88,8 +88,8 @@ test_that("Invalid consent code removed and reported: string",{
 })
 
 test_that("SSM samples missing from subject file are reported",{
-  ssm <- .read_ds_file(ssm_file)
-  subj_rev <- .read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev <- subj_rev[-c(1:3),]
   subj_rev_fn <- tempfile(fileext=".txt")
   write.table(subj_rev, file=subj_rev_fn, col.names=TRUE, row.names=FALSE,
@@ -102,15 +102,15 @@ test_that("SSM samples missing from subject file are reported",{
 })
 
 test_that("SSM samples not in list of molecular samples are reported ",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   out <- check_cross_file(subj_file, ssm_file, molecular_samples=ssm$SAMPLE_ID[-c(1:2)])
   expect_equal(out$ssm_no_molecular, c("S1","S2"))
 })
 
 test_that("Sample attribues file samples without consent >= 1 are reported", {
   # change consent to 0 for a sample attributes file sample
-  ssm <- .read_ds_file(ssm_file)
-  subj_rev <- .read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev$CONSENT[3] <- 0
   subj_rev_fn <- tempfile(fileext=".txt")
   write.table(subj_rev, file=subj_rev_fn, col.names=TRUE, row.names=FALSE,
@@ -123,7 +123,7 @@ test_that("Sample attribues file samples without consent >= 1 are reported", {
 })
 
 test_that("Molecular data samples missing from sample attributes are reported",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   extras <- c("S888","S999")
   molecular_samples <- c(ssm$SAMPLE_ID, extras)
   out <- check_cross_file(subj_file, ssm_file, molecular_samples, sattr_file)
@@ -133,8 +133,8 @@ test_that("Molecular data samples missing from sample attributes are reported",{
 
 test_that("Subjects in pheno file without consent >= 1 are reported",{
   # change consent to 0 for a pheno file subject
-  ssm <- .read_ds_file(ssm_file)
-  subj_rev <- .read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev$CONSENT[3] <- 0
   subj_rev_fn <- tempfile(fileext=".txt")
   write.table(subj_rev, file=subj_rev_fn, col.names=TRUE, row.names=FALSE,
@@ -149,8 +149,8 @@ test_that("Subjects in pheno file without consent >= 1 are reported",{
 
 test_that("Molecular subjects missing from pheno file are reported",{
   # remove pheno records
-  ssm <- .read_ds_file(ssm_file)
-  pheno_rev <- .read_ds_file(pheno_file)
+  ssm <- read_ds_file(ssm_file)
+  pheno_rev <- read_ds_file(pheno_file)
   pheno_rev <- pheno_rev[-c(5,7),]
   pheno_rev_fn <- tempfile(fileext=".txt")
   write.table(pheno_rev, file=pheno_rev_fn, col.names=TRUE, row.names=FALSE,
@@ -164,9 +164,9 @@ test_that("Molecular subjects missing from pheno file are reported",{
 })
 
 test_that("Pedigree subjects missing from subject file are reported",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   # remove subj records
-  subj_rev <- .read_ds_file(subj_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev <- subj_rev[-c(1:3),]
   subj_rev_fn <- tempfile(fileext=".txt")
   write.table(subj_rev, file=subj_rev_fn, col.names=TRUE, row.names=FALSE,
@@ -180,9 +180,9 @@ test_that("Pedigree subjects missing from subject file are reported",{
 })
 
 test_that("Pedigree subjects that don't map to molecluar samples should have consent=0",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   # set linking subject to consent=2
-  subj_rev <- .read_ds_file(subj_file)
+  subj_rev <- read_ds_file(subj_file)
   subj_rev$CONSENT[14] <- 2
   subj_rev_fn <- tempfile(fileext=".txt")
   write.table(subj_rev, file=subj_rev_fn, col.names=TRUE, row.names=FALSE,
@@ -196,9 +196,9 @@ test_that("Pedigree subjects that don't map to molecluar samples should have con
 })
 
 test_that("Molecular data samples not in pedigree are repored",{
-  ssm <- .read_ds_file(ssm_file)
+  ssm <- read_ds_file(ssm_file)
   # remove pedigree record
-  ped_rev <- .read_ds_file(ped_file)
+  ped_rev <- read_ds_file(ped_file)
   ped_rev <- ped_rev[-4,]
   ped_rev_fn <- tempfile(fileext=".txt")
   write.table(ped_rev, file=ped_rev_fn, col.names=TRUE, row.names=FALSE,

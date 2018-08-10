@@ -5,18 +5,18 @@ ddfn <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "db
 dsfn <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools", mustWork = TRUE)
 
 test_that("Missing DS type argument stops with error", {
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   str <- "Please specify dstype, one of: pheno, ped, sattr, ssm, subj"
   expect_error(.check_dd(dd), str)
 })
 
 test_that("Non-standard DS type argument stops with error",{
-   dd <- .read_dd_file(ddfn)  
+   dd <- read_dd_file(ddfn)  
    expect_error(.check_dd(dd, dstype="other"), "Please specify dstype, one of: pheno, ped, sattr, ssm, subj")
 })
 
 test_that("Non-uppercase column names returns a warning",{
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL  
   names(dd)[2] <- tolower(names(dd)[2])
   expect_warning(out <- .check_dd(dd, dstype="sattr"), "All column names should be UPPER CASE", fixed=TRUE)
@@ -24,7 +24,7 @@ test_that("Non-uppercase column names returns a warning",{
 })
 
 test_that("Missing and required initialcolumns stops with error",{
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL
   names(dd)[1] <- "VARIABLE"
   str <- "First two columns required to be 'VARNAME' and 'VARDESC'"
@@ -35,13 +35,13 @@ test_that("Missing and required initialcolumns stops with error",{
 
 test_that("Extra variables are reported",{
   # For some reason, dbGaP example file has extra variable (maybe examples will be updated)
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   expect_warning(out <- .check_dd(dd, dstype="sattr"), "DD contains non-standard columns: VARIABLE_TERM")
   expect_equal(out$extra_vars, "VARIABLE_TERM")
 })
 
 test_that("Missing variables are reported",{
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd$UNITS <- NULL
   # remove known extra variable to avoid that warning
   dd$VARIABLE_TERM <- NULL
@@ -49,7 +49,7 @@ test_that("Missing variables are reported",{
 })
 
 test_that("Check VALUES position other than last returns warning",{
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   names(dd)[9] <- "VALUES"
   names(dd)[16] <- "COMMENT1"
   dd$VARIABLE_TERM <- NULL  
@@ -59,7 +59,7 @@ test_that("Check VALUES position other than last returns warning",{
 
 test_that("VALUES columns with multiple encodings returns warnings",{
   # one encoded var
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   # want one warning to test
   dd$VARIABLE_TERM <- NULL
   dd$VALUES[4] <- "Y=Is Tumor, N/A=not applicable"
@@ -74,9 +74,9 @@ test_that("VALUES columns with multiple encodings returns warnings",{
 
 test_that("Undefined encoded vars in DS returns warning", {
   # remove first warning
-  ds <- .read_ds_file(dsfn)
+  ds <- read_ds_file(dsfn)
   ds[,"VARIABLE_TERM"] <- NULL
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL
 
   # one encoded var
@@ -94,9 +94,9 @@ test_that("Undefined encoded vars in DS returns warning", {
 
 test_that("Difference in DS and DD variables returns warning", {
   # remove first warning
-  ds <- .read_ds_file(dsfn)
+  ds <- read_ds_file(dsfn)
   ds[,"VARIABLE_TERM"] <- NULL
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL  
 
   names(ds)[11] <- "GENOTYPING_LAB"
@@ -108,8 +108,8 @@ test_that("Difference in DS and DD variables returns warning", {
 
 test_that("DS values outside of MIN and MAX ranges warning", {
   # remove first warning
-  ds <- .read_ds_file(dsfn)
-  dd <- .read_dd_file(ddfn)
+  ds <- read_ds_file(dsfn)
+  dd <- read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL
   
   var <- "SEQUENCING_CENTER"
@@ -124,7 +124,7 @@ test_that("DS values outside of MIN and MAX ranges warning", {
 
 test_that("Illegal characters in variable names are reported", {
   # remove first warning
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd$VARIABLE_TERM <- NULL
   
   dd$VARNAME[3] <- paste0("DBGAP_",dd$VARNAME[3])
@@ -138,7 +138,7 @@ test_that("Illegal characters in variable names are reported", {
 })
 
 test_that("Missing VALUES only reported for select filetypes", {
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd <- dd[,1:2]
   expect_equal(.check_dd(dd, dstype="pheno")$missing_reqvars[1], "VALUES")
   expect_equal(.check_dd(dd, dstype="ped")$missing_reqvars[1], "VALUES")
@@ -147,14 +147,14 @@ test_that("Missing VALUES only reported for select filetypes", {
 })
 
 test_that("Missing UNITS only reported for select filetypes", {
-  dd <- .read_dd_file(ddfn)
+  dd <- read_dd_file(ddfn)
   dd <- dd[,1:2]
   expect_equal(.check_dd(dd, dstype="pheno")$missing_reqvars[2], "UNITS")
   expect_equal(.check_dd(dd, dstype="sattr")$missing_reqvars[2], "UNITS")  
 })
 
 test_that("Unique key marked with something besides 'X' is reported", {
-    dd.rev <- .read_dd_file(ddfn)
+    dd.rev <- read_dd_file(ddfn)
     dd.rev$UNIQUEKEY[dd.rev$UNIQUEKEY %in% "X"] <- "Y"
     # get rid of this non-standard column
     dd.rev$VARIABLE_TERM <- NULL    
@@ -164,9 +164,9 @@ test_that("Unique key marked with something besides 'X' is reported", {
 })
 
 test_that("Non-unique uniquekey is reported",{
-  ds <- .read_ds_file(dsfn)
+  ds <- read_ds_file(dsfn)
   # change UNIQUEKEY
-  dd.rev <- .read_dd_file(ddfn)
+  dd.rev <- read_dd_file(ddfn)
   # get rid of this non-standard column
   dd.rev$VARIABLE_TERM <- NULL
   dd.rev$UNIQUEKEY[dd.rev$UNIQUEKEY %in% "X"] <- NA
@@ -177,7 +177,7 @@ test_that("Non-unique uniquekey is reported",{
 })
 
 test_that("Uniquekey for wrong file type is reportd",{
-  dd.rev <- .read_dd_file(ddfn)
+  dd.rev <- read_dd_file(ddfn)
   # get rid of this non-standard column
   dd.rev$VARIABLE_TERM <- NULL  
   # pretend this is not a sample attributes file

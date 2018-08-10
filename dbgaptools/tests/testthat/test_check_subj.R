@@ -5,12 +5,12 @@ subj_ds <- system.file("extdata", "4a_dbGaP_SubjectDS.txt", package = "dbgaptool
 
 test_that("Compliant files run error free",{
   # remove affection status col so we don't get that notification  
-  ds.rev <- .read_ds_file(subj_ds)
+  ds.rev <- read_ds_file(subj_ds)
   ds.rev$AFFECTION_STATUS <- NULL
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
-  dd.rev <- .read_dd_file(subj_dd)
+  dd.rev <- read_dd_file(subj_dd)
   dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS",]
   dd.rev.fn <- tempfile(fileext=".txt")
   write.table(dd.rev, file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -35,7 +35,7 @@ test_that("Missing consent column stops with error",{
 })
 
 test_that("Incorrect consent column name is detected",{
-  ds.rev <- .read_ds_file(subj_ds)
+  ds.rev <- read_ds_file(subj_ds)
   names(ds.rev)[names(ds.rev) %in% "CONSENT"] <- "myconsent"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -47,7 +47,7 @@ test_that("Incorrect consent column name is detected",{
 })
 
 test_that("Presence of only one alias column is detected",{
-  ds.rev <- .read_ds_file(subj_ds)
+  ds.rev <- read_ds_file(subj_ds)
   ds.rev$SUBJECT_SOURCE <- NULL
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -68,7 +68,7 @@ test_that("Undefined CONSENT=0 does not return dd_error output",{
 })
 
 test_that("Extra subjects are detected", {
-  ds <- .read_ds_file(subj_ds)
+  ds <- read_ds_file(subj_ds)
   subj_exp <- ds[,1:2]
   subj_exp_less <- subj_exp[-c(3:4),]
   out <- check_subj(subj_ds, subj_exp=subj_exp_less)
@@ -76,7 +76,7 @@ test_that("Extra subjects are detected", {
 })
 
 test_that("Missing subjects are detected", {
-  ds <- .read_ds_file(subj_ds)
+  ds <- read_ds_file(subj_ds)
   subj_exp <- ds[,1:2]
   ext_rows <- c(SUBJECT_ID=999, CONSENT=1)
   subj_exp_more <- rbind(subj_exp, ext_rows)
@@ -85,7 +85,7 @@ test_that("Missing subjects are detected", {
 })
 
 test_that("Discrepant consent values are detected",{
-  ds <- .read_ds_file(subj_ds)
+  ds <- read_ds_file(subj_ds)
   subj_exp <- ds[,1:2]
   # preturb one consent value
   subj_exp[14,2] <- 1
@@ -95,7 +95,7 @@ test_that("Discrepant consent values are detected",{
 })
 
 test_that("Non integer consent values are reported", {
-  ds <- .read_ds_file(subj_ds)
+  ds <- read_ds_file(subj_ds)
   ds$CONSENT[5:10] <- "HMB"
   ds.rev.fn <-  tempfile(fileext=".txt")
   write.table(ds, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -113,7 +113,7 @@ test_that("Phenotype columns are detected", {
 
 # this is still reporting NA as undefined AFFECTION STATUS var
 test_that("Unmapped, non-0 consent values are reported", {
-  ds <- .read_ds_file(subj_ds)
+  ds <- read_ds_file(subj_ds)
   ds$CONSENT[5:10] <- 2
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,

@@ -4,9 +4,10 @@
 \alias{check_cross_file}
 \title{Cross file checks}
 \usage{
-check_cross_file(subj_file, ssm_file, molecular_samples, sattr_file = NULL,
-  pheno_file = NULL, ped_file = NULL, subjectID_col = "SUBJECT_ID",
-  sampleID_col = "SAMPLE_ID", consent_col = "CONSENT")
+check_cross_file(subj_file, ssm_file, molecular_samples,
+  sattr_file = NULL, pheno_file = NULL, ped_file = NULL,
+  subjectID_col = "SUBJECT_ID", sampleID_col = "SAMPLE_ID",
+  consent_col = "CONSENT")
 }
 \arguments{
 \item{subj_file}{Path to subject consent file on disk}

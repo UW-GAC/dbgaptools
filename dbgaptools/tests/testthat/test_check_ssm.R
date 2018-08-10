@@ -14,7 +14,7 @@ test_that("Missing ID columns are detected",{
 })
 
 test_that("Non-standard ID column names are detected",{
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   names(ds.rev)[1:2] <- c("mysubject","mysample")
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -26,7 +26,7 @@ test_that("Non-standard ID column names are detected",{
 })
                  
 test_that("Duplicated sample IDs are detected",{
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_ID[3] <- ds.rev$SAMPLE_ID[2]
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -37,7 +37,7 @@ test_that("Duplicated sample IDs are detected",{
 })
 
 test_that("Blank sample IDs are detected",{
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_ID[3] <- ""
   ds.rev.fn <-  tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -48,7 +48,7 @@ test_that("Blank sample IDs are detected",{
 })
 
 test_that("Extra samples and subjects are detected",{
-  ds <- .read_ds_file(ssm_ds)
+  ds <- read_ds_file(ssm_ds)
   ssm_exp <- ds[,1:2]
   ssm_exp_less <- ssm_exp[-c(3:4),]
   out <- check_ssm(ssm_ds, ssm_exp=ssm_exp_less)
@@ -57,7 +57,7 @@ test_that("Extra samples and subjects are detected",{
 })
 
 test_that("Missing samples and subjects are detected",{
-  ds <- .read_ds_file(ssm_ds)
+  ds <- read_ds_file(ssm_ds)
   ssm_exp <- ds[,1:2]
   ext_rows <- c(SUBJECT_ID=999, SAMPLE_ID="S999")
   ssm_exp_more <- rbind(ssm_exp, ext_rows)
@@ -67,7 +67,7 @@ test_that("Missing samples and subjects are detected",{
 })
 
 test_that("Mapping differences detected",{
-  ds <- .read_ds_file(ssm_ds)
+  ds <- read_ds_file(ssm_ds)
   ssm_exp <- ds[,1:2]
   ssm_exp$SAMPLE_ID[3] <- "S999"
   out <- check_ssm(ssm_ds, ssm_exp=ssm_exp)
@@ -83,7 +83,7 @@ test_that("Non TOPMed sample uses are detected",{
 })
 
 test_that("Sample_uses submitted as data frame for topmed=TRUE return warning",{
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_USE <- "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -101,7 +101,7 @@ test_that("Sample_uses submitted as data frame for topmed=TRUE return warning",{
 })
 
 test_that("TOPMed sample use submitted in opposite order is okay", {
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_USE <- "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -115,7 +115,7 @@ test_that("TOPMed sample use submitted in opposite order is okay", {
 })
 
 test_that("TOPMed quarantined samples are recognized", {
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_USE <- "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
   idx <- 5:10
   ds.rev$SAMPLE_USE[idx] <- NA
@@ -138,7 +138,7 @@ test_that("Discrepant sample uses are detected",{
   expect_equal(nrow(out$sampuse_diffs), 12)
 
   # data frame of sample uses values
-  ds <- .read_ds_file(ssm_ds)  
+  ds <- read_ds_file(ssm_ds)  
   samp_use <- ds[,c(2,5)]
   samp_use$SAMPLE_USE[1:2] <- "Array_SNP"
   out <- check_ssm(ssm_ds, sample_use=samp_use)
@@ -146,7 +146,7 @@ test_that("Discrepant sample uses are detected",{
 })
 
 test_that("Missing and required variables are detected",{
-  ds.rev <- .read_ds_file(ssm_ds)
+  ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_USE <- NULL
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,

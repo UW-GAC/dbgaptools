@@ -21,54 +21,54 @@ test_that("Header lines are properly counted", {
 })
 
 test_that("DD files have expected dimensions when read in", {
-  dd <- .read_dd_file(satt_dd)
+  dd <- read_dd_file(satt_dd)
   expect_equal(ncol(dd), 17)
   expect_equal(nrow(dd), 12)
 })
 
 test_that("DS files have expected dimensions when read in", {
   # will errors here get propogated to test log file?
-  ds <- .read_ds_file(satt_ds)
+  ds <- read_ds_file(satt_ds)
   expect_equal(ncol(ds), 12)
   expect_equal(nrow(ds), 17)
 })
 
 test_that("DD file with header generates a warning",{
-  expect_warning(.read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
-  expect_warning(.read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")  
+  expect_warning(read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
+  expect_warning(read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")  
 })
 
 test_that("Non existent file paths generate stop message",{
-  expect_error(.read_ds_file("myDSfile.txt"), "file.exists(filename) is not TRUE",
+  expect_error(read_ds_file("myDSfile.txt"), "file.exists(filename) is not TRUE",
                fixed=TRUE)
-  expect_error(.read_dd_file("myDDfile.xlsx"), "file.exists(filename) is not TRUE",
+  expect_error(read_dd_file("myDDfile.xlsx"), "file.exists(filename) is not TRUE",
                fixed=TRUE)
 })
 
 test_that("Unexpected file extensions generate expected stop messages",{
-  expect_error(.read_ds_file(satt_dd),
+  expect_error(read_ds_file(satt_dd),
                "Expected tab-delimited input file (.txt), not .xlsx", fixed=TRUE)
-  expect_error(.read_dd_file(dd_nohdr_csv),
+  expect_error(read_dd_file(dd_nohdr_csv),
                "Expected tab-delimited or Excel input file, not .csv", fixed=TRUE)
   
 })
 
 test_that("Mult sheet Excel workbooks reads in first sheet as DD", {
-  expect_warning(.read_dd_file(dd_nohdr_multsheet),
+  expect_warning(read_dd_file(dd_nohdr_multsheet),
 "Data dictionary Excel contains multiple sheets; assuming first is the DD", fixed=TRUE)
 })
 
 test_that("DD with no 'VALUES' column reads in without error", {
-    dd <- .read_dd_file(satt_dd)
+    dd <- read_dd_file(satt_dd)
     dd.rev.fn <- tempfile(fileext=".txt")
     # keep only first 3 cols
     write.table(dd[,1:3], file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
                 quote=FALSE, sep="\t", na="")
-    expect_error(.read_dd_file(dd.rev.fn), NA)
+    expect_error(read_dd_file(dd.rev.fn), NA)
 })
     
 
 # TO ADD:
-# .read_ds_file and .read_dd_file check that returns an error from the tryCatch
+# read_ds_file and read_dd_file check that returns an error from the tryCatch
 
 

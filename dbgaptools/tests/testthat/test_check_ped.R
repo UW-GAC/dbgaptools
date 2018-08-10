@@ -14,7 +14,7 @@ test_that("Missing ID column stops with error",{
 })
 
 test_that("Warning of non-preferred subject ID col is issued",{
-  ds.rev <- .read_ds_file(ped_ds)
+  ds.rev <- read_ds_file(ped_ds)
   names(ds.rev)[2] <- "INDIVIDUAL_ID"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -25,7 +25,7 @@ test_that("Warning of non-preferred subject ID col is issued",{
 })
 
 test_that("Extra subjects are detected", {
-  ds <- .read_ds_file(ped_ds)
+  ds <- read_ds_file(ped_ds)
   subj_exp <- ds[,2]
   subj_exp_less <- subj_exp[-c(3:4)]
   out <- check_ped(ped_ds, subj_exp=subj_exp_less)
@@ -33,14 +33,14 @@ test_that("Extra subjects are detected", {
 })
 
 test_that("Missing subjects are detected", {
-  ds <- .read_ds_file(ped_ds)
+  ds <- read_ds_file(ped_ds)
   subj_exp_more <- c(ds[,2], "999")
   out <- check_ped(ped_ds, subj_exp=subj_exp_more)
   expect_equal(out$missing_subjects, c("999"))
 })
 
 test_that("Missing and required variable names are detected", {
-  ds.rev <- .read_ds_file(ped_ds)
+  ds.rev <- read_ds_file(ped_ds)
   names(ds.rev)[1] <- "FAMILY"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -52,7 +52,7 @@ test_that("Missing and required variable names are detected", {
 })
 
 test_that("Multiple missing and required variable names are detected", {
-  ds.rev <- .read_ds_file(ped_ds)
+  ds.rev <- read_ds_file(ped_ds)
   names(ds.rev)[c(1,3)] <- c("FAMILY","MOTHER_ID")
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -66,7 +66,7 @@ test_that("Multiple missing and required variable names are detected", {
 
 # dd error
 test_that("DD error is reported for DS variable not in DD",{
-  dd.rev <- .read_dd_file(ped_dd)
+  dd.rev <- read_dd_file(ped_dd)
   dd.rev$VARNAME[1] <- "FAMILY"
   dd.rev.fn <- tempfile(fileext=".txt")
   write.table(dd.rev, file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -89,7 +89,7 @@ test_that("Extra SEX value is detected", {
 
 # pedigree check (focus on the issue dbGaP cares
 test_that("Missing parental IDs cause pedigree check errors",{
-  ds <- .read_ds_file(ped_ds)
+  ds <- read_ds_file(ped_ds)
   # remove rows for some father and mother IDs
   ds.rev <- ds[-(1:2),]
   ds.rev.fn <- tempfile(fileext=".txt")
@@ -109,7 +109,7 @@ test_that("Missing parental IDs cause pedigree check errors",{
          
 
 test_that("Incorrect MZ twin column name is reported",{
-  ds.rev <- .read_ds_file(ped_ds)
+  ds.rev <- read_ds_file(ped_ds)
   names(ds.rev)[6] <- "TWINS"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
@@ -122,7 +122,7 @@ test_that("Incorrect MZ twin column name is reported",{
 })
 
 test_that("MZ twins in different families are reported",{
-  ds.rev <- .read_ds_file(ped_ds)
+  ds.rev <- read_ds_file(ped_ds)
   ds.rev$FAMILY_ID[4] <- "999"
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,

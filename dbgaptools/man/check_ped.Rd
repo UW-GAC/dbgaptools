@@ -13,7 +13,7 @@ check_ped(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
 
 \item{subj_exp}{Vector of expected subject IDs}
 

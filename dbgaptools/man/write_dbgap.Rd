@@ -4,8 +4,8 @@
 \alias{write_dbgap}
 \title{Write dbGaP files}
 \usage{
-write_dbgap(x, file = "", study_name = NULL, phs = NULL, DD = FALSE,
-  dstype = "", generate_fn = FALSE)
+write_dbgap(x, file = "", study_name = NULL, phs = NULL,
+  DD = FALSE, dstype = "", generate_fn = FALSE)
 }
 \arguments{
 \item{x}{Object to write out}

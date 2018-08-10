@@ -51,8 +51,8 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
                              consent_col="CONSENT"){
   
   # read in required files
-  subj <- .read_ds_file(subj_file)
-  ssm <- .read_ds_file(ssm_file)
+  subj <- read_ds_file(subj_file)
+  ssm <- read_ds_file(ssm_file)
 
   # cannot proceed without specified subject ID col
   if(!is.element(subjectID_col, names(subj)) | !is.element(subjectID_col, names(ssm))){
@@ -79,7 +79,7 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   }
 
   if(!is.null(sattr_file)) {
-    sattr <- .read_ds_file(sattr_file)
+    sattr <- read_ds_file(sattr_file)
     if(sampleID_col != "SAMPLE_ID"){
       names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"    
       names(sattr)[names(sattr) %in% sampleID_col] <- "SAMPLE_ID"
@@ -130,7 +130,7 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   # check subj <> pheno
   pheno_consent_err <- pheno_miss_molecular <- NULL
   if(!is.null(pheno_file)){
-    pheno <- .read_ds_file(pheno_file)
+    pheno <- read_ds_file(pheno_file)
     # all subjs listed here must have consent >= 1 in subj file
     pheno_consent_err <- setdiff(pheno[,subjectID_col], subjs_study_cons)
     # molecular data samples should be here if they have consent >= 1
@@ -141,7 +141,7 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   # check subj <> pedigree
   subj_miss_ped <-  ped_consent_err <- ped_miss_molecular <- NULL
   if(!is.null(ped_file)){
-    ped <- .read_ds_file(ped_file)
+    ped <- read_ds_file(ped_file)
     # all subjs should be present in subject consent file. merge the two
     ped_merg <- merge(ped, subj, by.x=subjectID_col, by.y="SUBJECT_ID",
                       all.x=TRUE, all.y=FALSE)

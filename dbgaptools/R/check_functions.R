@@ -30,7 +30,6 @@
 #' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
 #'
 #' @rdname check_dd
-#' @export
 
 .check_dd <- function(dd, ds=NULL, dstype=""){
 
@@ -265,7 +264,7 @@
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
 #' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)
 #' @param sampleID_col Column name for sample-level ID
 #' @param subjectID_col Column name for subject-level ID
@@ -312,7 +311,7 @@ check_ssm <- function(dsfile, ddfile=NULL,
                       sample_uses=NULL, topmed=FALSE){
 
   # read in data file
-  ds <- .read_ds_file(dsfile, na_vals=na_vals)
+  ds <- read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject and sample ID cols
   if(!is.element(subjectID_col, names(ds)) | !is.element(sampleID_col, names(ds))){
@@ -352,7 +351,7 @@ check_ssm <- function(dsfile, ddfile=NULL,
   # read in data dictionary if provided
   dd_errors <- NULL
   if(!is.null(ddfile)){
-    dd <- .read_dd_file(ddfile)
+    dd <- read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds, dstype="ssm")
     # TO DO - need to capture all the 'warning' messages from .check_dd. tryCatch?
   }
@@ -473,7 +472,7 @@ check_ssm <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
 #' @param samp_exp List of expected sample IDs
 #' @param sampleID_col Column name for sample-level ID
 #' @param topmed Logical to indicate TOPMed study
@@ -509,7 +508,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
                         sampleID_col="SAMPLE_ID", topmed=FALSE){
 
   # read in data file
-  ds <- .read_ds_file(dsfile, na_vals=na_vals)
+  ds <- read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without sample ID col
   if(!is.element(sampleID_col, names(ds))){
@@ -545,7 +544,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
   # read in data dictionary if provided
   dd_errors <- NULL
   if(!is.null(ddfile)){
-    dd <- .read_dd_file(ddfile)
+    dd <- read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds, dstype="sattr")
   }  
 
@@ -599,7 +598,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
 #' @param subj_exp Dataframe of expected subject ID (column 1) and consent value (column 2)
 #' @param subjectID_col Column name for subject-level ID
 #' @param consent_col Column name for consent variable
@@ -636,7 +635,7 @@ check_subj <- function(dsfile, ddfile=NULL,
                        subjectID_col="SUBJECT_ID", consent_col="CONSENT"){
 
   # read in data file
-  ds <- .read_ds_file(dsfile, na_vals=na_vals)
+  ds <- read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject ID col
   if(!is.element(subjectID_col, names(ds))) {
@@ -682,7 +681,7 @@ check_subj <- function(dsfile, ddfile=NULL,
   # read in data dictionary if provided
   dd_errors <- NULL
   if(!is.null(ddfile)){
-    dd <- .read_dd_file(ddfile)
+    dd <- read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds, dstype="subj")
 
     # for subject consent file, dbGaP will define consent=0 for user
@@ -764,7 +763,7 @@ check_subj <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
 #' @param subjectID_col Column name for subject-level ID
 #' @param check_incons Logical whether to report pedigree inconsistencies, using \code{GWASTools pedigreeCheck}
@@ -797,7 +796,7 @@ check_ped <- function(dsfile, ddfile=NULL,
                       male=1, female=2){
 
   # read in data file
-  ds <- .read_ds_file(dsfile, na_vals=na_vals)
+  ds <- read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject ID col
   if(!is.element(subjectID_col, names(ds))) {
@@ -826,7 +825,7 @@ check_ped <- function(dsfile, ddfile=NULL,
   # read in data dictionary if provided
   dd_errors <- NULL
   if(!is.null(ddfile)){
-    dd <- .read_dd_file(ddfile)
+    dd <- read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds, dstype="ped")
   }
 
@@ -910,7 +909,7 @@ check_ped <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{.read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
 #' @param subjectID_col Column name for subject-level ID
 #'
@@ -936,7 +935,7 @@ check_pheno <- function(dsfile, ddfile=NULL,
                         subjectID_col="SUBJECT_ID"){
 
   # read in data file
-  ds <- .read_ds_file(dsfile, na_vals=na_vals)
+  ds <- read_ds_file(dsfile, na_vals=na_vals)
 
   # cannot proceed without subject ID col
   if(!is.element(subjectID_col, names(ds))) {
@@ -956,7 +955,7 @@ check_pheno <- function(dsfile, ddfile=NULL,
   # read in data dictionary if provided
   dd_errors <- NULL
   if(!is.null(ddfile)){
-    dd <- .read_dd_file(ddfile)
+    dd <- read_dd_file(ddfile)
     dd_errors <- .check_dd(dd, ds=ds, dstype="pheno")
   }
 
