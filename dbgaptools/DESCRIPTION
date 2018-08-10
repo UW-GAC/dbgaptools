@@ -2,7 +2,7 @@ Package: dbgaptools
 Title: Creates and Checks Standard Files for dbGaP submission
 Version: 0.1.0
 Authors@R: person("Nelson", "Sarah", email = "sarahcn@uw.edu", role = c("aut", "cre"))
-Description: This package can create or check dataset and data dictionary files for the required dbGaP submission elements: sample-subject mapping, sample attributes, and subject consent files. Optionally, pedigree and phenotype files can be checked for presence of expected subjects. (say something about TOPMed as motivating use case to create?)
+Description: This package assists in creating dataset (DS) and data dictionary (DD) files required for dbGaP submission: sample-subject mapping, sample attributes, and subject consent files. Checks proceed based on dbGaP Submission Guidelines. Optionally, pedigree and phenotype files can be checked for presence of expected subjects.
 Depends:
 License: MIT
 Encoding: UTF-8
