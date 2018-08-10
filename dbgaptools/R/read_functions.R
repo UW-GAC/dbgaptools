@@ -184,13 +184,13 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
         warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
         sheetArg <- sheets[1]
       }
-      dd <- readxl:read_excel(filename, sheet=sheet_arg, col_types="text")
+      dd <- readxl::read_excel(filename, sheet=sheet_arg, col_types="text")
       
       # identify if first row was not column headers
       if(!is.element("VARNAME", toupper(names(dd)))){
         warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
         colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case=TRUE)))
-        dd <- readxl:read_excel(filename, sheet=sheet_arg,
+        dd <- readxl::read_excel(filename, sheet=sheet_arg,
                                  skip=colnames_row+1, col_types="text")
       }
     }
