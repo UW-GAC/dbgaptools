@@ -1,3 +1,5 @@
+[![Travis-CI Build Status](https://travis-ci.org/UW-GAC/dbgaptools.svg?branch=master)](https://travis-ci.org/UW-GAC/dbgaptools)
+
 # dbgaptools
 
 This package assists in creating dataset (DS) and data dictionary (DD) files required for dbGaP submission: sample-subject mapping, sample attributes, and subject consent files. Checks proceed based on [dbGaP Submission Guidelines](https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetPdf.cgi?document_name=HowToSubmit.pdf). Additionally, pedigree and phenotype files can be checked for presence of expected subjects.
