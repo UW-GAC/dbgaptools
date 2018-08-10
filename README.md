@@ -19,7 +19,7 @@ devtools::install_github("UW-GAC/dbgaptools")
 
 1. Check functions
 	* There are functions to check each dbGaP file type --- DS and, optionally, accompanying DD files
-	* See `help(check_<ftype>)` where <ftype> includes
+	* See `help(check_<ftype>)` where *ftype* includes
 		* sattr: for sample attributes
 		* ssm: for sample-subject mapping
 		* subj: for subject consent
