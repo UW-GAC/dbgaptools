@@ -4,7 +4,7 @@
 
 This package assists in creating dataset (DS) and data dictionary (DD) files required for dbGaP submission: sample-subject mapping, sample attributes, and subject consent files. Checks proceed based on [dbGaP Submission Guidelines](https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetPdf.cgi?document_name=HowToSubmit.pdf). Additionally, pedigree and phenotype files can be checked for presence of expected subjects.
 
-This package was developed in the context of dbGaP file preparation for the [TOPMed Whole Genome Sequencing Program](www.nhlbiwgs.org) and therefore includes some TOPMed-oriented functionality. 
+This package was developed in the context of dbGaP file preparation for the [TOPMed Whole Genome Sequencing Program](https://www.nhlbiwgs.org) and therefore includes some TOPMed-oriented functionality. 
 
 ## Installation
 
