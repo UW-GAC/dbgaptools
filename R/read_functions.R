@@ -40,7 +40,7 @@
 ## adapted from dbTopmed::.readTraitFile
 
 #' Read in a data file
-#' 
+#'
 #' Works for tab-delimited (.txt) data files
 #'
 #' @param filename The path to the file on disk
@@ -61,7 +61,7 @@
 #'
 #' @details
 #' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
-#' 
+#'
 #' @rdnameread_ds_file
 #' @export
 
@@ -84,7 +84,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
     } else if (dd) {
       nskip <- .count_hdr_lines(filename, colname="VARNAME")
     }
-    
+
     if(nskip > 0){
       warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
     }
@@ -117,7 +117,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
         blank.rows <- rowSums(!is.na(dat)) %in% 0
         dat <- dat[!blank.rows,]
         }
-    
+
     ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
     if(remove_empty_col) {
         blank.cols <- colSums(!is.na(dat)) %in% 0
@@ -132,13 +132,13 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 }
 
 #' Read data dictionary file
-#' 
+#'
 #' @param filename The path to the file on disk
 #' @param remove_empty_row Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE
 #' @param remove_empty_col Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE
-#' 
+#'
 #' @details
-#' Expects (tab-delimited) .txt or .xlsx file. 
+#' Expects (tab-delimited) .txt or .xlsx file.
 #' dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 #' @return
 #' A data frame from the file
@@ -149,50 +149,21 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE){
 
   stopifnot(file.exists(filename))
-  
+
   ## read in data dictionary files. could be txt or Excel
   ## exit if file extension indicates other than .txt or .xlsx)
   ext <- tools::file_ext(filename)
   if(!ext %in% c("txt", "xlsx","xls")) {
     stop("Expected tab-delimited or Excel input file, not .", ext)
-  }  
+  }
   ## add name of file to error message in case of failure
   tryCatch({
 
     ## method for reading in DD depends on file type
     if(ext %in% "txt"){
-      dd <-read_ds_file(filename, dd=TRUE)
-      
-      # rename extra columns after VALUES as "X__*" 
-      val.col <- grep("VALUES", names(dd), ignore.case=TRUE)
-      if(length(val.col) > 0) {
-         if(val.col < ncol(dd)){
-              idx <- (val.col + 1):ncol(dd)
-              new.nms <- paste0("X__", 1:length(idx))
-              names(dd)[idx] <- new.nms
-              }
-          }
-      
-      # save as tibble (for consistency with Excel input processing, partly)
-      dd <- tibble::as_tibble(dd)
+      dd <- .read_dd_txt(filename)
     } else if (ext %in% c("xls","xlsx")) {
-
-      sheet_arg <- NULL
-      # check if there are multiple sheets
-      sheets <- readxl::excel_sheets(filename)
-      if(length(sheets) > 1){
-        warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
-        sheetArg <- sheets[1]
-      }
-      dd <- readxl::read_excel(filename, sheet=sheet_arg, col_types="text")
-      
-      # identify if first row was not column headers
-      if(!is.element("VARNAME", toupper(names(dd)))){
-        warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
-        colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case=TRUE)))
-        dd <- readxl::read_excel(filename, sheet=sheet_arg,
-                                 skip=colnames_row+1, col_types="text")
-      }
+      dd <- .read_dd_xls(filename)
     }
   }, error = function(e) {
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
@@ -203,14 +174,54 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
         blank.rows <- rowSums(!is.na(dd)) %in% 0
         dd <- dd[!blank.rows,]
         }
-    
+
     ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
     if(remove_empty_col) {
         blank.cols <- colSums(!is.na(dd)) %in% 0
         dd <- dd[,!blank.cols]
-        }    
-    
+        }
+
     dd
 }
 
 
+.read_dd_txt <- function(filename) {
+  dd <- read_ds_file(filename, dd = TRUE)
+
+  # rename extra columns after VALUES as "X__*"
+  val.col <- grep("VALUES", names(dd), ignore.case = TRUE)
+  if (length(val.col) > 0) {
+    if (val.col < ncol(dd)) {
+      idx <- (val.col + 1):ncol(dd)
+      new.nms <- paste0("X__", 1:length(idx))
+      names(dd)[idx] <- new.nms
+    }
+  }
+
+  # save as tibble (for consistency with Excel input processing, partly)
+  dd <- tibble::as_tibble(dd)
+
+  return(dd)
+}
+
+
+.read_dd_xls <- function(filename) {
+  sheet_arg <- NULL
+  # check if there are multiple sheets
+  sheets <- readxl::excel_sheets(filename)
+  if (length(sheets) > 1) {
+    warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
+    sheetArg <- sheets[1]
+  }
+  dd <- readxl::read_excel(filename, sheet = sheet_arg, col_types = "text")
+
+  # identify if first row was not column headers
+  if (!is.element("VARNAME", toupper(names(dd)))) {
+    warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
+    colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case = TRUE)))
+    dd <- readxl::read_excel(filename, sheet = sheet_arg,
+                             skip = colnames_row + 1, col_types = "text")
+  }
+
+  return(dd)
+}
