@@ -15,8 +15,10 @@ Imports:
 	Biobase, 
 	GWASTools, 
 	dplyr, 
+	magrittr,
 	readxl, 
 	stringr, 
 	tibble, 
 	tidyr,
+	utils,
 	xml2
