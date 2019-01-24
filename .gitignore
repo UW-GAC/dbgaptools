@@ -22,6 +22,7 @@ code_devel/*
 
 # RStudio files
 .Rproj.user/
+*.Rproj
 
 # produced vignettes
 vignettes/*.html
