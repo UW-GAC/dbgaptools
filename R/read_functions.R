@@ -152,7 +152,8 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
 
   allowed_text_exts <- c("txt")
   allowed_xls_exts <- c("xlsx", "xls")
-  allowed_exts <- c(allowed_text_exts, allowed_xls_exts)
+  allowed_xml_exts <- c("xml")
+  allowed_exts <- c(allowed_text_exts, allowed_xls_exts, allowed_xml_exts)
   ## read in data dictionary files. could be txt or Excel
   ## exit if file extension indicates other than .txt or .xlsx)
   ext <- tools::file_ext(filename)
@@ -167,6 +168,8 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
       dd <- .read_dd_txt(filename)
     } else if (ext %in% allowed_xls_exts) {
       dd <- .read_dd_xls(filename)
+    } else if (ext %in% allowed_xml_exts) {
+      dd <- .read_dd_xml(filename)
     }
   }, error = function(e) {
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
@@ -225,6 +228,80 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
     dd <- readxl::read_excel(filename, sheet = sheet_arg,
                              skip = colnames_row + 1, col_types = "text")
   }
+
+  return(dd)
+}
+
+
+.read_dd_xml <- function(filename) {
+  # Set parent_dd_file to the filename of the XML data dictionary on disk
+  xml_dd <- xml2::read_xml(filename)
+
+  # Select variable nodes
+  variable_nodes <- xml2::xml_find_all(xml_dd, "/data_table/variable")
+
+  # Create a one-line data frame for each variable node.
+  required_nodes <- c(
+    VARNAME = "name",
+    VARDESC = "description"
+  )
+  # Process some optional nodes; others are ignored.
+  optional_nodes <- c(
+    TYPE = "type",
+    UNITS = "unit",
+    MIN = "logical_min",
+    MAX = "logical_max"
+  )
+  unique_keys <- xml2::xml_find_all(xml_dd, "/data_table/unique_key") %>%
+    xml2::xml_text()
+  df_list <- lapply(variable_nodes, function(x) {
+    df <- data.frame(stringsAsFactors = FALSE, row.names = 1)
+    for (n in names(required_nodes)) {
+      xpath <- sprintf(".//%s", required_nodes[[n]])
+      text <- xml2::xml_find_all(x, xpath) %>%
+        xml2::xml_text()
+      df[[n]] <- text
+    }
+    for (n in names(optional_nodes)) {
+      xpath <- sprintf(".//%s", optional_nodes[[n]])
+      text <- xml2::xml_find_all(x, xpath) %>%
+        xml2::xml_text()
+      if (length(text) > 0) {
+        if (text == "") text <- NA
+        df[[n]] <- text
+      }
+    }
+    # Add the colmn that identifies the unique keys.
+    if (length(unique_keys) > 0) {
+      df$UNIQUE_KEY <- ifelse(df$VARNAME %in% unique_keys, "X", NA)
+    }
+
+    # VALUES nodes are stored in multiple colmns, so process them separately.
+    child_value_nodes <- xml2::xml_find_all(x, ".//value")
+    if (length(child_value_nodes) > 0) {
+      value_strings <- sprintf(
+        "%s=%s",
+        unlist(xml2::xml_attrs(child_value_nodes)),
+        xml2::xml_text(child_value_nodes)
+      )
+      value_df <- do.call(data.frame,c(as.list(value_strings), stringsAsFactors = FALSE))
+      names(value_df) <- NULL
+      df <- dplyr::bind_cols(df, value_df)
+      idx <- which(names(df) == "V1")
+      names(df)[idx] <- "VALUES"
+      n_extra <- ncol(df) - idx
+      if (n_extra > 0) {
+        names(df)[(idx + 1):ncol(df)] <- paste0("X__", 1:n_extra)
+      }
+    }
+    df
+  })
+
+  # Bind the data frames together to create the data frame.
+  dd <- do.call(dplyr::bind_rows, df_list)
+
+  # Convert to tibble for consistency with other read functions.
+  dd <- tibble::as_tibble(dd)
 
   return(dd)
 }

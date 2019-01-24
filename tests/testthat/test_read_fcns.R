@@ -35,7 +35,7 @@ test_that("DS files have expected dimensions when read in", {
 
 test_that("DD file with header generates a warning",{
   expect_warning(read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
-  expect_warning(read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")  
+  expect_warning(read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
 })
 
 test_that("Non existent file paths generate stop message",{
@@ -50,7 +50,7 @@ test_that("Unexpected file extensions generate expected stop messages",{
                "Expected tab-delimited input file (.txt), not .xlsx", fixed=TRUE)
   expect_error(read_dd_file(dd_nohdr_csv),
                "Expected tab-delimited or Excel input file, not .csv", fixed=TRUE)
-  
+
 })
 
 test_that("Mult sheet Excel workbooks reads in first sheet as DD", {
@@ -66,7 +66,24 @@ test_that("DD with no 'VALUES' column reads in without error", {
                 quote=FALSE, sep="\t", na="")
     expect_error(read_dd_file(dd.rev.fn), NA)
 })
-    
+
+test_that("read_dd_file works with an xml data dictionary", {
+  dd_file <- system.file("extdata", "phs000001.v3.pht002477.v1.AREDS_Subject.data_dict.xml", package = "dbgaptools", mustWork = TRUE)
+  dd <- read_dd_file(dd_file)
+  expect_equal(names(dd), c("VARNAME", "VARDESC", "TYPE", "VALUES", "X__1"))
+  expect_equal(dd$VARNAME, c("ID2", "consent"))
+  expect_equal(dd$VARDESC, c("De-identified subject ID", "Consent group description"))
+  expect_equal(dd$TYPE, c(NA, NA))
+  expect_equal(dd$VALUES, c(NA, "1=EDO (Eye Disease Research Only)"))
+  expect_equal(dd$X__1, c(NA, "2=GRU (General Research Use)"))
+})
+
+test_that("read_dd_file processes unique key information in xml files", {
+  dd_file <- system.file("extdata", "phs000001.v3.pht000378.v2.hospitalization.data_dict.xml", package = "dbgaptools", mustWork = TRUE)
+  dd <- read_dd_file(dd_file)
+  expect_true("UNIQUE_KEY" %in% names(dd))
+  expect_equal(dd$UNIQUE_KEY, c("X", NA, NA, NA, "X", NA))
+})
 
 # TO ADD:
 # read_ds_file and read_dd_file check that returns an error from the tryCatch

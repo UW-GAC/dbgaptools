@@ -16,4 +16,5 @@ Imports:
 	readxl, 
 	stringr, 
 	tibble, 
-	tidyr
+	tidyr,
+	xml2
