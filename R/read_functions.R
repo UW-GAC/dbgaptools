@@ -150,19 +150,22 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
 
   stopifnot(file.exists(filename))
 
+  allowed_text_exts <- c("txt")
+  allowed_xls_exts <- c("xlsx", "xls")
+  allowed_exts <- c(allowed_text_exts, allowed_xls_exts)
   ## read in data dictionary files. could be txt or Excel
   ## exit if file extension indicates other than .txt or .xlsx)
   ext <- tools::file_ext(filename)
-  if(!ext %in% c("txt", "xlsx","xls")) {
+  if(!ext %in% allowed_exts) {
     stop("Expected tab-delimited or Excel input file, not .", ext)
   }
   ## add name of file to error message in case of failure
   tryCatch({
 
     ## method for reading in DD depends on file type
-    if(ext %in% "txt"){
+    if(ext %in% allowed_text_exts){
       dd <- .read_dd_txt(filename)
-    } else if (ext %in% c("xls","xlsx")) {
+    } else if (ext %in% allowed_xls_exts) {
       dd <- .read_dd_xls(filename)
     }
   }, error = function(e) {
