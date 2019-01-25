@@ -40,7 +40,7 @@
 ## adapted from dbTopmed::.readTraitFile
 
 #' Read in a data file
-#' 
+#'
 #' Works for tab-delimited (.txt) data files
 #'
 #' @param filename The path to the file on disk
@@ -61,7 +61,7 @@
 #'
 #' @details
 #' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
-#' 
+#'
 #' @rdnameread_ds_file
 #' @export
 
@@ -84,7 +84,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
     } else if (dd) {
       nskip <- .count_hdr_lines(filename, colname="VARNAME")
     }
-    
+
     if(nskip > 0){
       warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
     }
@@ -117,7 +117,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
         blank.rows <- rowSums(!is.na(dat)) %in% 0
         dat <- dat[!blank.rows,]
         }
-    
+
     ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
     if(remove_empty_col) {
         blank.cols <- colSums(!is.na(dat)) %in% 0
@@ -132,14 +132,24 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 }
 
 #' Read data dictionary file
-#' 
+#'
 #' @param filename The path to the file on disk
 #' @param remove_empty_row Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE
 #' @param remove_empty_col Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE
-#' 
+#'
 #' @details
-#' Expects (tab-delimited) .txt or .xlsx file. 
-#' dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
+#' Expects (tab-delimited) .txt, .xlsx, or .xml file.
+#' For .txt and .xlsx files, dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
+#' .xml file types should be those provided by dbGaP.
+#' Only a subset ofpossible child nodes of a variable node are processed:
+#' \code{type}
+#' \code{unit}
+#' \code{logical_min}
+#' \code{logical_max}
+#' These names are converted to the names expected in a user-submitted data dictionary.
+#' Finally, if any variables are flagged as "unique keys", a column is added to the output data frame and populated correctly (with X's).
+#' Otherwise, the "UNIQUEKEY" column does not exist in the output.
+#'
 #' @return
 #' A data frame from the file
 #'
@@ -149,50 +159,27 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE){
 
   stopifnot(file.exists(filename))
-  
+
+  allowed_text_exts <- c("txt")
+  allowed_xls_exts <- c("xlsx", "xls")
+  allowed_xml_exts <- c("xml")
+  allowed_exts <- c(allowed_text_exts, allowed_xls_exts, allowed_xml_exts)
   ## read in data dictionary files. could be txt or Excel
   ## exit if file extension indicates other than .txt or .xlsx)
   ext <- tools::file_ext(filename)
-  if(!ext %in% c("txt", "xlsx","xls")) {
+  if(!ext %in% allowed_exts) {
     stop("Expected tab-delimited or Excel input file, not .", ext)
-  }  
+  }
   ## add name of file to error message in case of failure
   tryCatch({
 
     ## method for reading in DD depends on file type
-    if(ext %in% "txt"){
-      dd <-read_ds_file(filename, dd=TRUE)
-      
-      # rename extra columns after VALUES as "X__*" 
-      val.col <- grep("VALUES", names(dd), ignore.case=TRUE)
-      if(length(val.col) > 0) {
-         if(val.col < ncol(dd)){
-              idx <- (val.col + 1):ncol(dd)
-              new.nms <- paste0("X__", 1:length(idx))
-              names(dd)[idx] <- new.nms
-              }
-          }
-      
-      # save as tibble (for consistency with Excel input processing, partly)
-      dd <- tibble::as_tibble(dd)
-    } else if (ext %in% c("xls","xlsx")) {
-
-      sheet_arg <- NULL
-      # check if there are multiple sheets
-      sheets <- readxl::excel_sheets(filename)
-      if(length(sheets) > 1){
-        warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
-        sheetArg <- sheets[1]
-      }
-      dd <- readxl::read_excel(filename, sheet=sheet_arg, col_types="text")
-      
-      # identify if first row was not column headers
-      if(!is.element("VARNAME", toupper(names(dd)))){
-        warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
-        colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case=TRUE)))
-        dd <- readxl::read_excel(filename, sheet=sheet_arg,
-                                 skip=colnames_row+1, col_types="text")
-      }
+    if(ext %in% allowed_text_exts){
+      dd <- .read_dd_txt(filename)
+    } else if (ext %in% allowed_xls_exts) {
+      dd <- .read_dd_xls(filename)
+    } else if (ext %in% allowed_xml_exts) {
+      dd <- .read_dd_xml(filename)
     }
   }, error = function(e) {
     stop(paste("in reading file", filename, ":\n", e$message), call. = FALSE)
@@ -203,14 +190,135 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
         blank.rows <- rowSums(!is.na(dd)) %in% 0
         dd <- dd[!blank.rows,]
         }
-    
+
     ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
     if(remove_empty_col) {
         blank.cols <- colSums(!is.na(dd)) %in% 0
         dd <- dd[,!blank.cols]
-        }    
-    
+        }
+
     dd
 }
 
 
+.read_dd_txt <- function(filename) {
+  dd <- read_ds_file(filename, dd = TRUE)
+
+  # rename extra columns after VALUES as "X__*"
+  val.col <- grep("VALUES", names(dd), ignore.case = TRUE)
+  if (length(val.col) > 0) {
+    if (val.col < ncol(dd)) {
+      idx <- (val.col + 1):ncol(dd)
+      new.nms <- paste0("X__", 1:length(idx))
+      names(dd)[idx] <- new.nms
+    }
+  }
+
+  # save as tibble (for consistency with Excel input processing, partly)
+  dd <- tibble::as_tibble(dd)
+
+  return(dd)
+}
+
+
+.read_dd_xls <- function(filename) {
+  sheet_arg <- NULL
+  # check if there are multiple sheets
+  sheets <- readxl::excel_sheets(filename)
+  if (length(sheets) > 1) {
+    warning("Data dictionary Excel contains multiple sheets; assuming first is the DD")
+    sheetArg <- sheets[1]
+  }
+  dd <- readxl::read_excel(filename, sheet = sheet_arg, col_types = "text")
+
+  # identify if first row was not column headers
+  if (!is.element("VARNAME", toupper(names(dd)))) {
+    warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
+    colnames_row <- which(stringr::str_detect(dd, stringr::regex("VARDESC", ignore.case = TRUE)))
+    dd <- readxl::read_excel(filename, sheet = sheet_arg,
+                             skip = colnames_row + 1, col_types = "text")
+  }
+
+  return(dd)
+}
+
+
+.read_dd_xml <- function(filename) {
+  # Set parent_dd_file to the filename of the XML data dictionary on disk
+  xml_dd <- xml2::read_xml(filename)
+
+  # Select variable nodes
+  variable_nodes <- xml2::xml_find_all(xml_dd, "/data_table/variable")
+
+  # Create a one-line data frame for each variable node.
+  required_nodes <- c(
+    VARNAME = "name",
+    VARDESC = "description"
+  )
+  # Process some optional nodes; others are ignored.
+  optional_nodes <- c(
+    TYPE = "type",
+    UNITS = "unit",
+    MIN = "logical_min",
+    MAX = "logical_max"
+  )
+  unique_keys <- xml2::xml_find_all(xml_dd, "/data_table/unique_key") %>%
+    xml2::xml_text()
+  df_list <- lapply(variable_nodes, function(x) {
+    df <- data.frame(stringsAsFactors = FALSE, row.names = 1)
+    for (n in names(required_nodes)) {
+      xpath <- sprintf(".//%s", required_nodes[[n]])
+      text <- xml2::xml_find_all(x, xpath) %>%
+        xml2::xml_text()
+      df[[n]] <- text
+    }
+    for (n in names(optional_nodes)) {
+      xpath <- sprintf(".//%s", optional_nodes[[n]])
+      text <- xml2::xml_find_all(x, xpath) %>%
+        xml2::xml_text()
+      if (length(text) > 0) {
+        if (text == "") text <- NA
+        df[[n]] <- text
+      }
+    }
+    # Add the colmn that identifies the unique keys.
+    if (length(unique_keys) > 0) {
+      df$UNIQUEKEY <- ifelse(df$VARNAME %in% unique_keys, "X", NA)
+    }
+
+    # VALUES nodes are stored in multiple colmns, so process them separately.
+    child_value_nodes <- xml2::xml_find_all(x, ".//value")
+    if (length(child_value_nodes) > 0) {
+      value_strings <- sprintf(
+        "%s=%s",
+        unlist(xml2::xml_attrs(child_value_nodes)),
+        xml2::xml_text(child_value_nodes)
+      )
+      value_df <- do.call(data.frame,c(as.list(value_strings), stringsAsFactors = FALSE))
+      names(value_df) <- NULL
+      df <- dplyr::bind_cols(df, value_df)
+      idx <- which(names(df) == "V1")
+      names(df)[idx] <- "VALUES"
+      n_extra <- ncol(df) - idx
+      if (n_extra > 0) {
+        names(df)[(idx + 1):ncol(df)] <- paste0("X__", 1:n_extra)
+      }
+    }
+    df
+  })
+
+  # Bind the data frames together to create the data frame.
+  dd <- do.call(dplyr::bind_rows, df_list)
+
+  # Put the columns in the order required by dbGaP.
+  required_column_order <- c("VARNAME", "VARDESC", "TYPE", "UNITS", "MIN", "MAX", "UNIQUEKEY", "VALUES")
+  first_column_order <- intersect(required_column_order, names(dd))
+  dd <- dd %>%
+    dplyr::select(tidyselect::one_of(first_column_order),
+                  tidyselect::everything())
+
+  # Convert to tibble for consistency with other read functions.
+  dd <- tibble::as_tibble(dd)
+
+  return(dd)
+}

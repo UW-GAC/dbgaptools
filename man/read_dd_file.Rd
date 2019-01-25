@@ -21,6 +21,15 @@ A data frame from the file
 Read data dictionary file
 }
 \details{
-Expects (tab-delimited) .txt or .xlsx file. 
-dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
+Expects (tab-delimited) .txt, .xlsx, or .xml file.
+For .txt and .xlsx files, dbGaP data dictionary files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
+.xml file types should be those provided by dbGaP.
+Only a subset ofpossible child nodes of a variable node are processed:
+\code{type}
+\code{unit}
+\code{logical_min}
+\code{logical_max}
+These names are converted to the names expected in a user-submitted data dictionary.
+Finally, if any variables are flagged as "unique keys", a column is added to the output data frame and populated correctly (with X's).
+Otherwise, the "UNIQUEKEY" column does not exist in the output.
 }
