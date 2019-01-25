@@ -310,6 +310,13 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
   # Bind the data frames together to create the data frame.
   dd <- do.call(dplyr::bind_rows, df_list)
 
+  # Put the columns in the order required by dbGaP.
+  required_column_order <- c("VARNAME", "VARDESC", "TYPE", "UNITS", "MIN", "MAX", "UNIQUE_KEY", "VALUES")
+  first_column_order <- intersect(required_column_order, names(dd))
+  dd <- dd %>%
+    dplyr::select(tidyselect::one_of(first_column_order),
+                  tidyselect::everything())
+
   # Convert to tibble for consistency with other read functions.
   dd <- tibble::as_tibble(dd)
 

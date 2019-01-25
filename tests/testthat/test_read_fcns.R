@@ -81,7 +81,7 @@ test_that("read_dd_file works with an xml data dictionary", {
 test_that("read_dd_file processes unique key information in xml files", {
   dd_file <- system.file("extdata", "phs000001.v3.pht000378.v2.hospitalization.data_dict.xml", package = "dbgaptools", mustWork = TRUE)
   dd <- read_dd_file(dd_file)
-  expect_true("UNIQUE_KEY" %in% names(dd))
+  expect_equal(names(dd), c("VARNAME", "VARDESC", "TYPE", "UNITS", "MIN", "MAX", "UNIQUE_KEY", "VALUES", "X__1", "X__2", "X__3", "X__4", "X__5"))
   expect_equal(dd$UNIQUE_KEY, c("X", NA, NA, NA, "X", NA))
 })
 
