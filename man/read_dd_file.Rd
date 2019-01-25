@@ -31,5 +31,5 @@ Only a subset ofpossible child nodes of a variable node are processed:
 \code{logical_max}
 These names are converted to the names expected in a user-submitted data dictionary.
 Finally, if any variables are flagged as "unique keys", a column is added to the output data frame and populated correctly (with X's).
-Otherwise, the "UNIQUE_KEY" column does not exist in the output.
+Otherwise, the "UNIQUEKEY" column does not exist in the output.
 }

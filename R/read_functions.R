@@ -148,7 +148,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 #' \code{logical_max}
 #' These names are converted to the names expected in a user-submitted data dictionary.
 #' Finally, if any variables are flagged as "unique keys", a column is added to the output data frame and populated correctly (with X's).
-#' Otherwise, the "UNIQUE_KEY" column does not exist in the output.
+#' Otherwise, the "UNIQUEKEY" column does not exist in the output.
 #'
 #' @return
 #' A data frame from the file
@@ -283,7 +283,7 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
     }
     # Add the colmn that identifies the unique keys.
     if (length(unique_keys) > 0) {
-      df$UNIQUE_KEY <- ifelse(df$VARNAME %in% unique_keys, "X", NA)
+      df$UNIQUEKEY <- ifelse(df$VARNAME %in% unique_keys, "X", NA)
     }
 
     # VALUES nodes are stored in multiple colmns, so process them separately.
@@ -311,7 +311,7 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
   dd <- do.call(dplyr::bind_rows, df_list)
 
   # Put the columns in the order required by dbGaP.
-  required_column_order <- c("VARNAME", "VARDESC", "TYPE", "UNITS", "MIN", "MAX", "UNIQUE_KEY", "VALUES")
+  required_column_order <- c("VARNAME", "VARDESC", "TYPE", "UNITS", "MIN", "MAX", "UNIQUEKEY", "VALUES")
   first_column_order <- intersect(required_column_order, names(dd))
   dd <- dd %>%
     dplyr::select(tidyselect::one_of(first_column_order),
