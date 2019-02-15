@@ -1,3 +1,6 @@
+# ignore hidden files
+.*
+
 # ignore code devel
 code_devel
 code_devel/*
