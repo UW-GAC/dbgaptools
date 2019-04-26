@@ -1,6 +1,6 @@
 Package: dbgaptools 
 Title: Creates and Checks Standard Files for dbGaP submission
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
   person("Nelson", "Sarah", email = "sarahcn@uw.edu", role = c("aut", "cre")),
   person("Adrienne", "Stilp", email = "amstilp@uw.edu", role = "ctb"))

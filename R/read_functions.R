@@ -200,10 +200,7 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
     dd
 }
 
-
-.read_dd_txt <- function(filename) {
-  dd <- read_ds_file(filename, dd = TRUE)
-
+.rename_val_cols <- function(dd) {
   # rename extra columns after VALUES as "X__*"
   val.col <- grep("VALUES", names(dd), ignore.case = TRUE)
   if (length(val.col) > 0) {
@@ -213,6 +210,13 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
       names(dd)[idx] <- new.nms
     }
   }
+  return(dd)
+}
+
+.read_dd_txt <- function(filename) {
+  dd <- read_ds_file(filename, dd = TRUE)
+
+  dd <- .rename_val_cols(dd)
 
   # save as tibble (for consistency with Excel input processing, partly)
   dd <- tibble::as_tibble(dd)
@@ -238,6 +242,8 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
     dd <- readxl::read_excel(filename, sheet = sheet_arg,
                              skip = colnames_row + 1, col_types = "text")
   }
+
+  dd <- .rename_val_cols(dd)
 
   return(dd)
 }
