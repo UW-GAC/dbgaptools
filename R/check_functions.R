@@ -265,11 +265,9 @@
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
 #' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
-#' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)
+#' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID
 #' @param sampleID_col Column name for sample-level ID
 #' @param subjectID_col Column name for subject-level ID
-#' @param sample_uses Either a single string for expected SAMPLE_USE across all samples, or a data frame with SAMPLE_ID and SAMPLE_USE values
-#' @param topmed Logical to indicate TOPMed study
 #'
 #' @details
 #' The sample subject mapping file should be a tab-delimited .txt file.
@@ -277,20 +275,12 @@
 #' SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 #' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 #' will be returned in the output.
-#' If \code{ssm_exp != NULL} contains an additional logical field 'quarantine,'
-#' code will check that SAMPLE_USE is left blank (read in as 'NA') for this record.
-#' Quarantined samples will otherwise be treated as
-#' other records in terms of checking for missing or extra subjects or samples.
-#'
-#' If \code{topmed}, then SAMPLE_USE is expected to be either "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" or "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome", except for
-#' samples marked as quarantine in \code{ssm_exp}.
 #' 
 #' If a data dictionary is provided \code{ddfile != NULL}, additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
 #' @return ssm_report, a list of the following issues (when present):
-#' \item{missing_vars}{Missing and required variables}
 #' \item{dup_samples}{List of duplicated sample IDs}
 #' \item{blank_idx}{Row index of blank/missing subject or sample IDs}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
@@ -299,7 +289,6 @@
 #' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 #' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
 #' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
-#' \item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
 #' 
 #' @rdname check_ssm
 #' @export
@@ -325,13 +314,6 @@ check_ssm <- function(dsfile, ddfile=NULL,
   if(sampleID_col != "SAMPLE_ID"){
     warning("Note preferred sample-level ID column name is 'SAMPLE_ID'")
   }
-  
-  # check for required variables
-  # req_vars <- c("SUBJECT_ID","SAMPLE_ID","SAMPLE_USE")
-  # allow for other ID names
-  req_vars <- c(subjectID_col, sampleID_col, "SAMPLE_USE")
-  missing_vars <- setdiff(req_vars, names(ds))
-  if(length(missing_vars) %in% 0) missing_vars <- NULL  
   
   # check for duplicated sample IDs
   samplist <- ds[,sampleID_col]
@@ -377,70 +359,9 @@ check_ssm <- function(dsfile, ddfile=NULL,
     }
   }
 
-  # if TOPMed, sample uses should be either "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV"
-  # or "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome" for all samples,
-  # except where quarantine=TRUE in ssm_exp
-  sample_uses_topmed <- c("Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV",
-                          "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome")
-  
-  if(topmed){
-    # if a sample use dataframe was submitted, take only first value and return warning
-    if(is.data.frame(sample_uses)){
-      warning("Expecting unique sample_uses value for TOPMed; taking first value of sample_uses data frame")
-      sample_uses <- sample_uses[1,2]
-    }
-    
-    # if no sample use was provided, set to TOPMed value
-    if(is.null(sample_uses)){
-      sample_uses <- sample_uses_topmed[1] # use first order
-    } else if (!is.null(sample_uses) & !sample_uses %in% sample_uses_topmed){
-      # 'unique' above takes care of a data frame being submitted as sample_uses
-        warning(paste0("Non TOPMed sample use was provided; manually setting to '",
-                   sample_uses_topmed[1],".' To check other sample_uses, set topmed=FALSE"))
-       sample_uses <- sample_uses_topmed[1]
-      }
-    
-   # if quarantine=TRUE samples are in ssm_exp, change expected sample use to blank
-    if(!is.null(ssm_exp) & is.logical(ssm_exp[,3])){
-      sample_uses <- data.frame(SAMPLE_ID=ssm_exp$SAMPLE_ID,
-                                SAMPLE_USE=sample_uses)
-      sample_uses$SAMPLE_USE[ssm_exp[,3]] <- NA
-      }
-    } # close if topmed
-
-  sampuse_diffs <- NULL
-  # check for expected sample uses
-  if(!is.null(sample_uses)){
-    ds.mini <- ds[,c(sampleID_col,"SAMPLE_USE")]
-    names(ds.mini)[1] <- "SAMPLE_ID"
-
-    # determine if it's single string or a data frame
-    if(is.character(sample_uses)){
-      sampuse_diffs <- ds.mini[ds.mini$SAMPLE_USE != sample_uses |
-                               is.na(ds.mini$SAMPLE_USE),]
-    } else if(is.data.frame(sample_uses)){
-      sampuse_chk <- merge(sample_uses, ds.mini, by="SAMPLE_ID",
-                           all=TRUE, suffixes=c(".exp",".ds"))
-
-      # check if one is NA and the other isn't, or if they're non-NA and differing vals
-      bothNA <- with(sampuse_chk, is.na(SAMPLE_USE.exp) & is.na(SAMPLE_USE.ds))
-      flag <- with(sampuse_chk, xor(is.na(SAMPLE_USE.exp), is.na(SAMPLE_USE.ds)) |
-                   SAMPLE_USE.exp != SAMPLE_USE.ds & !bothNA)
-      # flag will be NA when both values are NA
-      sampuse_diffs <- sampuse_chk[flag,]
-    } else {
-      warning("sample_uses was neither string nor data frame and could not be processed")
-    }
-
-    if(nrow(sampuse_diffs) %in% 0){
-      sampuse_diffs <- NULL
-    }
-  }
-
   # create and return results list
   ssm_report <- list()
 
-  if(!is.null(missing_vars)) ssm_report$missing_vars <- missing_vars
   if(!is.null(dup_samples)) ssm_report$dup_samples <- dup_samples
   if(!is.null(blank_idx)) ssm_report$blank_idx <- blank_idx
   if(!is.null(dd_errors)) ssm_report$dd_errors <- dd_errors
@@ -457,7 +378,6 @@ check_ssm <- function(dsfile, ddfile=NULL,
     ssm_report$missing_samples <- missing_samples
   }
   if(!is.null(ssm_diffs)) ssm_report$ssm_diffs <- ssm_diffs
-  if(!is.null(sampuse_diffs))  ssm_report$sampuse_diffs <- sampuse_diffs
 
 
   # if list is empty, return NULL

@@ -15,19 +15,14 @@ check_ssm(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
 
-\item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID, with optionaly third column 'quarantine' (see Details below)}
+\item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID}
 
 \item{sampleID_col}{Column name for sample-level ID}
 
 \item{subjectID_col}{Column name for subject-level ID}
-
-\item{sample_uses}{Either a single string for expected SAMPLE_USE across all samples, or a data frame with SAMPLE_ID and SAMPLE_USE values}
-
-\item{topmed}{Logical to indicate TOPMed study}
 }
 \value{
 ssm_report, a list of the following issues (when present):
-\item{missing_vars}{Missing and required variables}
 \item{dup_samples}{List of duplicated sample IDs}
 \item{blank_idx}{Row index of blank/missing subject or sample IDs}
 \item{dd_errors}{Differences in fields between data file and data dictionary}
@@ -36,7 +31,6 @@ ssm_report, a list of the following issues (when present):
 \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
 \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
-\item{sampuse_diffs}{Discrepancies with expected SAMPLE_USE values}
 }
 \description{
 Check contents of a sample subject mapping file for dbGaP posting.
@@ -47,13 +41,6 @@ When \code{ssm_exp != NULL}, checks for expected correspondence between
 SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 will be returned in the output.
-If \code{ssm_exp != NULL} contains an additional logical field 'quarantine,'
-code will check that SAMPLE_USE is left blank (read in as 'NA') for this record.
-Quarantined samples will otherwise be treated as
-other records in terms of checking for missing or extra subjects or samples.
-
-If \code{topmed}, then SAMPLE_USE is expected to be either "Seq_DNA_WholeGenome; Seq_DNA_SNP_CNV" or "Seq_DNA_SNP_CNV; Seq_DNA_WholeGenome", except for
-samples marked as quarantine in \code{ssm_exp}.
 
 If a data dictionary is provided \code{ddfile != NULL}, additionally checks 
 correspondence between column names in data file and entries in data dictionary.
