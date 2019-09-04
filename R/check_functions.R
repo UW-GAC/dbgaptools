@@ -540,6 +540,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
 #' \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
 #' \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' \item{dup_subjects}{List of duplicated subject IDs}
 #' \item{extra_subjects}{Subjects in data file missing from \code{subj_exp}}
 #' \item{missing_subjects}{Subjects in \code{subj_exp} missing from data file}
 #' \item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}
@@ -629,6 +630,13 @@ check_subj <- function(dsfile, ddfile=NULL,
     }
   }
 
+  # check for duplicated subject IDs
+  subjlist <- ds[,subjectID_col]
+  dup_subjects <- subjlist[duplicated(subjlist)]
+  if(length(dup_subjects) %in% 0){
+    dup_subjects <- NULL
+  }
+
   # check for presence of expected subjects, with expected consent values
   missing_subjects <- extra_subjects <- consent_diffs <- NULL
   if(!is.null(subj_exp)){
@@ -663,6 +671,7 @@ check_subj <- function(dsfile, ddfile=NULL,
   if(!is.null(consent_varname)) subj_report$consent_varname <- consent_varname
   if(!is.null(alias_missvar)) subj_report$alias_missvar <- alias_missvar
   if(!is.null(dd_errors)) subj_report$dd_errors <- dd_errors
+  if(!is.null(dup_subjects)) subj_report$dup_subjects <- dup_subjects
   if(!is.null(missing_subjects)) subj_report$missing_subjects <- missing_subjects
   if(!is.null(extra_subjects)) subj_report$extra_subjects <- extra_subjects
   if(!is.null(consent_diffs)) subj_report$consent_diffs <- consent_diffs
@@ -701,6 +710,7 @@ check_subj <- function(dsfile, ddfile=NULL,
 #' \item{lowercase}{Logical flag indicating non-upper case variable names}
 #' \item{missing_vars}{Missing and required variables}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
+#' \item{dup_subjects}{List of duplicated subject IDs}
 #' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 #' \item{extra_sexvals}{Additional values in SEX column beyond what's specified by \code{male} and \code{female} function arguments}
@@ -771,6 +781,13 @@ check_ped <- function(dsfile, ddfile=NULL,
     }
   }
 
+  # check for duplicated subject IDs
+  subjlist <- ds[,subjectID_col]
+  dup_subjects <- subjlist[duplicated(subjlist)]
+  if(length(dup_subjects) %in% 0){
+    dup_subjects <- NULL
+  }
+
   # check for expected subjects
   missing_subjects <- extra_subjects <- NULL
   if(!is.null(subj_exp)){
@@ -812,6 +829,7 @@ check_ped <- function(dsfile, ddfile=NULL,
   if(!is.null(missing_vars)) ped_report$missing_vars <- missing_vars
   if(!is.null(dd_errors)) ped_report$dd_errors <- dd_errors
   if(!is.null(incon_report)) ped_report$incon_report <- incon_report
+  if(!is.null(dup_subjects)) ped_report$dup_subjects <- dup_subjects
   if(!is.null(extra_subjects)) ped_report$extra_subjects <- extra_subjects
   if(!is.null(missing_subjects) & length(missing_subjects) > 0 ) ped_report$missing_subjects <- missing_subjects
   if(length(mztwin_errors) > 0) ped_report$mztwin_errors <- mztwin_errors

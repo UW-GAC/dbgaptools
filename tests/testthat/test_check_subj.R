@@ -67,6 +67,17 @@ test_that("Undefined CONSENT=0 does not return dd_error output",{
   expect_null(out <- check_subj(subj_ds, subj_dd)$dd_errors$vals_warnings)
 })
 
+test_that("Duplicate subjects are detected", {
+  ds.rev <- read_ds_file(subj_ds)
+  ds.rev$SUBJECT_ID[3] <- ds.rev$SUBJECT_ID[2]
+  ds.rev.fn <- tempfile(fileext=".txt")
+  write.table(ds.rev[,1:2], file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
+              quote=FALSE, sep="\t")
+
+  expect_equal(check_subj(ds.rev.fn)$dup_subjects, "2")
+  unlink(ds.rev.fn)
+})
+
 test_that("Extra subjects are detected", {
   ds <- read_ds_file(subj_ds)
   subj_exp <- ds[,1:2]

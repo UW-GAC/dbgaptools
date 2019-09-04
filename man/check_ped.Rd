@@ -30,6 +30,7 @@ ped_report, a list of the following issues (when present):
 \item{lowercase}{Logical flag indicating non-upper case variable names}
 \item{missing_vars}{Missing and required variables}
 \item{dd_errors}{Differences in fields between data file and data dictionary}
+\item{dup_subjects}{List of duplicated subject IDs}
 \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 \item{extra_sexvals}{Additional values in SEX column beyond what's specified by \code{male} and \code{female} function arguments}

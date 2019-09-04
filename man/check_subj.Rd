@@ -26,6 +26,7 @@ subj_report, a list of the following issues (when present):
 \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
 \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted}
 \item{dd_errors}{Differences in fields between data file and data dictionary}
+\item{dup_subjects}{List of duplicated subject IDs}
 \item{extra_subjects}{Subjects in data file missing from \code{subj_exp}}
 \item{missing_subjects}{Subjects in \code{subj_exp} missing from data file}
 \item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}

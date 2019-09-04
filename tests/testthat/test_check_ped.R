@@ -24,6 +24,17 @@ test_that("Warning of non-preferred subject ID col is issued",{
   unlink(ds.rev.fn)
 })
 
+test_that("Duplicate subjects are detected", {
+  ds.rev <- read_ds_file(ped_ds)
+  ds.rev <- rbind(ds.rev, ds.rev[1,])
+  ds.rev.fn <- tempfile(fileext=".txt")
+  write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
+              quote=FALSE, sep="\t")
+
+  expect_equal(check_ped(ds.rev.fn)$dup_subjects, ds.rev$SUBJECT_ID[1])
+  unlink(ds.rev.fn)
+})
+
 test_that("Extra subjects are detected", {
   ds <- read_ds_file(ped_ds)
   subj_exp <- ds[,2]
