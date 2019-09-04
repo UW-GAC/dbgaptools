@@ -441,7 +441,7 @@ check_sattr <- function(dsfile, ddfile=NULL,
   }
 
   # check for required variables
-  req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","HISTOLOGICAL_TYPE","IS_TUMOR")
+  req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","IS_TUMOR")
   missing_vars <- setdiff(req_vars, names(ds))
   if(length(missing_vars) %in% 0) missing_vars <- NULL  
   
