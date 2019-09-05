@@ -296,8 +296,7 @@
 check_ssm <- function(dsfile, ddfile=NULL,
                       na_vals=c("NA","N/A","na","n/a"),
                       ssm_exp=NULL,
-                      sampleID_col="SAMPLE_ID", subjectID_col="SUBJECT_ID",
-                      sample_uses=NULL, topmed=FALSE){
+                      sampleID_col="SAMPLE_ID", subjectID_col="SUBJECT_ID"){
 
   # read in data file
   ds <- read_ds_file(dsfile, na_vals=na_vals)

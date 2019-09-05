@@ -6,7 +6,7 @@
 \usage{
 check_ssm(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
   ssm_exp = NULL, sampleID_col = "SAMPLE_ID",
-  subjectID_col = "SUBJECT_ID", sample_uses = NULL, topmed = FALSE)
+  subjectID_col = "SUBJECT_ID")
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
