@@ -66,11 +66,11 @@
 check_cross_file <- function(subj, ssm, molecular_samples,
                              sattr = NULL, pheno = NULL, ped = NULL,
                              subjectID_col = "SUBJECT_ID", sampleID_col = "SAMPLE_ID",
-                             consent_col = "CONSENT")
+                             consent_col = "CONSENT") {
 
-  # read in required files
-  subj <- read_ds_file(subj)
-  ssm <- read_ds_file(ssm)
+  # read in required files if necessary
+  if (is.character(subj)) subj <- read_ds_file(subj)
+  if (is.character(ssm)) ssm <- read_ds_file(ssm)
 
   # cannot proceed without specified subject ID col
   if (!is.element(subjectID_col, names(subj)) | !is.element(subjectID_col, names(ssm))) {
@@ -78,33 +78,33 @@ check_cross_file <- function(subj, ssm, molecular_samples,
   }
   
   # cannot proceed without specified sample  ID col
-  if(!is.element(sampleID_col, names(ssm))){
+  if (!is.element(sampleID_col, names(ssm))) {
     stop("Please check that files contain columns for sample-level ID")
   }
   
   # cannot proceed without specfied consent col
-  if(!is.element(consent_col, names(subj))){
+  if (!is.element(consent_col, names(subj))) {
     stop("Please check that subject file contains consent column")
   }
   
   # check that all samples with molecular data are in ssm
-  ssm_miss_molecular <- setdiff(molecular_samples, ssm[,sampleID_col])
+  ssm_miss_molecular <- setdiff(molecular_samples, ssm[, sampleID_col])
 
   # standardize column names
-  if(subjectID_col != "SUBJECT_ID"){
+  if (subjectID_col != "SUBJECT_ID") {
     names(subj)[names(subj) %in% subjectID_col] <- "SUBJECT_ID"
-    names(ssm)[names(ssm) %in% subjectID_col] <- "SUBJECT_ID"    
+    names(ssm)[names(ssm) %in% subjectID_col] <- "SUBJECT_ID"
   }
 
-  if(!is.null(sattr)) {
-    sattr <- read_ds_file(sattr)
-    if(sampleID_col != "SAMPLE_ID"){
-      names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"    
+  if (!is.null(sattr)) {
+    if (is.character(sattr)) sattr <- read_ds_file(sattr)
+    if (sampleID_col != "SAMPLE_ID") {
+      names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"
       names(sattr)[names(sattr) %in% sampleID_col] <- "SAMPLE_ID"
     }
   }
   
-  if(consent_col != "CONSENT"){
+  if (consent_col != "CONSENT") {
     names(subj)[names(subj) %in% consent_col] <- "CONSENT"
   }
 
@@ -135,7 +135,7 @@ check_cross_file <- function(subj, ssm, molecular_samples,
   
   # check subj <> sattr
   sattr_consent_err <- sattr_miss_molecular <- NULL
-  if(!is.null(sattr)){
+  if (!is.null(sattr)) {
     # all samples listed here must map to subject with consent >= 1 in subj file
     samps_ok <- ssm$SAMPLE_ID[ssm$SUBJECT_ID %in% subjs_study_cons]
     sattr_consent_err <- setdiff(sattr$SAMPLE_ID, samps_ok)
@@ -147,25 +147,25 @@ check_cross_file <- function(subj, ssm, molecular_samples,
   
   # check subj <> pheno
   pheno_consent_err <- pheno_miss_molecular <- NULL
-  if(!is.null(pheno)){
-    pheno <- read_ds_file(pheno)
+  if (!is.null(pheno)) {
+    if (is.character(pheno)) pheno <- read_ds_file(pheno)
     # all subjs listed here must have consent >= 1 in subj file
-    pheno_consent_err <- setdiff(pheno[,subjectID_col], subjs_study_cons)
+    pheno_consent_err <- setdiff(pheno[, subjectID_col], subjs_study_cons)
     # molecular data samples should be here if they have consent >= 1
     pheno_miss_molecular <- setdiff(intersect(molecular_subjs, subjs_study_cons),
-                                    pheno[,subjectID_col])
+                                    pheno[, subjectID_col])
   }
   
   # check subj <> pedigree
   subj_miss_ped <-  ped_consent_err <- ped_miss_molecular <- NULL
-  if(!is.null(ped)){
-    ped <- read_ds_file(ped)
+  if (!is.null(ped)) {
+    if (is.character(ped)) ped <- read_ds_file(ped)
     # all subjs should be present in subject consent file. merge the two
     ped_merg <- merge(ped, subj, by.x=subjectID_col, by.y="SUBJECT_ID",
                       all.x=TRUE, all.y=FALSE)
     names(ped_merg)[1] <- "SUBJECT_ID"
     subj_miss_ped <- ped_merg$SUBJECT_ID[is.na(ped_merg$CONSENT)]
-    
+
     # subjs not mapping to samples with molecular data (i.e. linking) should have consent=0
     ped_merg$molecular_sample <- ped_merg[,1] %in% molecular_subjs
     ped_consent_err <- ped_merg$SUBJECT_ID[!ped_merg$molecular_sample &
@@ -178,19 +178,19 @@ check_cross_file <- function(subj, ssm, molecular_samples,
   # return list of errors
   rpt <- list()
   
-  if(length(ssm_miss_molecular) > 0) rpt$ssm_miss_molecular <- ssm_miss_molecular
-  if(length(ssm_no_molecular) > 0) rpt$ssm_no_molecular <- ssm_no_molecular
-  if(nrow(subj_consent_err) > 0) rpt$subj_consent_err <- subj_consent_err
-  if(length(subj_miss_ssm) > 0) rpt$subj_miss_ssm <- subj_miss_ssm
-  if(length(sattr_consent_err) > 0) rpt$sattr_consent_err <- sattr_consent_err
-  if(length(sattr_miss_molecular) > 0) rpt$sattr_miss_molecular <- sattr_miss_molecular    
-  if(length(pheno_consent_err)> 0) rpt$pheno_consent_err <- pheno_consent_err
-  if(length(pheno_miss_molecular) > 0) rpt$pheno_miss_molecular <- pheno_miss_molecular    
-  if(length(subj_miss_ped) > 0) rpt$subj_miss_ped <- subj_miss_ped
-  if(length(ped_consent_err) > 0) rpt$ped_consent_err <- ped_consent_err
-  if(length(ped_miss_molecular) > 0) rpt$ped_miss_molecular <- ped_miss_molecular
+  if (length(ssm_miss_molecular) > 0) rpt$ssm_miss_molecular <- ssm_miss_molecular
+  if (length(ssm_no_molecular) > 0) rpt$ssm_no_molecular <- ssm_no_molecular
+  if (nrow(subj_consent_err) > 0) rpt$subj_consent_err <- subj_consent_err
+  if (length(subj_miss_ssm) > 0) rpt$subj_miss_ssm <- subj_miss_ssm
+  if (length(sattr_consent_err) > 0) rpt$sattr_consent_err <- sattr_consent_err
+  if (length(sattr_miss_molecular) > 0) rpt$sattr_miss_molecular <- sattr_miss_molecular
+  if (length(pheno_consent_err) > 0) rpt$pheno_consent_err <- pheno_consent_err
+  if (length(pheno_miss_molecular) > 0) rpt$pheno_miss_molecular <- pheno_miss_molecular
+  if (length(subj_miss_ped) > 0) rpt$subj_miss_ped <- subj_miss_ped
+  if (length(ped_consent_err) > 0) rpt$ped_consent_err <- ped_consent_err
+  if (length(ped_miss_molecular) > 0) rpt$ped_miss_molecular <- ped_miss_molecular
 
-  if(length(rpt) > 0){
+  if (length(rpt) > 0) {
     cross_check_report <- rpt
   } else {
     cross_check_report <- NULL
@@ -198,4 +198,3 @@ check_cross_file <- function(subj, ssm, molecular_samples,
 
   return(cross_check_report)
 }
-
