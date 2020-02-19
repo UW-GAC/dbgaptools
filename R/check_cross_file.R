@@ -13,33 +13,51 @@
 #' @param consent_col Column name for consent in subject file
 #'
 #' @details
-#' Checks for presence of expected subjects and samples across a set of dbGaP files.
-#' At a minimum, requires a subject consent file, sample-subject mapping file, and list of sample IDs for which molecular data is being submitted.
-#' Subjects with consent codes other than 0 and positive integers are returned as an error and excluded from further checks.
+#' Checks for presence of expected subjects and samples across a set of dbGaP
+#' files.  At a minimum, requires a subject consent file, sample-subject
+#' mapping file, and list of sample IDs for which molecular data is being
+#' submitted.  Subjects with consent codes other than 0 and positive integers
+#' are returned as an error and excluded from further checks.
 #' Including additional files increases the number of pairwise checks done across files.
 #' The basic principles behind these checks are:
 #' \itemize{
 #'   \item{subject file: must contain all subjects in phenotype and pedigree files}
-#'   \item{sample-subject mapping file: must contain all samples with molecular data; all samples listed here must map to subjects with consent=0 or consent >=1 in subject file}
-#'   \item{pedigree file: subjects not mapping to samples with molecular data (i.e. linking individuals in a pedigrees) are expected to have consent=0 in the subject file}
+#'   \item{sample-subject mapping file: must contain all samples with molecular data; all samples
+#'         listed here must map to subjects with consent=0 or consent >=1 in subject file}
+#'   \item{pedigree file: subjects not mapping to samples with molecular data
+#'         (i.e. linking individuals in a pedigrees) are expected to have consent=0
+#'         in the subject file}
 #'   \item{phenotype file: should have no subjects missing consent or with consent=0}
-#'   \item{sample attributes file: all samples listed here must map to subjects with consent >= 1 in subject file}
+#'   \item{sample attributes file: all samples listed here must map to subjects
+#'         with consent >= 1 in subject file}
 #'}
-#' Note issues returned in the report may not always require corrective action - i.e. sometimes there are extenuating circumstances, such as when consented study subjects are missing from current molecular data submissions but expected in future submissions, and are thus retained in dbGaP files with non-zero consent status.
+#' Note issues returned in the report may not always require corrective action
+#' - i.e. sometimes there are extenuating circumstances, such as when consented
+#' study subjects are missing from current molecular data submissions but
+#' expected in future submissions, and are thus retained in dbGaP files with
+#' non-zero consent status.
 #'
 #' @return cross_check_report, a list of the following issues (when present):
 #' \itemize{
-#'   \item{ssm_miss_molecular: List of molecular data samples missing from sample-subject mapping file}
-#'   \item{ssm_no_molecular: List of samples in the sample-subject mapping file that are not molecular data samples}
-#'   \item{subj_consent_err: List of subjects in subject consent file with invalid consent codes, which were excluded from subsequent checks}
-#'   \item{subj_miss_ssm: List of subjects in sample-subject mapping file either missing from subject file, or in subject file but with invalid consent code}
-#'   \item{sattr_miss_molecular: List of molecular data samples missing from the sample-attributes file}
-#'   \item{sattr_consent_err: List of samples in sample attributes file that map to subjects with consent other than >= 1}
-#'   \item{pheno_consent_err: List of subjects in the phenotype file that have consent other than >= 1}
+#'   \item{ssm_miss_molecular: List of molecular data samples missing from
+#'         sample-subject mapping file} \item{ssm_no_molecular: List of samples in
+#'         the sample-subject mapping file that are not molecular data samples}
+#'   \item{subj_consent_err: List of subjects in subject consent file with
+#'         invalid consent codes, which were excluded from subsequent checks}
+#'   \item{subj_miss_ssm: List of subjects in sample-subject mapping file
+#'         either missing from subject file, or in subject file but with invalid
+#'         consent code} \item{sattr_miss_molecular: List of molecular data samples
+#'         missing from the sample-attributes file} \item{sattr_consent_err: List of
+#'         samples in sample attributes file that map to subjects with consent other
+#'         than >= 1} \item{pheno_consent_err: List of subjects in the phenotype file
+#'         that have consent other than >= 1}
 #'   \item{pheno_miss_molecular: List of molecular data samples missing from the phenotype file}
 #'   \item{subj_miss_ped: Subjects in pedigree file that are missing from subject consent file}
-#'   \item{ped_consent_err: List of subjects in pedigree file having non-0 consent and not mapping to a sample with molecular data}
-#'   \item{ped_miss_molecular: List of molecular samples mapped to a subject not present in the pedigree file, and thus assumed to be singletons/unrelateds}
+#'   \item{ped_consent_err: List of subjects in pedigree file having non-0
+#'         consent and not mapping to a sample with molecular data}
+#'   \item{ped_miss_molecular: List of molecular samples mapped to a subject
+#'         not present in the pedigree file, and thus assumed to be
+#'         singletons/unrelateds}
 #' }
 #'
 #' @rdname check_cross_file
