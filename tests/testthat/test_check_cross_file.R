@@ -23,6 +23,14 @@ test_that("Compliant files run error free", {
   expect_equal(names(out), c("sattr_miss_molecular", "ped_miss_molecular"))
 })
 
+test_that("Compliant dataframes run error free", {
+  expect_null(check_cross_file(subj, ssm, molecular_samples=ssm$SAMPLE_ID))
+  
+  # ok to have pheno and ped missing non-molecular samples (indeed these are HapMaps)
+  out <- check_cross_file(subj, ssm, molecular_samples=ssm$SAMPLE_ID,
+                          sattr, pheno, ped)
+  expect_equal(names(out), c("sattr_miss_molecular", "ped_miss_molecular"))
+})
 
 test_that("Missing subject ID column stops with error",{
   str <- "Please check that files contain columns for subject-level ID"
