@@ -2,12 +2,12 @@
 #'
 #' Check presence of expected subjects and samples across dbGaP files.
 #'
-#' @param subj_file Path to subject consent file on disk
-#' @param ssm_file Path to sample-subject mapping file on disk
+#' @param subj Subject consent dataframe, or path to subject consent file on disk
+#' @param ssm Sample-subject mapping dataframe, or path to sample-subject mapping file on disk
 #' @param molecular_samples Vector of sample IDs with molecular data
-#' @param sattr_file Path to sample attributes file on disk
-#' @param pheno_file Path to phenotype file on disk
-#' @param ped_file Path to pedigree file on disk
+#' @param sattr Sample Attributes dataframe, or path to sample attributes file on disk
+#' @param pheno Phenotype dataframe, or path to phenotype file on disk
+#' @param ped Pedigree dataframe, or path to pedigree file on disk
 #' @param subjectID_col Column name for subject-level ID across file
 #' @param sampleID_col Column name for sample-level ID across files
 #' @param consent_col Column name for consent in subject file
@@ -63,17 +63,17 @@
 #' @rdname check_cross_file
 #' @export
 
-check_cross_file <- function(subj_file, ssm_file, molecular_samples,
-                             sattr_file=NULL, pheno_file=NULL, ped_file=NULL,
-                             subjectID_col="SUBJECT_ID", sampleID_col="SAMPLE_ID",
-                             consent_col="CONSENT"){
-  
+check_cross_file <- function(subj, ssm, molecular_samples,
+                             sattr = NULL, pheno = NULL, ped = NULL,
+                             subjectID_col = "SUBJECT_ID", sampleID_col = "SAMPLE_ID",
+                             consent_col = "CONSENT")
+
   # read in required files
-  subj <- read_ds_file(subj_file)
-  ssm <- read_ds_file(ssm_file)
+  subj <- read_ds_file(subj)
+  ssm <- read_ds_file(ssm)
 
   # cannot proceed without specified subject ID col
-  if(!is.element(subjectID_col, names(subj)) | !is.element(subjectID_col, names(ssm))){
+  if (!is.element(subjectID_col, names(subj)) | !is.element(subjectID_col, names(ssm))) {
     stop("Please check that files contain columns for subject-level ID")
   }
   
@@ -96,8 +96,8 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
     names(ssm)[names(ssm) %in% subjectID_col] <- "SUBJECT_ID"    
   }
 
-  if(!is.null(sattr_file)) {
-    sattr <- read_ds_file(sattr_file)
+  if(!is.null(sattr)) {
+    sattr <- read_ds_file(sattr)
     if(sampleID_col != "SAMPLE_ID"){
       names(ssm)[names(ssm) %in% sampleID_col] <- "SAMPLE_ID"    
       names(sattr)[names(sattr) %in% sampleID_col] <- "SAMPLE_ID"
@@ -135,7 +135,7 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   
   # check subj <> sattr
   sattr_consent_err <- sattr_miss_molecular <- NULL
-  if(!is.null(sattr_file)){
+  if(!is.null(sattr)){
     # all samples listed here must map to subject with consent >= 1 in subj file
     samps_ok <- ssm$SAMPLE_ID[ssm$SUBJECT_ID %in% subjs_study_cons]
     sattr_consent_err <- setdiff(sattr$SAMPLE_ID, samps_ok)
@@ -147,8 +147,8 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   
   # check subj <> pheno
   pheno_consent_err <- pheno_miss_molecular <- NULL
-  if(!is.null(pheno_file)){
-    pheno <- read_ds_file(pheno_file)
+  if(!is.null(pheno)){
+    pheno <- read_ds_file(pheno)
     # all subjs listed here must have consent >= 1 in subj file
     pheno_consent_err <- setdiff(pheno[,subjectID_col], subjs_study_cons)
     # molecular data samples should be here if they have consent >= 1
@@ -158,8 +158,8 @@ check_cross_file <- function(subj_file, ssm_file, molecular_samples,
   
   # check subj <> pedigree
   subj_miss_ped <-  ped_consent_err <- ped_miss_molecular <- NULL
-  if(!is.null(ped_file)){
-    ped <- read_ds_file(ped_file)
+  if(!is.null(ped)){
+    ped <- read_ds_file(ped)
     # all subjs should be present in subject consent file. merge the two
     ped_merg <- merge(ped, subj, by.x=subjectID_col, by.y="SUBJECT_ID",
                       all.x=TRUE, all.y=FALSE)
