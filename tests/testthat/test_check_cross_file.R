@@ -40,7 +40,7 @@ test_that("Compliant dataframes run error free", {
 test_that("Missing subject ID column stops with error", {
   str <- "Please check that files contain columns for subject-level ID"
   expect_error(check_cross_file(subj_file, ssm_file, molecular_samples = ssm$SAMPLE_ID,
-                                subject_id_col = "mysubject"), str, fixed = TRUE)
+                                subjectID_col = "mysubject"), str, fixed = TRUE)
 })
 
 test_that("Missing consent column stops with error", {
