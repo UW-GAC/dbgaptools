@@ -4,8 +4,13 @@
 \alias{read_ds_file}
 \title{Read in a data file}
 \usage{
-read_ds_file(filename, dd = FALSE, na_vals = c("NA", "N/A", "na",
-  "n/a"), remove_empty_row = TRUE, remove_empty_col = FALSE)
+read_ds_file(
+  filename,
+  dd = FALSE,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  remove_empty_row = TRUE,
+  remove_empty_col = FALSE
+)
 }
 \arguments{
 \item{filename}{The path to the file on disk}

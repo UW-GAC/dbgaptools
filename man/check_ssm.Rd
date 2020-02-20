@@ -4,9 +4,14 @@
 \alias{check_ssm}
 \title{Check sample subject mapping file}
 \usage{
-check_ssm(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
-  ssm_exp = NULL, sampleID_col = "SAMPLE_ID",
-  subjectID_col = "SUBJECT_ID")
+check_ssm(
+  dsfile,
+  ddfile = NULL,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  ssm_exp = NULL,
+  sampleID_col = "SAMPLE_ID",
+  subjectID_col = "SUBJECT_ID"
+)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}

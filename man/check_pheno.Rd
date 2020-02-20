@@ -4,8 +4,13 @@
 \alias{check_pheno}
 \title{Check phenotype file}
 \usage{
-check_pheno(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na",
-  "n/a"), subj_exp = NULL, subjectID_col = "SUBJECT_ID")
+check_pheno(
+  dsfile,
+  ddfile = NULL,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  subj_exp = NULL,
+  subjectID_col = "SUBJECT_ID"
+)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}

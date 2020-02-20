@@ -4,9 +4,16 @@
 \alias{check_ped}
 \title{Check pedigree file}
 \usage{
-check_ped(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
-  subj_exp = NULL, subjectID_col = "SUBJECT_ID", check_incons = TRUE,
-  male = 1, female = 2)
+check_ped(
+  dsfile,
+  ddfile = NULL,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  subj_exp = NULL,
+  subjectID_col = "SUBJECT_ID",
+  check_incons = TRUE,
+  male = 1,
+  female = 2
+)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}

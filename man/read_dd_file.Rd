@@ -4,8 +4,7 @@
 \alias{read_dd_file}
 \title{Read data dictionary file}
 \usage{
-read_dd_file(filename, remove_empty_row = TRUE,
-  remove_empty_col = FALSE)
+read_dd_file(filename, remove_empty_row = TRUE, remove_empty_col = FALSE)
 }
 \arguments{
 \item{filename}{The path to the file on disk}

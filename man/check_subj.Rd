@@ -4,9 +4,14 @@
 \alias{check_subj}
 \title{Check subject consent file}
 \usage{
-check_subj(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na",
-  "n/a"), subj_exp = NULL, subjectID_col = "SUBJECT_ID",
-  consent_col = "CONSENT")
+check_subj(
+  dsfile,
+  ddfile = NULL,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  subj_exp = NULL,
+  subjectID_col = "SUBJECT_ID",
+  consent_col = "CONSENT"
+)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}

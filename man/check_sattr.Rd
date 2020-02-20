@@ -4,9 +4,14 @@
 \alias{check_sattr}
 \title{Check sample attributes file}
 \usage{
-check_sattr(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na",
-  "n/a"), samp_exp = NULL, sampleID_col = "SAMPLE_ID",
-  topmed = FALSE)
+check_sattr(
+  dsfile,
+  ddfile = NULL,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  samp_exp = NULL,
+  sampleID_col = "SAMPLE_ID",
+  topmed = FALSE
+)
 }
 \arguments{
 \item{dsfile}{Path to the data file on disk}
