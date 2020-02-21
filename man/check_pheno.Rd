@@ -17,7 +17,8 @@ check_pheno(
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in
+data file (see details of \code{read_ds_file})}
 
 \item{subj_exp}{Vector of expected subject IDs}
 
@@ -25,7 +26,9 @@ check_pheno(
 }
 \value{
 pheno_report, a list of the following issues (when present):
-\item{flag_nonuniq_subjID}{TRUE when subject ID column is not unique, which would require definition of UNIQUEKEY columns in the corresponding data dictionary}
+\item{flag_nonuniq_subjID}{TRUE when subject ID column is not unique, which
+      would require definition of UNIQUEKEY columns in the corresponding data
+      dictionary}
 \item{dd_errors}{Differences in fields between data file and data dictionary}
 \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
@@ -34,7 +37,11 @@ pheno_report, a list of the following issues (when present):
 Check contents of a phenotype file for dbGaP posting
 }
 \details{
-Because of the variability of phenotype file contents, the only required column checked here is the subject-level ID. Note dbGaP requests variables (1) described in the study description and/or study config; (2) affection status, if not already included in the subject consent file; (3) sex; and (4) race/ethnicity/ancestry/heritage.
+Because of the variability of phenotype file contents, the only required
+column checked here is the subject-level ID. Note dbGaP requests variables
+(1) described in the study description and/or study config; (2) affection
+status, if not already included in the subject consent file; (3) sex; and
+(4) race/ethnicity/ancestry/heritage.
 
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 correspondence between column names in data file and entries in data dictionary.

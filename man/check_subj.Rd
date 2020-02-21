@@ -18,7 +18,8 @@ check_subj(
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in
+data file (see details of \code{read_ds_file})}
 
 \item{subj_exp}{Dataframe of expected subject ID (column 1) and consent value (column 2)}
 
@@ -29,14 +30,19 @@ check_subj(
 \value{
 subj_report, a list of the following issues (when present):
 \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
-\item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted}
+\item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or
+SOURCE_SUBJECT_ID is submitted}
 \item{dd_errors}{Differences in fields between data file and data dictionary}
 \item{dup_subjects}{List of duplicated subject IDs}
 \item{extra_subjects}{Subjects in data file missing from \code{subj_exp}}
 \item{missing_subjects}{Subjects in \code{subj_exp} missing from data file}
-\item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}
+\item{consent_diffs}{Discrepancies in correspondence between subject ID and
+      consent. Lists entries in \code{subj_exp} that disagree with correspondence
+      in the data file}
 \item{consent_nonints}{List of non-integer consent values.}
-\item{potential_pheno_vars}{List of potential phenotype variable names in DS. Note phenotype should only be in one of these two files: phenotype file or subject consent file.}
+\item{potential_pheno_vars}{List of potential phenotype variable names in
+      DS. Note phenotype should only be in one of these two files: phenotype file
+      or subject consent file.}
 }
 \description{
 Check contents of a subject consent file for dbGaP posting.
@@ -51,6 +57,8 @@ Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 
 If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 for agreement between data file and data dictionary.
-Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP automatically codes as subjects used as genotyping controls and/or pedigree linking members.
+Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP
+automatically codes as subjects used as genotyping controls and/or pedigree
+linking members.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

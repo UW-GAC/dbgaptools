@@ -12,7 +12,8 @@
 #'
 #' Even if DS file is not provided, (\code{ds == NULL}), the (\code{dstype}) must
 #' be specified to check for customize check for UNITS and VALUES columns:
-#' pheno = phenotype DS; ped = pedigree DS, sattr =sample attributes DS, ssm=sample-subject mapping DS, subj=subject consent DS.
+#' pheno = phenotype DS; ped = pedigree DS, sattr =sample attributes DS,
+#' ssm=sample-subject mapping DS, subj=subject consent DS.
 #' Note VALUES are considered required for pheno, ped, sattr, and subj DS types.
 #' Additionally, UNITS are considered required for pheno and sattr DS types.
 #' Note some studies may not actually require VALUES and UNITS in these files types,
@@ -22,12 +23,17 @@
 #' \item{lowercase}{Logical flag indicating non-uppercase variable names}
 #' \item{missing_reqvars}{Missing and required variables, based on dstype}
 #' \item{extra_vars}{Extra variables}
-#' \item{uniquekey_flags}{Returns warning when UNIQUEKEY column is populated for file types other than phenotype (most common need for UNIQUEKEY) or sample attributes (which in some cases requires UNIQUEKEY). Returns warning if, in pheno or sattr dstypes, the UNIQUEKEY variable(s) do not specify unique rows in the DS.}
+#' \item{uniquekey_flags}{Returns warning when UNIQUEKEY column is populated
+#'       for file types other than phenotype (most common need for UNIQUEKEY) or
+#'       sample attributes (which in some cases requires UNIQUEKEY). Returns warning
+#'       if, in pheno or sattr dstypes, the UNIQUEKEY variable(s) do not specify
+#'       unique rows in the DS.}
 #' \item{vals_warnings}{Vector of warnings about VALUES columns}
 #' \item{missing_dsvars}{Variables present in DS but not defined in DD}
 #' \item{min_errors}{Variables for which DS value are < DD MIN}
 #' \item{max_errors}{Variables for which DS value are > DD MAX}
-#' \item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present} 
+#' \item{illegal_vars}{Variable names containing illegal characters: '\', '/',
+#'       ',' (comma), or 'dbGaP' are present} 
 #'
 #' @rdname check_dd
 
@@ -89,17 +95,23 @@
     if(sum(keysel) > 0) {
         uniqkey_cols <- dd$VARNAME[!is.na(dd$UNIQUEKEY)]
         if(!is.element(dstype, c("pheno","sattr")) & length(uniqkey_cols) > 0 ){
-          uniquekey_flags[["wrong_dstype"]] <- paste("UNIQUEKEY columns(s) should not be defined for dstype", dstype)
+          uniquekey_flags[["wrong_dstype"]] <- paste(
+            "UNIQUEKEY columns(s) should not be defined for dstype",
+            dstype
+          )
         }
         # check for only "X" in the columns
         uniqkey_marks <- unique(dd[dd$VARNAME %in% uniqkey_cols,"UNIQUEKEY"])
-        if(uniqkey_marks != "X") uniquekey_flags[["wrong_mark"]] <- "Only 'X' should be used to flag UNIQUE key columns"
+        err_st <- "Only 'X' should be used to flag UNIQUE key columns"
+        if(uniqkey_marks != "X") uniquekey_flags[["wrong_mark"]] <- err_st
 
         # check that uniquekey columns are unique
         if(!is.null(ds)){
           ds.uniq <- ds[,uniqkey_cols,drop=FALSE]
           if(nrow(ds.uniq) != nrow(unique(ds.uniq))){
-            uniquekey_flags[["notunique"]] <- paste0("UNIQUEKEY columns (",paste(uniqkey_cols, collapse=","),") do not specify unique records in DS")
+            uniquekey_flags[["notunique"]] <- paste0("UNIQUEKEY columns (",
+                                                     paste(uniqkey_cols, collapse=","),
+                                                     ") do not specify unique records in DS")
           } # if unique key is non-unique
         } # if ds is also provided
       }# if a VARNAME is marked as unique
@@ -136,7 +148,9 @@
         
         if(sum(Biobase::rowMax(eq_count) > 1) > 0){
           mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
-          str <- paste(paste(mult_eq_vars,collapse="; "), "variable(s) has multiple VALUE entries per cell. Only the first entry per cell will be evaluated. Encoded values must be split into one per cell.")
+          str <- paste(paste(mult_eq_vars,collapse="; "),
+                       "variable(s) has multiple VALUE entries per cell. Only the first entry per",
+                       "cell will be evaluated. Encoded values must be split into one per cell.")
           vals_warnings[["multiple_vals_warn"]] <- str
 
         }
@@ -162,7 +176,9 @@
             # remove leading or trailing white space
             undef_vals <- setdiff(trimws(var1), trimws(var2))
             if(length(undef_vals) > 0){
-                warn_tmp <- paste0("For variable ", var,", the following values are undefined in the dd: ", paste(sort(undef_vals), collapse=" "))
+                warn_tmp <- paste0("For variable ", var,
+                                   ", the following values are undefined in the dd: ",
+                                   paste(sort(undef_vals), collapse=" "))
                 warn_undef <- c(warn_undef, warn_tmp)
             }
           } # loop through encoded vars
@@ -264,7 +280,8 @@
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in
+#' data file (see details of \code{read_ds_file})
 #' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID
 #' @param sampleID_col Column name for sample-level ID
 #' @param subjectID_col Column name for subject-level ID
@@ -288,7 +305,8 @@
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 #' \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 #' \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
-#' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
+#' \item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID.
+#'       Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
 #' 
 #' @rdname check_ssm
 #' @export
@@ -391,7 +409,8 @@ check_ssm <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in
+#' data file (see details of \code{read_ds_file})
 #' @param samp_exp List of expected sample IDs
 #' @param sampleID_col Column name for sample-level ID
 #' @param topmed Logical to indicate TOPMed study
@@ -402,7 +421,12 @@ check_ssm <- function(dsfile, ddfile=NULL,
 #' sample attributes variables: SEQUENCING_CENTER, Funding_Source, TOPMed_Phase, 
 #' TOPMed_Project, Study_Name.
 #'
-#' Note that none of the BioSample variables (BODY_SITE, ANALYTE_TYPE, HISTOLOGICAL_TYPE, IS_TUMOR) are strictly required in the sense that their absence will not break dbGaP processing pipeline or delay study release. However, their inclusion is strongly encouraged, and indeed necessary for cancer studies and other tissue-specific studies, and are thus considered "required" variables for the purposes of this checking script.
+#' Note that none of the BioSample variables (BODY_SITE, ANALYTE_TYPE,
+#' HISTOLOGICAL_TYPE, IS_TUMOR) are strictly required in the sense that their
+#' absence will not break dbGaP processing pipeline or delay study release.
+#' However, their inclusion is strongly encouraged, and indeed necessary for
+#' cancer studies and other tissue-specific studies, and are thus considered
+#' "required" variables for the purposes of this checking script.
 #'
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
@@ -517,7 +541,8 @@ check_sattr <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in
+#' data file (see details of \code{read_ds_file})
 #' @param subj_exp Dataframe of expected subject ID (column 1) and consent value (column 2)
 #' @param subjectID_col Column name for subject-level ID
 #' @param consent_col Column name for consent variable
@@ -532,19 +557,26 @@ check_sattr <- function(dsfile, ddfile=NULL,
 #' 
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' for agreement between data file and data dictionary.
-#' Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP automatically codes as subjects used as genotyping controls and/or pedigree linking members.
+#' Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP
+#' automatically codes as subjects used as genotyping controls and/or pedigree
+#' linking members.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
 #' @return subj_report, a list of the following issues (when present):
 #' \item{consent_varname}{Logical, indicating consent variable is not named 'CONSENT'}
-#' \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or SOURCE_SUBJECT_ID is submitted}
+#' \item{alias_missvar}{Logical, indicating when only one of SUBJECT_SOURCE or
+#' SOURCE_SUBJECT_ID is submitted}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
 #' \item{dup_subjects}{List of duplicated subject IDs}
 #' \item{extra_subjects}{Subjects in data file missing from \code{subj_exp}}
 #' \item{missing_subjects}{Subjects in \code{subj_exp} missing from data file}
-#' \item{consent_diffs}{Discrepancies in correspondence between subject ID and consent. Lists entries in \code{subj_exp} that disagree with correspondence in the data file}
+#' \item{consent_diffs}{Discrepancies in correspondence between subject ID and
+#'       consent. Lists entries in \code{subj_exp} that disagree with correspondence
+#'       in the data file}
 #' \item{consent_nonints}{List of non-integer consent values.}
-#' \item{potential_pheno_vars}{List of potential phenotype variable names in DS. Note phenotype should only be in one of these two files: phenotype file or subject consent file.}
+#' \item{potential_pheno_vars}{List of potential phenotype variable names in
+#'       DS. Note phenotype should only be in one of these two files: phenotype file
+#'       or subject consent file.}
 #' 
 #' @rdname check_subj
 #' @export
@@ -591,7 +623,8 @@ check_subj <- function(dsfile, ddfile=NULL,
   alias_vars_pres <- intersect(alias_vars, names(ds))
   alias_vars_miss <- setdiff(alias_vars, names(ds))
   if(length(alias_vars_pres) > 0 ) {
-    message("Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing value strings such as NA, N/A, etc.")
+    message(paste("Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing",
+                  "value strings such as NA, N/A, etc."))
     if(length(alias_vars_miss) > 0 ){
       warning("Datafile has ", alias_vars_pres,", but missing ",alias_vars_miss)
       alias_missvar <- TRUE
@@ -691,15 +724,21 @@ check_subj <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in
+#' data file (see details of \code{read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
 #' @param subjectID_col Column name for subject-level ID
-#' @param check_incons Logical whether to report pedigree inconsistencies, using \code{GWASTools pedigreeCheck}
+#' @param check_incons Logical whether to report pedigree inconsistencies,
+#' using \code{GWASTools pedigreeCheck}
 #' @param male Encoded value for male in SEX column
 #' @param female Encoded value for female in SEX column
 #'
 #' @details
-#' If an MZ twin column is detected, returns issues including column name other than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic twins are included (\code{chk_sex=TRUE}).
+#' If an MZ twin column is detected, returns issues including column name other
+#' than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to
+#' indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject
+#' ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic
+#' twins are included (\code{chk_sex=TRUE}).
 #'
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
@@ -712,7 +751,8 @@ check_subj <- function(dsfile, ddfile=NULL,
 #' \item{dup_subjects}{List of duplicated subject IDs}
 #' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
-#' \item{extra_sexvals}{Additional values in SEX column beyond what's specified by \code{male} and \code{female} function arguments}
+#' \item{extra_sexvals}{Additional values in SEX column beyond what's specified
+#'       by \code{male} and \code{female} function arguments}
 #' \item{mztwin_errors}{List of potential errors with MZ twins}
 #'
 #' @rdname check_ped
@@ -767,7 +807,8 @@ check_ped <- function(dsfile, ddfile=NULL,
   incon_report <- NULL
   if(check_incons){
     if(!is.null(missing_vars)){
-      warning("Cannot check for pedigree inconsistencies until missing and required variables are added")
+      warning(paste("Cannot check for pedigree inconsistencies until missing and required",
+                    "variablesare added"))
     } else {
       message("\nRunning GWASTools pedigree check\n")
       # prepare pedigree
@@ -811,7 +852,9 @@ check_ped <- function(dsfile, ddfile=NULL,
       # twins should be in same family
       if(length(unique(twins_dat$FAMILY_ID[idx])) > 1) twins_dat$chk_family[idx] <- TRUE
       # twins should have different subject IDs (could be triplets)
-      if(length(unique(twins_dat[idx, subjectID_col])) != length(idx)) twins_dat$chk_subjectID[idx] <- TRUE
+      if(length(unique(twins_dat[idx, subjectID_col])) != length(idx)) {
+        twins_dat$chk_subjectID[idx] <- TRUE
+      }
       # twins should be the same sex (otherwise could be dizygotic twin
       if(length(unique(twins_dat$SEX[idx])) > 1) twins_dat$chk_sex[idx] <- TRUE
     } # end loop through twins
@@ -830,7 +873,9 @@ check_ped <- function(dsfile, ddfile=NULL,
   if(!is.null(incon_report)) ped_report$incon_report <- incon_report
   if(!is.null(dup_subjects)) ped_report$dup_subjects <- dup_subjects
   if(!is.null(extra_subjects)) ped_report$extra_subjects <- extra_subjects
-  if(!is.null(missing_subjects) & length(missing_subjects) > 0 ) ped_report$missing_subjects <- missing_subjects
+  if(!is.null(missing_subjects) & length(missing_subjects) > 0 ) {
+    ped_report$missing_subjects <- missing_subjects
+  }
   if(length(mztwin_errors) > 0) ped_report$mztwin_errors <- mztwin_errors
   if(!is.null(extra_sexvals)) ped_report$extra_sexvals <- extra_sexvals
 
@@ -846,19 +891,26 @@ check_ped <- function(dsfile, ddfile=NULL,
 #'
 #' @param dsfile Path to the data file on disk
 #' @param ddfile Path to the data dictionary file on disk
-#' @param na_vals Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})
+#' @param na_vals Vector of strings that should be read in as NA/missing in
+#' data file (see details of \code{read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
 #' @param subjectID_col Column name for subject-level ID
 #'
 #' @details
-#' Because of the variability of phenotype file contents, the only required column checked here is the subject-level ID. Note dbGaP requests variables (1) described in the study description and/or study config; (2) affection status, if not already included in the subject consent file; (3) sex; and (4) race/ethnicity/ancestry/heritage.
+#' Because of the variability of phenotype file contents, the only required
+#' column checked here is the subject-level ID. Note dbGaP requests variables
+#' (1) described in the study description and/or study config; (2) affection
+#' status, if not already included in the subject consent file; (3) sex; and
+#' (4) race/ethnicity/ancestry/heritage.
 #'
 #' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
 #' correspondence between column names in data file and entries in data dictionary.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #' 
 #' @return pheno_report, a list of the following issues (when present):
-#' \item{flag_nonuniq_subjID}{TRUE when subject ID column is not unique, which would require definition of UNIQUEKEY columns in the corresponding data dictionary}
+#' \item{flag_nonuniq_subjID}{TRUE when subject ID column is not unique, which
+#'       would require definition of UNIQUEKEY columns in the corresponding data
+#'       dictionary}
 #' \item{dd_errors}{Differences in fields between data file and data dictionary}
 #' \item{extra_subjects}{Subjects in data file missing from \code{ssm_exp}}
 #' \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
@@ -907,8 +959,12 @@ check_pheno <- function(dsfile, ddfile=NULL,
 
   if(dup_subjs) pheno_report$flag_nonuniq_subjID <- dup_subjs
   if(!is.null(dd_errors)) pheno_report$dd_errors <- dd_errors
-  if(!is.null(extra_subjects) & length(extra_subjects) > 0) pheno_report$extra_subjects <- extra_subjects
-  if(!is.null(missing_subjects) & length(missing_subjects) > 0) pheno_report$missing_subjects <- missing_subjects
+  if(!is.null(extra_subjects) & length(extra_subjects) > 0) {
+    pheno_report$extra_subjects <- extra_subjects
+  }
+  if(!is.null(missing_subjects) & length(missing_subjects) > 0) {
+    pheno_report$missing_subjects <- missing_subjects
+  }
 
   # if list is empty, return NULL
   if(length(pheno_report) == 0) pheno_report <- NULL

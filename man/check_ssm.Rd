@@ -18,7 +18,8 @@ check_ssm(
 
 \item{ddfile}{Path to the data dictionary file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in
+data file (see details of \code{read_ds_file})}
 
 \item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID}
 
@@ -35,7 +36,8 @@ ssm_report, a list of the following issues (when present):
 \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
-\item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
+\item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID.
+      Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
 }
 \description{
 Check contents of a sample subject mapping file for dbGaP posting.
