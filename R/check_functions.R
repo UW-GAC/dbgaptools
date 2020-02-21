@@ -83,7 +83,7 @@
   extra_vars <- NULL
   extra_cols <- setdiff(all_cols, possible_cols)
   if (length(extra_cols) > 0) {
-    warning("DD contains non-standard columns: ", paste(extra_cols, collapse="; "))
+    warning("DD contains non-standard columns: ", paste(extra_cols, collapse = "; "))
     extra_vars <- extra_cols
   }
 
@@ -124,7 +124,7 @@
   if ("VALUES" %in% names(dd)) {
     nnames <- length(names(dd)[!grepl("X__", names(dd))])
     if ("VALUES" != names(dd)[nnames]) {
-      vals_warnings[["lastcol_warn"]]<- "'VALUES' must be last column"
+      vals_warnings[["lastcol_warn"]] <- "'VALUES' must be last column"
     }
 
     # extract encoded values
@@ -137,7 +137,7 @@
         encoded_vars <- dd[!is.na(dd$VALUES), c(name_col, val_col:ncol(dd))]
 
         # check for multiple "=" statements within a cell
-        eq_count <- apply(encoded_vars, 2, function(x) {stringr::str_count(x, "=")})
+        eq_count <- apply(encoded_vars, 2, function(x) stringr::str_count(x, "="))
         # replace NA with 0
         eq_count[is.na(eq_count)] <- 0
 
@@ -167,7 +167,7 @@
 
           vars_chk <- names(encoded_vars)
           warn_undef <- NULL
-          for(var in vars_chk) {
+          for (var in vars_chk) {
             var1 <- unique(ds[, var])
             # remove NAs as encoded values
             var1 <- var1[!is.na(var1)]
@@ -183,7 +183,7 @@
             }
           } # loop through encoded vars
 
-         # save value warnings in returned objects   
+         # save value warnings in returned objects
          vals_warnings[["undefined_vals_warn"]] <- warn_undef
 
         } #  if dataset is provided
@@ -847,7 +847,7 @@ check_ped <- function(dsfile, ddfile = NULL,
     twins_dat$chk_sex <- twins_dat$chk_subjectID <- twins_dat$chk_family <- FALSE
     twins <- unlist(unique(twins_dat[twincol]))
 
-    for(tw in twins) {
+    for (tw in twins) {
       idx <- which(twins_dat[, twincol] %in% tw)
       # twins should be in same family
       if (length(unique(twins_dat$FAMILY_ID[idx])) > 1) twins_dat$chk_family[idx] <- TRUE
