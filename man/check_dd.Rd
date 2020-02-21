@@ -11,7 +11,7 @@
 
 \item{ds}{Corresponding dataset (DS) object}
 
-\item{dstype}{Type of corresponding DS file, one of "pheno","ped","sattr","ssm","subj."}
+\item{dstype}{Type of corresponding DS file, one of "pheno", "ped", "sattr", "ssm", "subj."}
 }
 \value{
 dd_report, a list of the following issues (when present):
@@ -41,8 +41,8 @@ When the corresponding DS file is also provided, checks for consistency between 
 
 Even if DS file is not provided, (\code{ds == NULL}), the (\code{dstype}) must
 be specified to check for customize check for UNITS and VALUES columns:
-pheno = phenotype DS; ped = pedigree DS, sattr =sample attributes DS,
-ssm=sample-subject mapping DS, subj=subject consent DS.
+pheno = phenotype DS; ped = pedigree DS, sattr = sample attributes DS,
+ssm = sample-subject mapping DS, subj = subject consent DS.
 Note VALUES are considered required for pheno, ped, sattr, and subj DS types.
 Additionally, UNITS are considered required for pheno and sattr DS types.
 Note some studies may not actually require VALUES and UNITS in these files types,

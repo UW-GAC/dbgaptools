@@ -43,7 +43,7 @@ column checked here is the subject-level ID. Note dbGaP requests variables
 status, if not already included in the subject consent file; (3) sex; and
 (4) race/ethnicity/ancestry/heritage.
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

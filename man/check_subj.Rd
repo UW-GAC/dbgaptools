@@ -55,9 +55,9 @@ If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID is present, returns a
 indicating that both variables must be submitted together.
 Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
 for agreement between data file and data dictionary.
-Assumes that CONSENT=0 need not be defined in data dictionary, as dbGaP
+Assumes that CONSENT = 0 need not be defined in data dictionary, as dbGaP
 automatically codes as subjects used as genotyping controls and/or pedigree
 linking members.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.

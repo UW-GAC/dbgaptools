@@ -49,7 +49,7 @@ SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 will be returned in the output.
 
-If a data dictionary is provided \code{ddfile != NULL}, additionally checks 
+If a data dictionary is provided \code{ddfile != NULL}, additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

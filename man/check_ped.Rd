@@ -52,11 +52,11 @@ Check contents of a pedigree file for dbGaP posting
 \details{
 If an MZ twin column is detected, returns issues including column name other
 than 'MZ_TWIN_ID' and a data frame of all twin pairs with logical flags to
-indicate > 1 family ID per pair (\code{chk_family=TRUE}); non-unique subject
-ID (\code{chk_subjectID=TRUE}); > 1 sex, which could indicate dizygotic
-twins are included (\code{chk_sex=TRUE}).
+indicate > 1 family ID per pair (\code{chk_family = TRUE}); non-unique subject
+ID (\code{chk_subjectID = TRUE}); > 1 sex, which could indicate dizygotic
+twins are included (\code{chk_sex = TRUE}).
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks 
+If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }
