@@ -2,7 +2,7 @@
 #'
 #' @param dd Data dictionary (DD) object
 #' @param ds Corresponding dataset (DS) object
-#' @param dstype Type of corresponding DS file, one of "pheno","ped","sattr","ssm","subj."
+#' @param dstype Type of corresponding DS file, one of "pheno", "ped", "sattr", "ssm", "subj."
 #'
 #' @details
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
@@ -40,7 +40,7 @@
 .check_dd <- function(dd, ds = NULL, dstype = ""){
 
   # check for required dstype argument
-  dstypes <- c("pheno","ped","sattr","ssm","subj")
+  dstypes <- c("pheno", "ped", "sattr", "ssm", "subj")
   if(!dstype %in% dstypes) stop("Please specify dstype, one of: ", paste(dstypes, collapse = ", "))
   
   # all colnames should be upper case
@@ -53,19 +53,19 @@
   }
   
   # required first two columns - needed to proceed with checks
-  if(sum(names(dd)[1:2] != c("VARNAME","VARDESC")) > 0){
+  if(sum(names(dd)[1:2] != c("VARNAME", "VARDESC")) > 0){
     stop("First two columns required to be 'VARNAME' and 'VARDESC'")
   }
 
   ### required columns, based on DS type
-  req_vars <- c("VARNAME","VARDESC")
+  req_vars <- c("VARNAME", "VARDESC")
 
   # consent will always require encoded values
   # sex likely will (in pedigree and pheno)
-  if(dstype %in% c("ped","pheno","sattr", "subj")) req_vars <- c(req_vars, "VALUES")
+  if(dstype %in% c("ped", "pheno", "sattr", "subj")) req_vars <- c(req_vars, "VALUES")
 
   # add UNITS for sample attributes and pheno
-  if(dstype %in% c("pheno","sattr")) req_vars <- c(req_vars, "UNITS")
+  if(dstype %in% c("pheno", "sattr")) req_vars <- c(req_vars, "UNITS")
   
   missing_reqvars <- setdiff(req_vars, names(dd))
   if(length(missing_reqvars) %in% 0) missing_reqvars <- NULL
@@ -94,23 +94,23 @@
     keysel <- !is.na(dd$UNIQUEKEY)
     if(sum(keysel) > 0) {
         uniqkey_cols <- dd$VARNAME[!is.na(dd$UNIQUEKEY)]
-        if(!is.element(dstype, c("pheno","sattr")) & length(uniqkey_cols) > 0 ){
+        if(!is.element(dstype, c("pheno", "sattr")) & length(uniqkey_cols) > 0 ){
           uniquekey_flags[["wrong_dstype"]] <- paste(
             "UNIQUEKEY columns(s) should not be defined for dstype",
             dstype
           )
         }
         # check for only "X" in the columns
-        uniqkey_marks <- unique(dd[dd$VARNAME %in% uniqkey_cols,"UNIQUEKEY"])
+        uniqkey_marks <- unique(dd[dd$VARNAME %in% uniqkey_cols, "UNIQUEKEY"])
         err_st <- "Only 'X' should be used to flag UNIQUE key columns"
         if(uniqkey_marks != "X") uniquekey_flags[["wrong_mark"]] <- err_st
 
         # check that uniquekey columns are unique
         if(!is.null(ds)){
-          ds.uniq <- ds[,uniqkey_cols,drop = FALSE]
+          ds.uniq <- ds[, uniqkey_cols, drop = FALSE]
           if(nrow(ds.uniq) != nrow(unique(ds.uniq))){
             uniquekey_flags[["notunique"]] <- paste0("UNIQUEKEY columns (",
-                                                     paste(uniqkey_cols, collapse = ","),
+                                                     paste(uniqkey_cols, collapse = ", "),
                                                      ") do not specify unique records in DS")
           } # if unique key is non-unique
         } # if ds is also provided
@@ -148,7 +148,7 @@
         
         if(sum(Biobase::rowMax(eq_count) > 1) > 0){
           mult_eq_vars <- encoded_vars$VARNAME[Biobase::rowMax(eq_count) > 1]
-          str <- paste(paste(mult_eq_vars,collapse = "; "),
+          str <- paste(paste(mult_eq_vars, collapse = "; "),
                        "variable(s) has multiple VALUE entries per cell. Only the first entry per",
                        "cell will be evaluated. Encoded values must be split into one per cell.")
           vals_warnings[["multiple_vals_warn"]] <- str
@@ -168,7 +168,7 @@
           vars_chk <- names(encoded_vars)
           warn_undef <- NULL
           for(var in vars_chk){
-            var1 <- unique(ds[,var])
+            var1 <- unique(ds[, var])
             # remove NAs as encoded values
             var1 <- var1[!is.na(var1)]
             var2 <- dplyr::pull(encoded_vars, var)
@@ -216,7 +216,7 @@
     # check MIN and MAX values
     if("MIN" %in% names(dd)){
       if(sum(!is.na(dd$MIN)) > 0){
-          dd.tmp <- dd[!is.na(dd$MIN),c("VARNAME","MIN")]
+          dd.tmp <- dd[!is.na(dd$MIN), c("VARNAME", "MIN")]
           ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
           # remove greater than or less than signs from DD MIN (e.g., >, < .etc)
           dd.tmp$MIN <- stringr::str_replace_all(dd.tmp$MIN, ">|<", "")
@@ -224,14 +224,14 @@
           ds.tmp <- apply(ds.tmp, 2, as.numeric)
           dd.tmp$min.ds <- apply(ds.tmp, 2, min, na.rm = TRUE)
           # return df of variable name, expeced and observed min
-          range_err <- dd.tmp[dd.tmp$min.ds < as.numeric(dd.tmp$MIN),]
+          range_err <- dd.tmp[dd.tmp$min.ds < as.numeric(dd.tmp$MIN), ]
           if(nrow(range_err) > 0) min_errors <- range_err
         } # if non-NA MINS
     } # if MIN is col
        
     if("MAX" %in% names(dd)){
       if(sum(!is.na(dd$MAX)) > 0) {
-          dd.tmp <- dd[!is.na(dd$MAX),c("VARNAME","MAX")]
+          dd.tmp <- dd[!is.na(dd$MAX), c("VARNAME", "MAX")]
           ds.tmp <- as.matrix(ds[, dd.tmp$VARNAME])
           # remove greater than or less than signs from DD MAX (e.g., >, < .etc)
           dd.tmp$MAX <- stringr::str_replace_all(dd.tmp$MAX, ">|<", "")
@@ -239,7 +239,7 @@
           ds.tmp <- apply(ds.tmp, 2, as.numeric)
           dd.tmp$max.ds <- apply(ds.tmp, 2, max, na.rm = TRUE)
           # return df of variable name, expeced and observed max
-          range_err <- dd.tmp[dd.tmp$max.ds > as.numeric(dd.tmp$MAX),]
+          range_err <- dd.tmp[dd.tmp$max.ds > as.numeric(dd.tmp$MAX), ]
           if(nrow(range_err) > 0) max_errors <- range_err
         } # if non-NA MAX
     } # if MAX is col
@@ -247,7 +247,7 @@
 
   # check for illegal characters in variable names: \ / , dbGaP
   illegal_vars <- NULL
-  ill_vars_sel <- stringr::str_detect(dd$VARNAME, "DBGAP|\\\\|/|,")
+  ill_vars_sel <- stringr::str_detect(dd$VARNAME, "DBGAP|\\\\|/|, ")
   
   if(sum(ill_vars_sel) > 0){
     ill_vars <- dd$VARNAME[ill_vars_sel]
@@ -312,7 +312,7 @@
 #' @export
 
 check_ssm <- function(dsfile, ddfile = NULL,
-                      na_vals = c("NA","N/A","na","n/a"),
+                      na_vals = c("NA", "N/A", "na", "n/a"),
                       ssm_exp = NULL,
                       sampleID_col = "SAMPLE_ID", subjectID_col = "SUBJECT_ID"){
 
@@ -333,16 +333,16 @@ check_ssm <- function(dsfile, ddfile = NULL,
   }
   
   # check for duplicated sample IDs
-  samplist <- ds[,sampleID_col]
+  samplist <- ds[, sampleID_col]
   dup_samples <- samplist[duplicated(samplist)]
   if(length(dup_samples) %in% 0){
     dup_samples <- NULL
   }
 
   # check for blank subject or sample IDs
-  blanks <- c("","NA",NA)
-  blank_idx <- which(trimws(ds[,sampleID_col]) %in% blanks |
-                     trimws(ds[,subjectID_col]) %in% blanks)
+  blanks <- c("", "NA", NA)
+  blank_idx <- which(trimws(ds[, sampleID_col]) %in% blanks |
+                     trimws(ds[, subjectID_col]) %in% blanks)
   if(length(blank_idx) %in% 0){
     blank_idx <- NULL
   }
@@ -360,17 +360,17 @@ check_ssm <- function(dsfile, ddfile = NULL,
   if(!is.null(ssm_exp)){
 
     # check for matching subject ids
-    missing_subjects <- setdiff(ssm_exp$SUBJECT_ID, ds[,subjectID_col])
-    extra_subjects <- setdiff(ds[,subjectID_col], ssm_exp$SUBJECT_ID)
+    missing_subjects <- setdiff(ssm_exp$SUBJECT_ID, ds[, subjectID_col])
+    extra_subjects <- setdiff(ds[, subjectID_col], ssm_exp$SUBJECT_ID)
 
     # check for matching sample ids
-    missing_samples <- setdiff(ssm_exp$SAMPLE_ID, ds[,sampleID_col])
-    extra_samples <- setdiff(ds[,sampleID_col], ssm_exp$SAMPLE_ID)
+    missing_samples <- setdiff(ssm_exp$SAMPLE_ID, ds[, sampleID_col])
+    extra_samples <- setdiff(ds[, sampleID_col], ssm_exp$SAMPLE_ID)
 
     # mapping diffs are where only one of SAMPLE_ID and SUBJECT_ID match
     ssm_exp$map <- with(ssm_exp, paste(SUBJECT_ID, SAMPLE_ID))
-    maps_ssm <- paste(ds[,subjectID_col], ds[,sampleID_col])
-    ssm_diffs <- ssm_exp[!is.element(ssm_exp$map, maps_ssm),1:2]
+    maps_ssm <- paste(ds[, subjectID_col], ds[, sampleID_col])
+    ssm_diffs <- ssm_exp[!is.element(ssm_exp$map, maps_ssm), 1:2]
     if(nrow(ssm_diffs) %in% 0) {
       ssm_diffs <- NULL
     }
@@ -446,7 +446,7 @@ check_ssm <- function(dsfile, ddfile = NULL,
 
 
 check_sattr <- function(dsfile, ddfile = NULL,
-                        na_vals = c("NA","N/A","na","n/a"),
+                        na_vals = c("NA", "N/A", "na", "n/a"),
                         samp_exp = NULL,
                         sampleID_col = "SAMPLE_ID", topmed = FALSE){
 
@@ -464,21 +464,21 @@ check_sattr <- function(dsfile, ddfile = NULL,
   }
 
   # check for required variables
-  req_vars <- c(sampleID_col, "BODY_SITE","ANALYTE_TYPE","IS_TUMOR")
+  req_vars <- c(sampleID_col, "BODY_SITE", "ANALYTE_TYPE", "IS_TUMOR")
   missing_vars <- setdiff(req_vars, names(ds))
   if(length(missing_vars) %in% 0) missing_vars <- NULL  
   
   # check for duplicated sample IDs
   # note might be acceptable where samples have a series of measurements,
   #  or data is longitudinal
-  samplist <- ds[,sampleID_col]
+  samplist <- ds[, sampleID_col]
   dup_samples <- samplist[duplicated(samplist)]
   if(length(dup_samples) %in% 0){
     dup_samples <- NULL
   }
 
   # check for blank sample IDs by row idex
-  blanks <- c("","NA",NA)
+  blanks <- c("", "NA", NA)
   blank_idx <- which(trimws(samplist) %in% blanks)
   if(length(blank_idx) %in% 0){
     blank_idx <- NULL
@@ -500,15 +500,15 @@ check_sattr <- function(dsfile, ddfile = NULL,
   # check for presence of expected samples
   missing_samples <- extra_samples <- NULL
   if(!is.null(samp_exp)){
-    missing_samples <- setdiff(samp_exp, ds[,sampleID_col])
-    extra_samples <- setdiff(ds[,sampleID_col], samp_exp)
+    missing_samples <- setdiff(samp_exp, ds[, sampleID_col])
+    extra_samples <- setdiff(ds[, sampleID_col], samp_exp)
   }
 
   # if TOPMed, check for TOPMed-specific variables
   missing_topmed_vars <- NULL
   if(topmed){
     topmed_vars <- c("SEQUENCING_CENTER", "Funding_Source",
-                     "TOPMed_Phase", "TOPMed_Project","Study_Name")
+                     "TOPMed_Phase", "TOPMed_Project", "Study_Name")
     missing_topmed_vars <- setdiff(topmed_vars, names(ds))
   }
 
@@ -582,7 +582,7 @@ check_sattr <- function(dsfile, ddfile = NULL,
 #' @export
 
 check_subj <- function(dsfile, ddfile = NULL,
-                       na_vals = c("NA","N/A","na","n/a"),
+                       na_vals = c("NA", "N/A", "na", "n/a"),
                        subj_exp = NULL,
                        subjectID_col = "SUBJECT_ID", consent_col = "CONSENT"){
 
@@ -619,14 +619,14 @@ check_subj <- function(dsfile, ddfile = NULL,
 
   # if one of the alias columns is provided, check that both are
   alias_missvar <- NULL
-  alias_vars <- c("SUBJECT_SOURCE","SOURCE_SUBJECT_ID")
+  alias_vars <- c("SUBJECT_SOURCE", "SOURCE_SUBJECT_ID")
   alias_vars_pres <- intersect(alias_vars, names(ds))
   alias_vars_miss <- setdiff(alias_vars, names(ds))
   if(length(alias_vars_pres) > 0 ) {
     message(paste("Note missing SUBJECT_SOURCE_ID should be left blank (\"\"), vs using missing",
                   "value strings such as NA, N/A, etc."))
     if(length(alias_vars_miss) > 0 ){
-      warning("Datafile has ", alias_vars_pres,", but missing ",alias_vars_miss)
+      warning("Datafile has ", alias_vars_pres, ", but missing ", alias_vars_miss)
       alias_missvar <- TRUE
     }
   }
@@ -639,7 +639,7 @@ check_subj <- function(dsfile, ddfile = NULL,
 
     # for subject consent file, dbGaP will define consent = 0 for user
     # remove this error (but not other mapping errors for consent or othe rvars)
-    str <- paste0("For variable ",consent_col, ", the following values are undefined in the dd:")
+    str <- paste0("For variable ", consent_col, ", the following values are undefined in the dd:")
     val_warns <- dd_errors$vals_warnings$undefined_vals_warn
 
     # only clean up this warning if it exists
@@ -663,7 +663,7 @@ check_subj <- function(dsfile, ddfile = NULL,
   }
 
   # check for duplicated subject IDs
-  subjlist <- ds[,subjectID_col]
+  subjlist <- ds[, subjectID_col]
   dup_subjects <- subjlist[duplicated(subjlist)]
   if(length(dup_subjects) %in% 0){
     dup_subjects <- NULL
@@ -672,13 +672,13 @@ check_subj <- function(dsfile, ddfile = NULL,
   # check for presence of expected subjects, with expected consent values
   missing_subjects <- extra_subjects <- consent_diffs <- NULL
   if(!is.null(subj_exp)){
-    missing_subjects <- setdiff(subj_exp[,1], ds[,subjectID_col])
-    extra_subjects <- setdiff(ds[,subjectID_col], subj_exp[,1])
+    missing_subjects <- setdiff(subj_exp[, 1], ds[, subjectID_col])
+    extra_subjects <- setdiff(ds[, subjectID_col], subj_exp[, 1])
 
     # check for expected consent values
-    subj_exp$map <- paste(subj_exp[,1], subj_exp[,2])
-    maps_subj <- paste(ds[,subjectID_col], ds[,consent_col])
-    consent_diffs <- subj_exp[!is.element(subj_exp$map, maps_subj),1:2]
+    subj_exp$map <- paste(subj_exp[, 1], subj_exp[, 2])
+    maps_subj <- paste(ds[, subjectID_col], ds[, consent_col])
+    consent_diffs <- subj_exp[!is.element(subj_exp$map, maps_subj), 1:2]
     if(nrow(consent_diffs) %in% 0) consent_diffs <- NULL 
   }
   # if empty, convert back to NULL
@@ -688,7 +688,7 @@ check_subj <- function(dsfile, ddfile = NULL,
 
   # check that consent codes are integers (or can be coerced to integers)
   consent_nonints <- NULL
-  consents <- unique(ds[,consent_col])
+  consents <- unique(ds[, consent_col])
   digits_sel <- grepl("^[[:digit:]]*$", consents)
   if(sum(!digits_sel) > 0) consent_nonints <- consents[!digits_sel]
   
@@ -759,7 +759,7 @@ check_subj <- function(dsfile, ddfile = NULL,
 #' @export
 
 check_ped <- function(dsfile, ddfile = NULL,
-                      na_vals = c("NA","N/A","na","n/a"),
+                      na_vals = c("NA", "N/A", "na", "n/a"),
                       subj_exp = NULL,
                       subjectID_col = "SUBJECT_ID", check_incons = TRUE,
                       male = 1, female = 2){
@@ -787,7 +787,7 @@ check_ped <- function(dsfile, ddfile = NULL,
   }
   
   # check for required variable names
-  req_vars <- c(subjectID_col, "FAMILY_ID","FATHER","MOTHER","SEX")
+  req_vars <- c(subjectID_col, "FAMILY_ID", "FATHER", "MOTHER", "SEX")
   missing_vars <- setdiff(req_vars, names(ds))
   if(length(missing_vars) %in% 0) missing_vars <- NULL
   
@@ -812,9 +812,9 @@ check_ped <- function(dsfile, ddfile = NULL,
     } else {
       message("\nRunning GWASTools pedigree check\n")
       # prepare pedigree
-      ped <- ds[,c("FAMILY_ID",subjectID_col,"MOTHER","FATHER","SEX")]
+      ped <- ds[, c("FAMILY_ID", subjectID_col, "MOTHER", "FATHER", "SEX")]
       names(ped) <- tolower(names(ped))
-      names(ped)[1:2] <- c("family","individ")
+      names(ped)[1:2] <- c("family", "individ")
       ped$sex[ped$sex %in% male] <- "M"
       ped$sex[ped$sex %in% female] <- "F"
       incon_report <- GWASTools::pedigreeCheck(ped)
@@ -822,7 +822,7 @@ check_ped <- function(dsfile, ddfile = NULL,
   }
 
   # check for duplicated subject IDs
-  subjlist <- ds[,subjectID_col]
+  subjlist <- ds[, subjectID_col]
   dup_subjects <- subjlist[duplicated(subjlist)]
   if(length(dup_subjects) %in% 0){
     dup_subjects <- NULL
@@ -831,8 +831,8 @@ check_ped <- function(dsfile, ddfile = NULL,
   # check for expected subjects
   missing_subjects <- extra_subjects <- NULL
   if(!is.null(subj_exp)){
-    missing_subjects <- setdiff(subj_exp, ds[,subjectID_col])
-    extra_subjects <- setdiff(ds[,subjectID_col], subj_exp)    
+    missing_subjects <- setdiff(subj_exp, ds[, subjectID_col])
+    extra_subjects <- setdiff(ds[, subjectID_col], subj_exp)    
   }
   
   # check for MZ twin column
@@ -843,12 +843,12 @@ check_ped <- function(dsfile, ddfile = NULL,
       mztwin_errors$colname <- "MZ twin column should be named 'MZ_TWIN_ID'"
     }
     
-    twins_dat <- ds[!is.na(ds[,twincol]),]
+    twins_dat <- ds[!is.na(ds[, twincol]), ]
     twins_dat$chk_sex <- twins_dat$chk_subjectID <- twins_dat$chk_family <- FALSE
     twins <- unlist(unique(twins_dat[twincol]))
     
     for(tw in twins) {
-      idx <- which(twins_dat[,twincol] %in% tw)
+      idx <- which(twins_dat[, twincol] %in% tw)
       # twins should be in same family
       if(length(unique(twins_dat$FAMILY_ID[idx])) > 1) twins_dat$chk_family[idx] <- TRUE
       # twins should have different subject IDs (could be triplets)
@@ -860,8 +860,8 @@ check_ped <- function(dsfile, ddfile = NULL,
     } # end loop through twins
 
     # if errors, return twins.dat
-    errSums <- rowSums(twins_dat[,grep("chk",names(twins_dat))])
-    if(max(errSums) > 0) mztwin_errors$twins_dat <- twins_dat[errSums > 0,]
+    errSums <- rowSums(twins_dat[, grep("chk", names(twins_dat))])
+    if(max(errSums) > 0) mztwin_errors$twins_dat <- twins_dat[errSums > 0, ]
   } # if twin col is present
 
   # create and return results list
@@ -919,7 +919,7 @@ check_ped <- function(dsfile, ddfile = NULL,
 #' @export
 
 check_pheno <- function(dsfile, ddfile = NULL,
-                        na_vals = c("NA","N/A","na","n/a"),
+                        na_vals = c("NA", "N/A", "na", "n/a"),
                         subj_exp = NULL,
                         subjectID_col = "SUBJECT_ID"){
 
@@ -937,7 +937,7 @@ check_pheno <- function(dsfile, ddfile = NULL,
   }  
   
   # issue warning if subject ID is not unique
-  dup_subjs <- sum(duplicated(ds[,subjectID_col])) > 0
+  dup_subjs <- sum(duplicated(ds[, subjectID_col])) > 0
 
   # if unique key is specified but not actually unique, .check_dd will catch it
 
@@ -951,8 +951,8 @@ check_pheno <- function(dsfile, ddfile = NULL,
   # check for expected subjects
   missing_subjects <- extra_subjects <- NULL
   if(!is.null(subj_exp)){
-    missing_subjects <- setdiff(subj_exp, ds[,subjectID_col])
-    extra_subjects <- setdiff(ds[,subjectID_col], subj_exp)    
+    missing_subjects <- setdiff(subj_exp, ds[, subjectID_col])
+    extra_subjects <- setdiff(ds[, subjectID_col], subj_exp)    
   }
   
   pheno_report <- list()
