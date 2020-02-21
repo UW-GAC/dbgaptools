@@ -491,12 +491,6 @@ check_sattr <- function(dsfile, ddfile = NULL,
     dd_errors <- .check_dd(dd, ds = ds, dstype = "sattr")
   }
 
-  ## ## removing this assumption
-  ## # most common analyte type is "DNA"
-  ## if ("ANALYTE_TYPE" %in% names(ds) & sum(ds$ANALYTE_TYPE != "DNA") > 0) {
-  ##   message("Note some entries have ANALYTE_TYPE other than DNA, which is the most common")
-  ## }
-
   # check for presence of expected samples
   missing_samples <- extra_samples <- NULL
   if (!is.null(samp_exp)) {
@@ -610,12 +604,6 @@ check_subj <- function(dsfile, ddfile = NULL,
     warning("Consent variable name should be 'CONSENT'")
     consent_varname <- TRUE
   }
-
-  ## the two checks above count as checking for required variables (only 2)
-  # check for required variables (only 2)
-  # req_vars <- c(subjectID_col, "CONSENT")
-  # miss_vars <- setdiff(req_vars, names(ds))
-  # missing_vars <- ifelse(length(miss_vars) %in% 0, NA, miss_vars)
 
   # if one of the alias columns is provided, check that both are
   alias_missvar <- NULL
