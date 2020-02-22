@@ -22,39 +22,39 @@ test_that("Missing ID columns are detected", {
 test_that("Non-standard ID column names are detected", {
   ds.rev <- read_ds_file(ssm_ds)
   names(ds.rev)[1:2] <- c("mysubject", "mysample")
-  ds.rev.fn <- tempfile(fileext = ".txt")
-  write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
+  ds_rev_fn <- tempfile(fileext = ".txt")
+  write.table(ds.rev, file = ds_rev_fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t")
 
-  expect_warning(check_ssm(dsfile = ds.rev.fn, sampleID_col = "mysample",
+  expect_warning(check_ssm(dsfile = ds_rev_fn, sampleID_col = "mysample",
                            subjectID_col = "mysubject"),
                  "Note preferred subject-level ID column name is 'SUBJECT_ID'", fixed = TRUE)
-  expect_warning(check_ssm(dsfile = ds.rev.fn, sampleID_col = "mysample",
+  expect_warning(check_ssm(dsfile = ds_rev_fn, sampleID_col = "mysample",
                            subjectID_col = "mysubject"),
                  "Note preferred sample-level ID column name is 'SAMPLE_ID'", fixed = TRUE)
-  unlink(ds.rev.fn)
+  unlink(ds_rev_fn)
 })
                  
 test_that("Duplicated sample IDs are detected", {
   ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_ID[3] <- ds.rev$SAMPLE_ID[2]
-  ds.rev.fn <- tempfile(fileext = ".txt")
-  write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
+  ds_rev_fn <- tempfile(fileext = ".txt")
+  write.table(ds.rev, file = ds_rev_fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t")
 
-  expect_equal(check_ssm(ds.rev.fn)$dup_samples, "S2")
-  unlink(ds.rev.fn)
+  expect_equal(check_ssm(ds_rev_fn)$dup_samples, "S2")
+  unlink(ds_rev_fn)
 })
 
 test_that("Blank sample IDs are detected", {
   ds.rev <- read_ds_file(ssm_ds)
   ds.rev$SAMPLE_ID[3] <- ""
-  ds.rev.fn <-  tempfile(fileext = ".txt")
-  write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
+  ds_rev_fn <-  tempfile(fileext = ".txt")
+  write.table(ds.rev, file = ds_rev_fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t")
 
-  expect_equal(check_ssm(ds.rev.fn)$blank_idx, 3)
-  unlink(ds.rev.fn)
+  expect_equal(check_ssm(ds_rev_fn)$blank_idx, 3)
+  unlink(ds_rev_fn)
 })
 
 test_that("Extra samples and subjects are detected", {
