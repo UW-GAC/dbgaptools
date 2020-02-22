@@ -1,6 +1,6 @@
 context("Checking sample subject mapping (SSM) file")
 
-ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx",package = "dbgaptools",
+ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx", package = "dbgaptools",
                       mustWork = TRUE)
 ssm_ds <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbgaptools",
                       mustWork = TRUE)
@@ -16,7 +16,7 @@ test_that("Missing ID columns are detected", {
                fixed = TRUE)
   expect_error(check_ssm(ssm_ds, subjectID_col = "mysubject"),
                "Please check that dsfile contains columns for subject-level and sample-level IDs",
-               fixed = TRUE)  
+               fixed = TRUE)
 })
 
 test_that("Non-standard ID column names are detected", {
