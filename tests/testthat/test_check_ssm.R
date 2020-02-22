@@ -1,7 +1,9 @@
 context("Checking sample subject mapping (SSM) file")
 
-ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx", package = "dbgaptools", mustWork = TRUE)
-ssm_ds <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbgaptools", mustWork = TRUE)
+ssm_dd <- system.file("extdata", "5b_dbGaP_SubjectSampleMappingDD.xlsx",package = "dbgaptools",
+                      mustWork = TRUE)
+ssm_ds <- system.file("extdata", "5a_dbGaP_SubjectSampleMappingDS.txt", package = "dbgaptools",
+                      mustWork = TRUE)
 
 test_that("Compliant files run error free", {
   expect_null(check_ssm(dsfile = ssm_ds))
@@ -9,8 +11,12 @@ test_that("Compliant files run error free", {
 })
 
 test_that("Missing ID columns are detected", {
-  expect_error(check_ssm(ssm_ds, sampleID_col = "mysample"), "Please check that dsfile contains columns for subject-level and sample-level IDs", fixed = TRUE)
-  expect_error(check_ssm(ssm_ds, subjectID_col = "mysubject"), "Please check that dsfile contains columns for subject-level and sample-level IDs", fixed = TRUE)  
+  expect_error(check_ssm(ssm_ds, sampleID_col = "mysample"),
+               "Please check that dsfile contains columns for subject-level and sample-level IDs",
+               fixed = TRUE)
+  expect_error(check_ssm(ssm_ds, subjectID_col = "mysubject"),
+               "Please check that dsfile contains columns for subject-level and sample-level IDs",
+               fixed = TRUE)  
 })
 
 test_that("Non-standard ID column names are detected", {
@@ -20,8 +26,12 @@ test_that("Non-standard ID column names are detected", {
   write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t")
 
-  expect_warning(check_ssm(dsfile = ds.rev.fn, sampleID_col = "mysample", subjectID_col = "mysubject"), "Note preferred subject-level ID column name is 'SUBJECT_ID'", fixed = TRUE)
-  expect_warning(check_ssm(dsfile = ds.rev.fn, sampleID_col = "mysample", subjectID_col = "mysubject"), "Note preferred sample-level ID column name is 'SAMPLE_ID'", fixed = TRUE)
+  expect_warning(check_ssm(dsfile = ds.rev.fn, sampleID_col = "mysample",
+                           subjectID_col = "mysubject"),
+                 "Note preferred subject-level ID column name is 'SUBJECT_ID'", fixed = TRUE)
+  expect_warning(check_ssm(dsfile = ds.rev.fn, sampleID_col = "mysample",
+                           subjectID_col = "mysubject"),
+                 "Note preferred sample-level ID column name is 'SAMPLE_ID'", fixed = TRUE)
   unlink(ds.rev.fn)
 })
                  
