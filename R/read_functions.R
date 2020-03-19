@@ -70,7 +70,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 
   stopifnot(file.exists(filename))
 
-  ## exit if file extension indicates other than .txt (e.g., csv, xlsx)
+  # Exit if file extension indicates other than .txt (e.g., csv, xlsx).
   ext <- tools::file_ext(filename)
   if(ext != "txt") {
     stop("Expected tab-delimited input file (.txt), not .", ext)
@@ -78,7 +78,9 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 
   ## add name of file to error message in case of failure
   tryCatch({
-    ## may be comment characters in the data fields. first decide how many lines to skip
+    # May be legitimate # characters in the data fields that do not indicate comments,
+    # but we need to skip header lines that start with a comment character.
+    # First, decide how many header lines to skip.
     if(!dd) {
       nskip <- .count_hdr_lines(filename)
     } else if (dd) {
@@ -90,14 +92,13 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
     }
     header <- scan(filename, sep = "\t", skip = nskip, nlines = 1, what = "character", quiet = TRUE)
     empty_check <- stringr::str_match(header[1], REGEX_BLANK_DATA_FILE)
-    # TO DO - see if I really need the REGEX in constants.R
     if (!is.na(empty_check[1, 1])) {
-      # there are no data lines in this file
+      # There are no data lines in this file.
       return(NULL)
     }
     col_classes <- rep("character", length(header))
     # suppressWarnings because we get cols  =  3 != length(data)  =  4 when there are
-    # missing end delimiters. unfortunately we have to suppress *all* warnings
+    # missing end delimiters. Unfortunately we have to suppress *all* warnings.
     dat <- suppressWarnings(utils::read.table(filename, header = FALSE, sep = "\t",
                                               as.is = TRUE, check.names = FALSE,
                                               skip = nskip + 1, fill = TRUE,
@@ -105,20 +106,14 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
                                               comment.char = "", colClasses = col_classes,
                                               na.strings = c("", na_vals)))
     names(dat) <- header
-    ## # deal with extra delimiters at end of line. thanks, phs001013.
-    ## extra_columns <- is.na(names(dat))
-    ## for (column in rev(which(extra_columns))) {
-    ##   # reverse the loop because we are removing columns; otherwise column numbers shift lower
-    ##   dat[[column]] <- NULL
-    ## }
 
-    ## remove rows with all blanks/NAs
+    # Remove rows with all blanks/NAs.
     if(remove_empty_row) {
         blank.rows <- rowSums(!is.na(dat)) %in% 0
         dat <- dat[!blank.rows,]
         }
 
-    ## remove columns with all blanks/NAs (FALSE by default - removes too many DD cols)
+    # Remove columns with all blanks/NAs (FALSE by default - removes too many DD cols).
     if(remove_empty_col) {
         blank.cols <- colSums(!is.na(dat)) %in% 0
         dat <- dat[,!blank.cols]
