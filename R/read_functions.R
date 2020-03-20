@@ -89,7 +89,7 @@ read_ds_file <- function(filename, dd=FALSE, processed = FALSE,
       nskip <- .count_hdr_lines(filename, colname="VARNAME")
     }
 
-    if(nskip > 0){
+    if (!processed & (nskip > 0)) {
       warning("Additional rows are present before column headers and should be removed prior to dbGaP submission")
     }
     header <- scan(filename, sep = "\t", skip = nskip, nlines = 1, what = "character", quiet = TRUE)

@@ -43,6 +43,15 @@ test_that("DS file with header generates a warning", {
   unlink(test_file)
 })
 
+test_that("DS file with header does not generates a warning when processed = TRUE", {
+  test_file <- tempfile(fileext='.txt')
+  dat <- readLines(satt_ds)
+  # Add a header and write out the lines from the original data file.
+  writeLines("# a header\n# another header", test_file)
+  write(dat, test_file, append = TRUE)
+  expect_silent(read_ds_file(test_file, processed = TRUE))
+  unlink(test_file)
+})
 
 test_that("DD file with header generates a warning",{
   expect_warning(read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
