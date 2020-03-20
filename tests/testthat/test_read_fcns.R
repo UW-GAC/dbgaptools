@@ -53,6 +53,42 @@ test_that("DS file with header does not generates a warning when processed = TRU
   unlink(test_file)
 })
 
+test_that("read_ds_file sets NA values to missing by default", {
+
+  test_file <- tempfile(fileext='.txt')
+  na_values <- c("NA","N/A","na","n/a")
+  for (na_value in na_values) {
+    dat <- data.frame(SUBJECT_ID = 'a', value = na_value, stringsAsFactors = FALSE)
+    write.table(dat, test_file, quote = FALSE, row.names = FALSE, sep = "\t")
+    chk <- read_ds_file(test_file)
+    expect_true(is.na(chk$value), info = na_value)
+  }
+  unlink(test_file)
+})
+
+test_that("read_ds_file sets custom NA value to missing by default", {
+
+  test_file <- tempfile(fileext='.txt')
+  na_value <- "missing"
+  dat <- data.frame(SUBJECT_ID = 'a', value = na_value, stringsAsFactors = FALSE)
+  write.table(dat, test_file, quote = FALSE, row.names = FALSE, sep = "\t")
+  chk <- read_ds_file(test_file, na_vals = na_value)
+  expect_true(is.na(chk$value), info = na_value)
+  unlink(test_file)
+})
+
+test_that("read_ds_file does not set NAs to missing when specified", {
+  test_file <- tempfile(fileext='.txt')
+  na_values <- c("NA", "N/A", "na", "n/a")
+  dat <- data.frame(SUBJECT_ID = letters[1:length(na_values)], value = na_values,
+                    stringsAsFactors = FALSE)
+  write.table(dat, test_file, quote = FALSE, row.names = FALSE, sep = "\t")
+  chk <- read_ds_file(test_file, na_vals = "")
+  expect_true(all(!is.na(chk$value)))
+  expect_equal(chk$value, na_values)
+  unlink(test_file)
+})
+
 test_that("DD file with header generates a warning",{
   expect_warning(read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
   expect_warning(read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
