@@ -52,7 +52,8 @@
 #'
 #' @details
 #' Missing values: The blank string "" will always be considered an NA or missing value. Additional strings that should be read in as missing values can be specified in the \code{na_vals} argument.
-#' The default set of additional NA values is "NA","N/A","na","n/a."
+#' For unprocessed files, the default set of additional NA values is "NA","N/A","na","n/a."
+#' The default for processed files is only the blank string "" unless otherwise specified by \code{na_vals}.
 #' Users should change the default if these values represent something beside missing ---
 #'  for example, "NA" could be an encoded value meaning "North America".
 #' Users may wish to add a value to the list, e.g. \code{na_vals=c("NA","N/A","na","n/a", "9999")}.
