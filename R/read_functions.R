@@ -45,6 +45,7 @@
 #'
 #' @param filename The path to the file on disk
 #' @param dd Logical, where \code{TRUE} indicates a data dictionary file
+#' @param processed Logical indicator of whether the file has been processed by dbGaP.
 #' @param na_vals Vector of strings that should be read in as NA/missing (see details)
 #' @param remove_empty_row Logical of whether to exclude empty (i.e. all missing values) rows. Defaults to TRUE
 #' @param remove_empty_col Logical of whether to exclude empty (i.e. all missing values) rowcolumns. Defaults to FALSE
@@ -65,7 +66,8 @@
 #' @rdnameread_ds_file
 #' @export
 
-read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
+read_ds_file <- function(filename, dd=FALSE, processed = FALSE,
+                         na_vals=c("NA","N/A","na","n/a"),
                           remove_empty_row=TRUE, remove_empty_col=FALSE) {
 
   stopifnot(file.exists(filename))
