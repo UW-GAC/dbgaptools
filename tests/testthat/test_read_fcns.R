@@ -89,6 +89,27 @@ test_that("read_ds_file does not set NAs to missing when specified", {
   unlink(test_file)
 })
 
+test_that("read_ds_file does not set NAs to missing by default for processed files" ,{
+  test_file <- tempfile(fileext='.txt')
+  na_values <- c("NA","N/A","na","n/a")
+  for (na_value in na_values) {
+    dat <- data.frame(SUBJECT_ID = 'a', value = na_value, stringsAsFactors = FALSE)
+    write.table(dat, test_file, quote = FALSE, row.names = FALSE, sep = "\t")
+    chk <- read_ds_file(test_file, processed = TRUE)
+    expect_equal(chk$value, na_value, info = na_value)
+  }
+  unlink(test_file)
+})
+
+test_that("read_ds_file sets blanks to missing for processed files", {
+  test_file <- tempfile(fileext='.txt')
+  dat <- data.frame(SUBJECT_ID = 'a', value = "", stringsAsFactors = FALSE)
+  write.table(dat, test_file, quote = FALSE, row.names = FALSE, sep = "\t")
+  chk <- read_ds_file(test_file, processed = TRUE)
+  expect_true(is.na(chk$value))
+  unlink(test_file)  
+})
+
 test_that("DD file with header generates a warning",{
   expect_warning(read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
   expect_warning(read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")

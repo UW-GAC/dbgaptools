@@ -67,7 +67,7 @@
 #' @export
 
 read_ds_file <- function(filename, dd=FALSE, processed = FALSE,
-                         na_vals=c("NA","N/A","na","n/a"),
+                         na_vals=NULL,
                           remove_empty_row=TRUE, remove_empty_col=FALSE) {
 
   stopifnot(file.exists(filename))
@@ -78,6 +78,10 @@ read_ds_file <- function(filename, dd=FALSE, processed = FALSE,
     stop("Expected tab-delimited input file (.txt), not .", ext)
   }
 
+  # Set na_vals depending on whether the file is "processed" or not.
+  if (!processed & is.null(na_vals)) {
+    na_vals = c("NA","N/A","na","n/a", "")
+  }
   ## add name of file to error message in case of failure
   tryCatch({
     # May be legitimate # characters in the data fields that do not indicate comments,
