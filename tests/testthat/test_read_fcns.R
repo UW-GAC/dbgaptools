@@ -33,6 +33,17 @@ test_that("DS files have expected dimensions when read in", {
   expect_equal(nrow(ds), 17)
 })
 
+test_that("DS file with header generates a warning", {
+  test_file <- tempfile(fileext='.txt')
+  dat <- readLines(satt_ds)
+  # Add a header and write out the lines from the original data file.
+  writeLines("# a header\n# another header", test_file)
+  write(dat, test_file, append = TRUE)
+  expect_warning(read_ds_file(test_file), "Additional rows")
+  unlink(test_file)
+})
+
+
 test_that("DD file with header generates a warning",{
   expect_warning(read_dd_file(dd_hdr_txt), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
   expect_warning(read_dd_file(dd_hdr_xls), "Additional rows are present before column headers and should be removed prior to dbGaP submission")
@@ -87,5 +98,3 @@ test_that("read_dd_file processes unique key information in xml files", {
 
 # TO ADD:
 # read_ds_file and read_dd_file check that returns an error from the tryCatch
-
-
