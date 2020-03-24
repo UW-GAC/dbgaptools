@@ -443,17 +443,17 @@ check_ssm <- function(ds, dd = NULL, na_vals = c("NA", "N/A", "na", "n/a"), ssm_
 #' @export
 
 
-check_sattr <- function(dsfile, ddfile = NULL,
+check_sattr <- function(ds, dd = NULL,
                         na_vals = c("NA", "N/A", "na", "n/a"),
                         samp_exp = NULL,
                         sampleID_col = "SAMPLE_ID", topmed = FALSE) {
 
   # read in data file
-  ds <- read_ds_file(dsfile, na_vals = na_vals)
+  if (is.character(ds)) ds <- read_ds_file(ds, na_vals = na_vals)
 
   # cannot proceed without sample ID col
   if (!is.element(sampleID_col, names(ds))) {
-    stop("Please check that dsfile contains column for sample-level ID")
+    stop("Please check that ds contains column for sample-level ID")
   }
 
   # issue warning for non-standard sampleID_col name
@@ -484,8 +484,8 @@ check_sattr <- function(dsfile, ddfile = NULL,
 
   # read in data dictionary if provided
   dd_errors <- NULL
-  if (!is.null(ddfile)) {
-    dd <- read_dd_file(ddfile)
+  if (!is.null(dd)) {
+    if (is.character(dd)) dd <- read_dd_file(dd)
     dd_errors <- .check_dd(dd, ds = ds, dstype = "sattr")
   }
 
