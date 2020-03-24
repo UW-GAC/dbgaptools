@@ -54,12 +54,12 @@ test_that("Extra samples are detected", {
   samp_exp <- ds[, 1]
   samp_exp_less <- samp_exp[-c(3:4)]
   out <- check_sattr(sattr_ds, samp_exp = samp_exp_less)
-  expect_equal(out$extra_samples, c("S3","S4"))
+  expect_equal(out$extra_samples, c("S3", "S4"))
 })
 
 test_that("Missing samples are detected", {
   ds <- read_ds_file(sattr_ds)
-  samp_exp <- ds[,1]
+  samp_exp <- ds[, 1]
   samp_exp_more <- c(samp_exp, "S999")
   out <- check_sattr(sattr_ds, samp_exp = samp_exp_more)
   expect_equal(out$missing_samples, "S999")
