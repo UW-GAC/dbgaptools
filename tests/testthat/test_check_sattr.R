@@ -1,15 +1,18 @@
 context("Checking sample attributes file")
 
-sattr_dd <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbgaptools", mustWork = TRUE)
+sattr_dd <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbgaptools",
+                        mustWork = TRUE)
 
-sattr_ds <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools", mustWork = TRUE)
+sattr_ds <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools",
+                        mustWork = TRUE)
 
 test_that("Compliant files run error free",{
   expect_null(check_sattr(dsfile=sattr_ds))
 })
 
 test_that("Missing ID columns are detected",{
-  expect_error(check_sattr(sattr_ds, sampleID_col="mysample"), "Please check that dsfile contains column for sample-level ID", fixed=TRUE)
+  expect_error(check_sattr(sattr_ds, sampleID_col="mysample"),
+               "Please check that dsfile contains column for sample-level ID", fixed=TRUE)
 })
 
 test_that("Non-standard ID column names are detected",{
