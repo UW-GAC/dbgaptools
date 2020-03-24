@@ -6,6 +6,7 @@ sattr_ds <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = 
 
 test_that("Compliant files run error free",{
   expect_null(check_sattr(dsfile=sattr_ds))
+  expect_null(check_sattr(dsfile=sattr_ds, ddfile=sattr_dd))
 })
 
 test_that("Missing ID columns are detected",{
