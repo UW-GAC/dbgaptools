@@ -278,8 +278,8 @@
 #'
 #' Check contents of a sample subject mapping file for dbGaP posting.
 #'
-#' @param dsfile Path to the data file on disk
-#' @param ddfile Path to the data dictionary file on disk
+#' @param ds Dataset object, or path to the data file on disk
+#' @param dd Data dictionary object, or path to file on disk
 #' @param na_vals Vector of strings that should be read in as NA/missing in
 #' data file (see details of \code{read_ds_file})
 #' @param ssm_exp Dataframe of expected SAMPLE_ID and SUBJECT_ID
@@ -293,7 +293,7 @@
 #' or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 #' will be returned in the output.
 #'
-#' If a data dictionary is provided \code{ddfile != NULL}, additionally checks
+#' If a data dictionary is provided \code{dd != NULL}, additionally checks
 #' correspondence between column names in data file and entries in data dictionary.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
@@ -311,17 +311,15 @@
 #' @rdname check_ssm
 #' @export
 
-check_ssm <- function(dsfile, ddfile = NULL,
-                      na_vals = c("NA", "N/A", "na", "n/a"),
-                      ssm_exp = NULL,
+check_ssm <- function(ds, dd = NULL, na_vals = c("NA", "N/A", "na", "n/a"), ssm_exp = NULL,
                       sampleID_col = "SAMPLE_ID", subjectID_col = "SUBJECT_ID") {
 
   # read in data file
-  ds <- read_ds_file(dsfile, na_vals = na_vals)
+  if (is.character(ds)) ds <- read_ds_file(ds, na_vals = na_vals)
 
   # cannot proceed without subject and sample ID cols
   if (!is.element(subjectID_col, names(ds)) | !is.element(sampleID_col, names(ds))) {
-    stop("Please check that dsfile contains columns for subject-level and sample-level IDs")
+    stop("Please check that ds contains columns for subject-level and sample-level IDs")
   }
 
   # issue warning for non-standard subjectID_col or sampleID_col names
@@ -349,8 +347,8 @@ check_ssm <- function(dsfile, ddfile = NULL,
 
   # read in data dictionary if provided
   dd_errors <- NULL
-  if (!is.null(ddfile)) {
-    dd <- read_dd_file(ddfile)
+  if (!is.null(dd)) {
+    if (is.character(dd)) dd <- read_dd_file(dd)
     dd_errors <- .check_dd(dd, ds = ds, dstype = "ssm")
     # TO DO - need to capture all the 'warning' messages from .check_dd. tryCatch?
   }
