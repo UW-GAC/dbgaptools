@@ -24,6 +24,17 @@ test_that("Compliant files run error free",{
   unlink(dd.rev.fn)
 })
 
+test_that("Compliant dataframes run error free",{
+  # remove affection status col so we don't get that notification  
+  ds.rev <- read_ds_file(subj_ds)
+  ds.rev$AFFECTION_STATUS <- NULL
+  dd.rev <- read_dd_file(subj_dd)
+  dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS",]
+
+  expect_null(check_subj(ds=ds.rev))
+  expect_null(check_subj(ds=ds.rev, dd=dd.rev))
+})
+
 test_that("Missing ID column stops with error",{
   str <- "Please check that ds contains column for subject-level ID"
   expect_error(check_subj(subj_ds, subjectID_col="mysubject"), str, fixed=TRUE)  
