@@ -426,7 +426,7 @@ check_ssm <- function(ds, dd = NULL, na_vals = c("NA", "N/A", "na", "n/a"), ssm_
 #' cancer studies and other tissue-specific studies, and are thus considered
 #' "required" variables for the purposes of this checking script.
 #'
-#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
+#' If a data dictionary is provided (\code{dd != NULL}), additionally checks
 #' correspondence between column names in data file and entries in data dictionary.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
@@ -547,7 +547,7 @@ check_sattr <- function(ds, dd = NULL,
 #' indicating that both variables must be submitted together.
 #' Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 #'
-#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
+#' If a data dictionary is provided (\code{dd != NULL}), additionally checks
 #' for agreement between data file and data dictionary.
 #' Assumes that CONSENT = 0 need not be defined in data dictionary, as dbGaP
 #' automatically codes as subjects used as genotyping controls and/or pedigree
@@ -875,8 +875,8 @@ check_ped <- function(ds, dd = NULL,
 #'
 #' Check contents of a phenotype file for dbGaP posting
 #'
-#' @param dsfile Path to the data file on disk
-#' @param ddfile Path to the data dictionary file on disk
+#' @param ds Dataset object, or path to the data file on disk
+#' @param dd Data dictionary object, or path to file on disk
 #' @param na_vals Vector of strings that should be read in as NA/missing in
 #' data file (see details of \code{read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
