@@ -73,11 +73,11 @@ The basic principles behind these checks are:
 \itemize{
   \item{subject file: must contain all subjects in phenotype and pedigree files}
   \item{sample-subject mapping file: must contain all samples with molecular data; all samples
-        listed here must map to subjects with consent=0 or consent >=1 in subject file}
+        listed here must map to subjects with consent = 0 or consent >= 1 in subject file}
   \item{pedigree file: subjects not mapping to samples with molecular data
-        (i.e. linking individuals in a pedigrees) are expected to have consent=0
+        (i.e. linking individuals in a pedigrees) are expected to have consent = 0
         in the subject file}
-  \item{phenotype file: should have no subjects missing consent or with consent=0}
+  \item{phenotype file: should have no subjects missing consent or with consent = 0}
   \item{sample attributes file: all samples listed here must map to subjects
         with consent >= 1 in subject file}
 }
