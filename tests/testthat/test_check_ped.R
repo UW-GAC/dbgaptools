@@ -2,16 +2,23 @@ context("Checking pedigree file")
 
 ped_dd <- system.file("extdata", "6b_dbGaP_PedigreeDD.xlsx", package = "dbgaptools",
                       mustWork = TRUE)
+ped_dd_df <- read_dd_file(ped_dd)
 ped_ds <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbgaptools",
                       mustWork = TRUE)
+ped_ds_df <- read_ds_file(ped_ds)
 
 test_that("Compliant files run error free", {
-  expect_null(check_ped(dsfile = ped_ds))
-  expect_null(check_ped(dsfile = ped_ds, ddfile = ped_dd))
+  expect_null(check_ped(ds = ped_ds))
+  expect_null(check_ped(ds = ped_ds, dd = ped_dd))
+})
+
+test_that("Compliant dataframes run error free", {
+  expect_null(check_ped(ds = ped_ds_df))
+  expect_null(check_ped(ds = ped_ds_df, dd = ped_dd_df))
 })
 
 test_that("Missing ID column stops with error", {
-  str <- "Please check that dsfile contains column for subject-level ID"
+  str <- "Please check that ds contains column for subject-level ID"
   expect_error(check_ped(ped_ds, subjectID_col = "mysubject"), str, fixed = TRUE)
 })
 
