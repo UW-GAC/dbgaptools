@@ -708,8 +708,8 @@ check_subj <- function(ds, dd = NULL,
 #'
 #' Check contents of a pedigree file for dbGaP posting
 #'
-#' @param dsfile Path to the data file on disk
-#' @param ddfile Path to the data dictionary file on disk
+#' @param ds Dataset object, or path to the data file on disk
+#' @param dd Path to the data dictionary object,or path to file on disk
 #' @param na_vals Vector of strings that should be read in as NA/missing in
 #' data file (see details of \code{read_ds_file})
 #' @param subj_exp Vector of expected subject IDs
@@ -726,7 +726,7 @@ check_subj <- function(ds, dd = NULL,
 #' ID (\code{chk_subjectID = TRUE}); > 1 sex, which could indicate dizygotic
 #' twins are included (\code{chk_sex = TRUE}).
 #'
-#' If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
+#' If a data dictionary is provided (\code{dd != NULL}), additionally checks
 #' correspondence between column names in data file and entries in data dictionary.
 #' Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 #'
@@ -744,18 +744,18 @@ check_subj <- function(ds, dd = NULL,
 #' @rdname check_ped
 #' @export
 
-check_ped <- function(dsfile, ddfile = NULL,
+check_ped <- function(ds, dd = NULL,
                       na_vals = c("NA", "N/A", "na", "n/a"),
                       subj_exp = NULL,
                       subjectID_col = "SUBJECT_ID", check_incons = TRUE,
                       male = 1, female = 2) {
 
   # read in data file
-  ds <- read_ds_file(dsfile, na_vals = na_vals)
+  if (is.character(ds)) ds <- read_ds_file(ds, na_vals = na_vals)
 
   # cannot proceed without subject ID col
   if (!is.element(subjectID_col, names(ds))) {
-    stop("Please check that dsfile contains column for subject-level ID")
+    stop("Please check that ds contains column for subject-level ID")
   }
 
   # issue warning for non-standard subjectID_col
@@ -779,8 +779,8 @@ check_ped <- function(dsfile, ddfile = NULL,
 
   # read in data dictionary if provided
   dd_errors <- NULL
-  if (!is.null(ddfile)) {
-    dd <- read_dd_file(ddfile)
+  if (!is.null(dd)) {
+    if (is.character(dd)) dd <- read_dd_file(dd)
     dd_errors <- .check_dd(dd, ds = ds, dstype = "ped")
   }
 
