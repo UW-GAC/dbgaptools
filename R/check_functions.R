@@ -405,8 +405,8 @@ check_ssm <- function(ds, dd = NULL, na_vals = c("NA", "N/A", "na", "n/a"), ssm_
 #'
 #' Check contents of a sample attributes file for dbGaP posting.
 #'
-#' @param dsfile Path to the data file on disk
-#' @param ddfile Path to the data dictionary file on disk
+#' @param ds Dataset object, or path to the data file on disk
+#' @param dd Data dictionary object, or path to file on disk
 #' @param na_vals Vector of strings that should be read in as NA/missing in
 #' data file (see details of \code{read_ds_file})
 #' @param samp_exp List of expected sample IDs
@@ -531,8 +531,8 @@ check_sattr <- function(ds, dd = NULL,
 #'
 #' Check contents of a subject consent file for dbGaP posting.
 #'
-#' @param dsfile Path to the data file on disk
-#' @param ddfile Path to the data dictionary file on disk
+#' @param ds Dataset object, or path to the data file on disk
+#' @param dd Data dictionary object, or path to file on disk
 #' @param na_vals Vector of strings that should be read in as NA/missing in
 #' data file (see details of \code{read_ds_file})
 #' @param subj_exp Dataframe of expected subject ID (column 1) and consent value (column 2)
@@ -573,22 +573,22 @@ check_sattr <- function(ds, dd = NULL,
 #' @rdname check_subj
 #' @export
 
-check_subj <- function(dsfile, ddfile = NULL,
+check_subj <- function(ds, dd = NULL,
                        na_vals = c("NA", "N/A", "na", "n/a"),
                        subj_exp = NULL,
                        subjectID_col = "SUBJECT_ID", consent_col = "CONSENT") {
 
   # read in data file
-  ds <- read_ds_file(dsfile, na_vals = na_vals)
+  if (is.character(ds)) ds <- read_ds_file(ds, na_vals = na_vals)
 
   # cannot proceed without subject ID col
   if (!is.element(subjectID_col, names(ds))) {
-    stop("Please check that dsfile contains column for subject-level ID")
+    stop("Please check that ds contains column for subject-level ID")
   }
 
   # cannot proceed without consent col
   if (!is.element(consent_col, names(ds))) {
-    stop("Please check that dsfile contains column for consent")
+    stop("Please check that ds contains column for consent")
   }
 
   # issue warning for non-standard subjectID_col
@@ -619,8 +619,8 @@ check_subj <- function(dsfile, ddfile = NULL,
 
   # read in data dictionary if provided
   dd_errors <- NULL
-  if (!is.null(ddfile)) {
-    dd <- read_dd_file(ddfile)
+  if (!is.null(dd)) {
+    if (is.character(dd)) dd <- read_dd_file(dd)
     dd_errors <- .check_dd(dd, ds = ds, dstype = "subj")
 
     # for subject consent file, dbGaP will define consent = 0 for user

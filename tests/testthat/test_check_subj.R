@@ -16,8 +16,8 @@ test_that("Compliant files run error free",{
   write.table(dd.rev, file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")  
 
-  expect_null(check_subj(dsfile=ds.rev.fn))
-  expect_null(check_subj(dsfile=ds.rev.fn, ddfile=dd.rev.fn))
+  expect_null(check_subj(ds=ds.rev.fn))
+  expect_null(check_subj(ds=ds.rev.fn, dd=dd.rev.fn))
 
   # clean up
   unlink(ds.rev.fn)
@@ -25,12 +25,12 @@ test_that("Compliant files run error free",{
 })
 
 test_that("Missing ID column stops with error",{
-  str <- "Please check that dsfile contains column for subject-level ID"
+  str <- "Please check that ds contains column for subject-level ID"
   expect_error(check_subj(subj_ds, subjectID_col="mysubject"), str, fixed=TRUE)  
 })
 
 test_that("Missing consent column stops with error",{
-  str <- "Please check that dsfile contains column for consent"
+  str <- "Please check that ds contains column for consent"
   expect_error(check_subj(subj_ds, consent_col="myconsent"), str, fixed=TRUE)  
 })
 
