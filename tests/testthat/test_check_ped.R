@@ -8,12 +8,12 @@ test_that("Compliant files run error free", {
   expect_null(check_ped(dsfile=ped_ds, ddfile=ped_dd))
 })
 
-test_that("Missing ID column stops with error",{
+test_that("Missing ID column stops with error", {
   str <- "Please check that dsfile contains column for subject-level ID"
   expect_error(check_ped(ped_ds, subjectID_col="mysubject"), str, fixed=TRUE)  
 })
 
-test_that("Warning of non-preferred subject ID col is issued",{
+test_that("Warning of non-preferred subject ID col is issued", {
   ds.rev <- read_ds_file(ped_ds)
   names(ds.rev)[2] <- "INDIVIDUAL_ID"
   ds.rev.fn <- tempfile(fileext=".txt")
@@ -26,7 +26,7 @@ test_that("Warning of non-preferred subject ID col is issued",{
 
 test_that("Duplicate subjects are detected", {
   ds.rev <- read_ds_file(ped_ds)
-  ds.rev <- rbind(ds.rev, ds.rev[1,])
+  ds.rev <- rbind(ds.rev, ds.rev[1, ])
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t")
@@ -37,15 +37,15 @@ test_that("Duplicate subjects are detected", {
 
 test_that("Extra subjects are detected", {
   ds <- read_ds_file(ped_ds)
-  subj_exp <- ds[,2]
+  subj_exp <- ds[, 2]
   subj_exp_less <- subj_exp[-c(3:4)]
   out <- check_ped(ped_ds, subj_exp=subj_exp_less)
-  expect_equal(out$extra_subjects, c("1","2"))  
+  expect_equal(out$extra_subjects, c("1", "2"))  
 })
 
 test_that("Missing subjects are detected", {
   ds <- read_ds_file(ped_ds)
-  subj_exp_more <- c(ds[,2], "999")
+  subj_exp_more <- c(ds[, 2], "999")
   out <- check_ped(ped_ds, subj_exp=subj_exp_more)
   expect_equal(out$missing_subjects, c("999"))
 })
@@ -64,7 +64,7 @@ test_that("Missing and required variable names are detected", {
 
 test_that("Multiple missing and required variable names are detected", {
   ds.rev <- read_ds_file(ped_ds)
-  names(ds.rev)[c(1,3)] <- c("FAMILY","MOTHER_ID")
+  names(ds.rev)[c(1, 3)] <- c("FAMILY", "MOTHER_ID")
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
@@ -76,7 +76,7 @@ test_that("Multiple missing and required variable names are detected", {
 })
 
 # dd error
-test_that("DD error is reported for DS variable not in DD",{
+test_that("DD error is reported for DS variable not in DD", {
   dd.rev <- read_dd_file(ped_dd)
   dd.rev$VARNAME[1] <- "FAMILY"
   dd.rev.fn <- tempfile(fileext=".txt")
@@ -95,14 +95,14 @@ test_that("DD error is reported for DS variable not in DD",{
 test_that("Extra SEX value is detected", {
   expect_equal(check_ped(ped_ds, male="M", check_incons=FALSE)$extra_sexvals, "1")
   expect_equal(check_ped(ped_ds, male="M", female="F", check_incons=FALSE)$extra_sexvals,
-               c("2","1"))
+               c("2", "1"))
 })
 
 # pedigree check (focus on the issue dbGaP cares
-test_that("Missing parental IDs cause pedigree check errors",{
+test_that("Missing parental IDs cause pedigree check errors", {
   ds <- read_ds_file(ped_ds)
   # remove rows for some father and mother IDs
-  ds.rev <- ds[-(1:2),]
+  ds.rev <- ds[-(1:2), ]
   ds.rev.fn <- tempfile(fileext=".txt")
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
@@ -119,7 +119,7 @@ test_that("Missing parental IDs cause pedigree check errors",{
 })
          
 
-test_that("Incorrect MZ twin column name is reported",{
+test_that("Incorrect MZ twin column name is reported", {
   ds.rev <- read_ds_file(ped_ds)
   names(ds.rev)[6] <- "TWINS"
   ds.rev.fn <- tempfile(fileext=".txt")
@@ -132,7 +132,7 @@ test_that("Incorrect MZ twin column name is reported",{
   unlink(ds.rev.fn)
 })
 
-test_that("MZ twins in different families are reported",{
+test_that("MZ twins in different families are reported", {
   ds.rev <- read_ds_file(ped_ds)
   ds.rev$FAMILY_ID[4] <- "999"
   ds.rev.fn <- tempfile(fileext=".txt")
@@ -142,7 +142,7 @@ test_that("MZ twins in different families are reported",{
   out <- check_ped(ds.rev.fn, check_incons=FALSE)
 
   # construct expected twins_dat report
-  err <- ds.rev[ds.rev$MZ_TWIN_ID %in% 1,]
+  err <- ds.rev[ds.rev$MZ_TWIN_ID %in% 1, ]
   err$chk_family <- TRUE
   err$chk_sex <- err$chk_subjectID <- FALSE
 
