@@ -5,8 +5,8 @@
 \title{Check pedigree file}
 \usage{
 check_ped(
-  dsfile,
-  ddfile = NULL,
+  ds,
+  dd = NULL,
   na_vals = c("NA", "N/A", "na", "n/a"),
   subj_exp = NULL,
   subjectID_col = "SUBJECT_ID",
@@ -16,9 +16,9 @@ check_ped(
 )
 }
 \arguments{
-\item{dsfile}{Path to the data file on disk}
+\item{ds}{Dataset object, or path to the data file on disk}
 
-\item{ddfile}{Path to the data dictionary file on disk}
+\item{dd}{Path to the data dictionary object,or path to file on disk}
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing in
 data file (see details of \code{read_ds_file})}
@@ -56,7 +56,7 @@ indicate > 1 family ID per pair (\code{chk_family = TRUE}); non-unique subject
 ID (\code{chk_subjectID = TRUE}); > 1 sex, which could indicate dizygotic
 twins are included (\code{chk_sex = TRUE}).
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
+If a data dictionary is provided (\code{dd != NULL}), additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

@@ -5,8 +5,8 @@
 \title{Check sample subject mapping file}
 \usage{
 check_ssm(
-  dsfile,
-  ddfile = NULL,
+  ds,
+  dd = NULL,
   na_vals = c("NA", "N/A", "na", "n/a"),
   ssm_exp = NULL,
   sampleID_col = "SAMPLE_ID",
@@ -14,9 +14,9 @@ check_ssm(
 )
 }
 \arguments{
-\item{dsfile}{Path to the data file on disk}
+\item{ds}{Dataset object, or path to the data file on disk}
 
-\item{ddfile}{Path to the data dictionary file on disk}
+\item{dd}{Data dictionary object, or path to file on disk}
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing in
 data file (see details of \code{read_ds_file})}
@@ -49,7 +49,7 @@ SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 will be returned in the output.
 
-If a data dictionary is provided \code{ddfile != NULL}, additionally checks
+If a data dictionary is provided \code{dd != NULL}, additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

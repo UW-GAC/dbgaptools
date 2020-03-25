@@ -5,8 +5,8 @@
 \title{Check subject consent file}
 \usage{
 check_subj(
-  dsfile,
-  ddfile = NULL,
+  ds,
+  dd = NULL,
   na_vals = c("NA", "N/A", "na", "n/a"),
   subj_exp = NULL,
   subjectID_col = "SUBJECT_ID",
@@ -14,9 +14,9 @@ check_subj(
 )
 }
 \arguments{
-\item{dsfile}{Path to the data file on disk}
+\item{ds}{Dataset object, or path to the data file on disk}
 
-\item{ddfile}{Path to the data dictionary file on disk}
+\item{dd}{Data dictionary object, or path to file on disk}
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing in
 data file (see details of \code{read_ds_file})}
@@ -55,7 +55,7 @@ If only one of either SUBJECT_SOURCE and SOURCE_SUBJECT_ID is present, returns a
 indicating that both variables must be submitted together.
 Checks that all consent groups are coded using an integer (1, 2, 3, etc).
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
+If a data dictionary is provided (\code{dd != NULL}), additionally checks
 for agreement between data file and data dictionary.
 Assumes that CONSENT = 0 need not be defined in data dictionary, as dbGaP
 automatically codes as subjects used as genotyping controls and/or pedigree

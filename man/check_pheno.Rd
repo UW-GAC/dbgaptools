@@ -5,17 +5,17 @@
 \title{Check phenotype file}
 \usage{
 check_pheno(
-  dsfile,
-  ddfile = NULL,
+  ds,
+  dd = NULL,
   na_vals = c("NA", "N/A", "na", "n/a"),
   subj_exp = NULL,
   subjectID_col = "SUBJECT_ID"
 )
 }
 \arguments{
-\item{dsfile}{Path to the data file on disk}
+\item{ds}{Dataset object, or path to the data file on disk}
 
-\item{ddfile}{Path to the data dictionary file on disk}
+\item{dd}{Data dictionary object, or path to file on disk}
 
 \item{na_vals}{Vector of strings that should be read in as NA/missing in
 data file (see details of \code{read_ds_file})}
@@ -43,7 +43,7 @@ column checked here is the subject-level ID. Note dbGaP requests variables
 status, if not already included in the subject consent file; (3) sex; and
 (4) race/ethnicity/ancestry/heritage.
 
-If a data dictionary is provided (\code{ddfile != NULL}), additionally checks
+If a data dictionary is provided (\code{dd != NULL}), additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }
