@@ -62,7 +62,7 @@
 #' @details
 #' dbGaP dataset files should have column headers as the first row. If the input violates this, e.g. additional header rows are present, a warning is returned but the file is still read in.
 #'
-#' @rdnameread_ds_file
+#' @rdname read_ds_file
 #' @export
 
 read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
@@ -153,7 +153,7 @@ read_ds_file <- function(filename, dd=FALSE, na_vals=c("NA","N/A","na","n/a"),
 #' @return
 #' A data frame from the file
 #'
-#' @rdnameread_dd_file
+#' @rdname read_dd_file
 #' @export
 
 read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE){
