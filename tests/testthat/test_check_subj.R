@@ -3,7 +3,7 @@ context("Checking subject consent file")
 subj_dd <- system.file("extdata", "4b_dbGaP_SubjectDD.xlsx", package = "dbgaptools", mustWork = TRUE)
 subj_ds <- system.file("extdata", "4a_dbGaP_SubjectDS.txt", package = "dbgaptools", mustWork = TRUE)
 
-test_that("Compliant files run error free",{
+test_that("Compliant files run error free", {
   # remove affection status col so we don't get that notification  
   ds.rev <- read_ds_file(subj_ds)
   ds.rev$AFFECTION_STATUS <- NULL
@@ -11,7 +11,7 @@ test_that("Compliant files run error free",{
   write.table(ds.rev, file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")
   dd.rev <- read_dd_file(subj_dd)
-  dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS",]
+  dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS", ]
   dd.rev.fn <- tempfile(fileext=".txt")
   write.table(dd.rev, file=dd.rev.fn, col.names=TRUE, row.names=FALSE,
               quote=FALSE, sep="\t", na="")  
@@ -24,28 +24,28 @@ test_that("Compliant files run error free",{
   unlink(dd.rev.fn)
 })
 
-test_that("Compliant dataframes run error free",{
+test_that("Compliant dataframes run error free", {
   # remove affection status col so we don't get that notification  
   ds.rev <- read_ds_file(subj_ds)
   ds.rev$AFFECTION_STATUS <- NULL
   dd.rev <- read_dd_file(subj_dd)
-  dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS",]
+  dd.rev <- dd.rev[dd.rev$VARNAME != "AFFECTION_STATUS", ]
 
   expect_null(check_subj(ds=ds.rev))
   expect_null(check_subj(ds=ds.rev, dd=dd.rev))
 })
 
-test_that("Missing ID column stops with error",{
+test_that("Missing ID column stops with error", {
   str <- "Please check that ds contains column for subject-level ID"
   expect_error(check_subj(subj_ds, subjectID_col="mysubject"), str, fixed=TRUE)  
 })
 
-test_that("Missing consent column stops with error",{
+test_that("Missing consent column stops with error", {
   str <- "Please check that ds contains column for consent"
   expect_error(check_subj(subj_ds, consent_col="myconsent"), str, fixed=TRUE)  
 })
 
-test_that("Incorrect consent column name is detected",{
+test_that("Incorrect consent column name is detected", {
   ds.rev <- read_ds_file(subj_ds)
   names(ds.rev)[names(ds.rev) %in% "CONSENT"] <- "myconsent"
   ds.rev.fn <- tempfile(fileext=".txt")
@@ -57,7 +57,7 @@ test_that("Incorrect consent column name is detected",{
   unlink(ds.rev.fn)
 })
 
-test_that("Presence of only one alias column is detected",{
+test_that("Presence of only one alias column is detected", {
   ds.rev <- read_ds_file(subj_ds)
   ds.rev$SUBJECT_SOURCE <- NULL
   ds.rev.fn <- tempfile(fileext=".txt")
@@ -74,7 +74,7 @@ test_that("Message about blanks in SOURCE_SUBJECT_ID is returned", {
   expect_message(out <- check_subj(subj_ds), str, fixed=TRUE)
 })
 
-test_that("Undefined CONSENT=0 does not return dd_error output",{
+test_that("Undefined CONSENT=0 does not return dd_error output", {
   expect_null(out <- check_subj(subj_ds, subj_dd)$dd_errors$vals_warnings)
 })
 
@@ -82,7 +82,7 @@ test_that("Duplicate subjects are detected", {
   ds.rev <- read_ds_file(subj_ds)
   ds.rev$SUBJECT_ID[3] <- ds.rev$SUBJECT_ID[2]
   ds.rev.fn <- tempfile(fileext=".txt")
-  write.table(ds.rev[,1:2], file=ds.rev.fn, col.names=TRUE, row.names=FALSE,
+  write.table(ds.rev[, 1:2], file=ds.rev.fn, col.names=TRUE, row.names=FALSE, 
               quote=FALSE, sep="\t")
 
   expect_equal(check_subj(ds.rev.fn)$dup_subjects, "2")
@@ -91,26 +91,26 @@ test_that("Duplicate subjects are detected", {
 
 test_that("Extra subjects are detected", {
   ds <- read_ds_file(subj_ds)
-  subj_exp <- ds[,1:2]
-  subj_exp_less <- subj_exp[-c(3:4),]
+  subj_exp <- ds[, 1:2]
+  subj_exp_less <- subj_exp[-c(3:4), ]
   out <- check_subj(subj_ds, subj_exp=subj_exp_less)
-  expect_equal(out$extra_subjects, c("3","4"))  
+  expect_equal(out$extra_subjects, c("3", "4"))  
 })
 
 test_that("Missing subjects are detected", {
   ds <- read_ds_file(subj_ds)
-  subj_exp <- ds[,1:2]
+  subj_exp <- ds[, 1:2]
   ext_rows <- c(SUBJECT_ID=999, CONSENT=1)
   subj_exp_more <- rbind(subj_exp, ext_rows)
   out <- check_subj(subj_ds, subj_exp=subj_exp_more)
   expect_equal(out$missing_subjects, c("999"))
 })
 
-test_that("Discrepant consent values are detected",{
+test_that("Discrepant consent values are detected", {
   ds <- read_ds_file(subj_ds)
-  subj_exp <- ds[,1:2]
+  subj_exp <- ds[, 1:2]
   # preturb one consent value
-  subj_exp[14,2] <- 1
+  subj_exp[14, 2] <- 1
   out <- check_subj(subj_ds, subj_exp=subj_exp)
   exp.df <- data.frame(SUBJECT_ID="1001", CONSENT="1", stringsAsFactors=FALSE)
   expect_equivalent(out$consent_diffs, exp.df)
