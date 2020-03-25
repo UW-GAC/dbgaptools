@@ -1,7 +1,9 @@
 context("Checking phenotype file")
 
-pheno_dd <- system.file("extdata", "2b_dbGaP_SubjectPhenotypesDD.xlsx", package = "dbgaptools", mustWork = TRUE)
-pheno_ds <- system.file("extdata", "2a_dbGaP_SubjectPhenotypesDS.txt", package = "dbgaptools", mustWork = TRUE)
+pheno_dd <- system.file("extdata", "2b_dbGaP_SubjectPhenotypesDD.xlsx", package = "dbgaptools",
+                        mustWork = TRUE)
+pheno_ds <- system.file("extdata", "2a_dbGaP_SubjectPhenotypesDS.txt", package = "dbgaptools",
+                        mustWork = TRUE)
 
 dd <- read_dd_file(pheno_dd)
 ds <- read_ds_file(pheno_ds, na_vals = c("NA", "N/A", "na", "n/a", "9999"))
@@ -12,7 +14,7 @@ test_that("Compliant files run error free", {
 
 test_that("Missing ID column stops with error", {
   str <- "Please check that dsfile contains column for subject-level ID"
-  expect_error(check_pheno(pheno_ds, subjectID_col = "mysubject"), str, fixed = TRUE)  
+  expect_error(check_pheno(pheno_ds, subjectID_col = "mysubject"), str, fixed = TRUE)
 })
 
 test_that("Warning of non-preferred subject ID col is issued", {
@@ -43,7 +45,7 @@ test_that("Extra subjects are detected", {
   subj_exp <- ds[, 1]
   subj_exp_less <- subj_exp[-c(3:4)]
   out <- check_pheno(pheno_ds, subj_exp = subj_exp_less)
-  expect_equal(out$extra_subjects, c("3", "4"))  
+  expect_equal(out$extra_subjects, c("3", "4"))
 })
 
 test_that("Missing subjects are detected", {
@@ -53,4 +55,3 @@ test_that("Missing subjects are detected", {
   out <- check_pheno(pheno_ds, subj_exp = subj_exp_more)
   expect_equal(out$missing_subjects, c("999"))
 })
-
