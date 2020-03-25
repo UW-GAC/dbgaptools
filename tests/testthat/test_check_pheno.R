@@ -9,7 +9,7 @@ dd <- read_dd_file(pheno_dd)
 ds <- read_ds_file(pheno_ds, na_vals = c("NA", "N/A", "na", "n/a", "9999"))
 
 test_that("Compliant files run error free", {
-  expect_null(check_pheno(dsfile = pheno_ds, na_vals = c("NA", "N/A", "na", "n/a", "9999")))
+  expect_null(check_pheno(ds = pheno_ds, na_vals = c("NA", "N/A", "na", "n/a", "9999")))
 })
 
 test_that("Compliant dataframe run error free", {
@@ -17,7 +17,7 @@ test_that("Compliant dataframe run error free", {
 })
 
 test_that("Missing ID column stops with error", {
-  str <- "Please check that dsfile contains column for subject-level ID"
+  str <- "Please check that ds contains column for subject-level ID"
   expect_error(check_pheno(pheno_ds, subjectID_col = "mysubject"), str, fixed = TRUE)
 })
 
