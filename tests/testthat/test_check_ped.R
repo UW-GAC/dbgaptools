@@ -1,7 +1,9 @@
 context("Checking pedigree file")
 
-ped_dd <- system.file("extdata", "6b_dbGaP_PedigreeDD.xlsx", package = "dbgaptools", mustWork = TRUE)
-ped_ds <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbgaptools", mustWork = TRUE)
+ped_dd <- system.file("extdata", "6b_dbGaP_PedigreeDD.xlsx", package = "dbgaptools",
+                      mustWork = TRUE)
+ped_ds <- system.file("extdata", "6a_dbGaP_PedigreeDS.txt", package = "dbgaptools",
+                      mustWork = TRUE)
 
 test_that("Compliant files run error free", {
   expect_null(check_ped(dsfile = ped_ds))
@@ -10,7 +12,7 @@ test_that("Compliant files run error free", {
 
 test_that("Missing ID column stops with error", {
   str <- "Please check that dsfile contains column for subject-level ID"
-  expect_error(check_ped(ped_ds, subjectID_col = "mysubject"), str, fixed = TRUE)  
+  expect_error(check_ped(ped_ds, subjectID_col = "mysubject"), str, fixed = TRUE)
 })
 
 test_that("Warning of non-preferred subject ID col is issued", {
@@ -40,7 +42,7 @@ test_that("Extra subjects are detected", {
   subj_exp <- ds[, 2]
   subj_exp_less <- subj_exp[-c(3:4)]
   out <- check_ped(ped_ds, subj_exp = subj_exp_less)
-  expect_equal(out$extra_subjects, c("1", "2"))  
+  expect_equal(out$extra_subjects, c("1", "2"))
 })
 
 test_that("Missing subjects are detected", {
@@ -56,7 +58,7 @@ test_that("Missing and required variable names are detected", {
   ds.rev.fn <- tempfile(fileext = ".txt")
   write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t", na = "")
-  
+
   expect_equal(check_ped(ds.rev.fn, check_incons = FALSE)$missing_vars, "FAMILY_ID")
 
   unlink(ds.rev.fn)
@@ -68,7 +70,7 @@ test_that("Multiple missing and required variable names are detected", {
   ds.rev.fn <- tempfile(fileext = ".txt")
   write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t", na = "")
-  
+
   expect_equal(check_ped(ds.rev.fn, check_incons = FALSE)$missing_vars,
                c("FAMILY_ID", "MOTHER"))
 
@@ -87,7 +89,7 @@ test_that("DD error is reported for DS variable not in DD", {
   expect_warning(out <- check_ped(ped_ds, dd = dd.rev.fn, check_incons = FALSE), str1)
   expect_warning(out <- check_ped(ped_ds, dd = dd.rev.fn, check_incons = FALSE), str2)
   expect_equal(out$dd_errors$missing_dsvars, "FAMILY_ID")
-  expect_equal(out$dd_errors$extra_ddvars, "FAMILY")  
+  expect_equal(out$dd_errors$extra_ddvars, "FAMILY")
 
   unlink(dd.rev.fn)
 })
@@ -102,7 +104,7 @@ test_that("Extra SEX value is detected", {
 test_that("Missing parental IDs cause pedigree check errors", {
   ds <- read_ds_file(ped_ds)
   # remove rows for some father and mother IDs
-  ds.rev <- ds[-(1:2), ]
+  ds.rev <- ds[- (1:2), ]
   ds.rev.fn <- tempfile(fileext = ".txt")
   write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t", na = "")
@@ -117,7 +119,7 @@ test_that("Missing parental IDs cause pedigree check errors", {
 
   unlink(ds.rev.fn)
 })
-         
+
 
 test_that("Incorrect MZ twin column name is reported", {
   ds.rev <- read_ds_file(ped_ds)
@@ -139,7 +141,7 @@ test_that("MZ twins in different families are reported", {
   write.table(ds.rev, file = ds.rev.fn, col.names = TRUE, row.names = FALSE,
               quote = FALSE, sep = "\t", na = "")
 
-  out <- check_ped(ds.rev.fn, check_incons = FALSE) 
+  out <- check_ped(ds.rev.fn, check_incons = FALSE)
   # construct expected twins_dat report
   err <- ds.rev[ds.rev$MZ_TWIN_ID %in% 1, ]
   err$chk_family <- TRUE
