@@ -4,16 +4,22 @@
 \alias{check_ssm}
 \title{Check sample subject mapping file}
 \usage{
-check_ssm(dsfile, ddfile = NULL, na_vals = c("NA", "N/A", "na", "n/a"),
-  ssm_exp = NULL, sampleID_col = "SAMPLE_ID",
-  subjectID_col = "SUBJECT_ID")
+check_ssm(
+  ds,
+  dd = NULL,
+  na_vals = c("NA", "N/A", "na", "n/a"),
+  ssm_exp = NULL,
+  sampleID_col = "SAMPLE_ID",
+  subjectID_col = "SUBJECT_ID"
+)
 }
 \arguments{
-\item{dsfile}{Path to the data file on disk}
+\item{ds}{Dataset object, or path to the data file on disk}
 
-\item{ddfile}{Path to the data dictionary file on disk}
+\item{dd}{Data dictionary object, or path to file on disk}
 
-\item{na_vals}{Vector of strings that should be read in as NA/missing in data file (see details of \code{read_ds_file})}
+\item{na_vals}{Vector of strings that should be read in as NA/missing in
+data file (see details of \code{read_ds_file})}
 
 \item{ssm_exp}{Dataframe of expected SAMPLE_ID and SUBJECT_ID}
 
@@ -30,7 +36,8 @@ ssm_report, a list of the following issues (when present):
 \item{missing_subjects}{Subjects in \code{ssm_exp} missing from data file}
 \item{extra_samples}{Samples in data file missing from \code{ssm_exp}}
 \item{missing_samples}{Samples in \code{ssm_exp} missing from data file}
-\item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID. Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
+\item{ssm_diffs}{Discrepancies in mapping between SAMPLE_ID and SUBJECT_ID.
+      Lists entries in \code{ssm_exp} that disagree with mapping in the data file}
 }
 \description{
 Check contents of a sample subject mapping file for dbGaP posting.
@@ -42,7 +49,7 @@ SAMPLE_ID and SUBJECT_ID. Any differences in mapping between the two,
 or a difference in the list of expected SAMPLE_IDs or SUBJECT_IDs,
 will be returned in the output.
 
-If a data dictionary is provided \code{ddfile != NULL}, additionally checks 
+If a data dictionary is provided \code{dd != NULL}, additionally checks
 correspondence between column names in data file and entries in data dictionary.
 Data dictionary files can be Excel (.xls, .xlsx) or tab-delimited .txt.
 }

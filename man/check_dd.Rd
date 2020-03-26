@@ -11,19 +11,24 @@
 
 \item{ds}{Corresponding dataset (DS) object}
 
-\item{dstype}{Type of corresponding DS file, one of "pheno","ped","sattr","ssm","subj."}
+\item{dstype}{Type of corresponding DS file, one of "pheno", "ped", "sattr", "ssm", "subj."}
 }
 \value{
 dd_report, a list of the following issues (when present):
 \item{lowercase}{Logical flag indicating non-uppercase variable names}
 \item{missing_reqvars}{Missing and required variables, based on dstype}
 \item{extra_vars}{Extra variables}
-\item{uniquekey_flags}{Returns warning when UNIQUEKEY column is populated for file types other than phenotype (most common need for UNIQUEKEY) or sample attributes (which in some cases requires UNIQUEKEY). Returns warning if, in pheno or sattr dstypes, the UNIQUEKEY variable(s) do not specify unique rows in the DS.}
+\item{uniquekey_flags}{Returns warning when UNIQUEKEY column is populated
+      for file types other than phenotype (most common need for UNIQUEKEY) or
+      sample attributes (which in some cases requires UNIQUEKEY). Returns warning
+      if, in pheno or sattr dstypes, the UNIQUEKEY variable(s) do not specify
+      unique rows in the DS.}
 \item{vals_warnings}{Vector of warnings about VALUES columns}
 \item{missing_dsvars}{Variables present in DS but not defined in DD}
 \item{min_errors}{Variables for which DS value are < DD MIN}
 \item{max_errors}{Variables for which DS value are > DD MAX}
-\item{illegal_vars}{Variable names containing illegal characters: '\', '/', ',' (comma), or 'dbGaP' are present}
+\item{illegal_vars}{Variable names containing illegal characters: '\', '/',
+      ',' (comma), or 'dbGaP' are present}
 }
 \description{
 Check data dictionary (generic)
@@ -36,7 +41,8 @@ When the corresponding DS file is also provided, checks for consistency between 
 
 Even if DS file is not provided, (\code{ds == NULL}), the (\code{dstype}) must
 be specified to check for customize check for UNITS and VALUES columns:
-pheno = phenotype DS; ped = pedigree DS, sattr =sample attributes DS, ssm=sample-subject mapping DS, subj=subject consent DS.
+pheno = phenotype DS; ped = pedigree DS, sattr = sample attributes DS,
+ssm = sample-subject mapping DS, subj = subject consent DS.
 Note VALUES are considered required for pheno, ped, sattr, and subj DS types.
 Additionally, UNITS are considered required for pheno and sattr DS types.
 Note some studies may not actually require VALUES and UNITS in these files types,
