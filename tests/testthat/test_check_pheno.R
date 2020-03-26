@@ -10,10 +10,14 @@ ds <- read_ds_file(pheno_ds, na_vals = c("NA", "N/A", "na", "n/a", "9999"))
 
 test_that("Compliant files run error free", {
   expect_null(check_pheno(ds = pheno_ds, na_vals = c("NA", "N/A", "na", "n/a", "9999")))
+  expect_null(check_pheno(ds = pheno_ds, dd = pheno_dd,
+                          na_vals = c("NA", "N/A", "na", "n/a", "9999")))
 })
 
 test_that("Compliant dataframe run error free", {
   expect_null(check_pheno(ds = ds, na_vals = c("NA", "N/A", "na", "n/a", "9999")))
+  expect_null(check_pheno(ds = pheno_ds, dd = dd,
+                          na_vals = c("NA", "N/A", "na", "n/a", "9999")))
 })
 
 test_that("Missing ID column stops with error", {
