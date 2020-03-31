@@ -3,6 +3,7 @@ Title: Creates and Checks Standard Files for dbGaP submission
 Version: 0.1.1
 Authors@R: c(
   person("Nelson", "Sarah", email = "sarahcn@uw.edu", role = c("aut", "cre")),
+  person("Jai", "Broome", email = "jbroome@uw.edu", role = "ctb"),
   person("Adrienne", "Stilp", email = "amstilp@uw.edu", role = "ctb"))
 Description: This package assists in creating dataset (DS) and data dictionary (DD) files required for dbGaP submission: sample-subject mapping, sample attributes, and subject consent files. Checks proceed based on dbGaP Submission Guidelines. Optionally, pedigree and phenotype files can be checked for presence of expected subjects.
 Depends:
