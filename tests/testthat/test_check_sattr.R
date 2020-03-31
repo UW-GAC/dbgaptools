@@ -1,20 +1,20 @@
 context("Checking sample attributes file")
 
-sattr_dd_file <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx", package = "dbgaptools",
-                        mustWork = TRUE)
-sattr_dd <- read_dd_file(sattr_dd_file)
+sattr_dd_file <- system.file("extdata", "3b_dbGaP_SampleAttributesDD.xlsx",
+                             package = "dbgaptools", mustWork = TRUE)
+sattr_dd <- read_dd_file(sattr_dd_file) %>% dplyr::select(-VARIABLE_TERM)
 
-sattr_ds_file <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt", package = "dbgaptools",
-                        mustWork = TRUE)
+sattr_ds_file <- system.file("extdata", "3a_dbGaP_SampleAttributesDS.txt",
+                             package = "dbgaptools", mustWork = TRUE)
 sattr_ds <- read_ds_file(sattr_ds_file)
 
-test_that("Compliant files run error free",{
+test_that("Compliant files run error free", {
   expect_null(check_sattr(ds = sattr_ds_file))
-  expect_null(check_sattr(ds = sattr_ds_file, dd = sattr_dd_file))
 })
 
 test_that("Compliant dataframes run error free", {
   expect_null(check_sattr(ds = sattr_ds))
+  expect_null(check_sattr(ds = sattr_ds_file, dd = sattr_dd))
 })
 
 test_that("Missing ID columns are detected", {
