@@ -301,7 +301,7 @@ read_dd_file <- function(filename, remove_empty_row=TRUE, remove_empty_col=FALSE
         xml2::xml_text(child_value_nodes)
       )
       value_df <- do.call(data.frame,c(as.list(value_strings), stringsAsFactors = FALSE))
-      names(value_df) <- NULL
+      names(value_df) <- sprintf("V%d", 1:ncol(value_df))
       df <- dplyr::bind_cols(df, value_df)
       idx <- which(names(df) == "V1")
       names(df)[idx] <- "VALUES"
